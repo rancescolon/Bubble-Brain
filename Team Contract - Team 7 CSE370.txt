@@ -1,0 +1,25 @@
+﻿Team Contract and Project Description
+Group Name: Drop Table; Team 11
+Github Repo URL: https://github.com/CSE370HCI/droptable
+Zenhub URL: https://webdev.cse.buffalo.edu/pmtool/scrumboard.php?teamId=1036&courseId=undefined
+Alternate Dispute Resolution Approach: For our alternate dispute resolution approach, we will participate in an intense game of rock, paper, scissors (best 2 out of 3)
+
+
+Team Mission: Provide easier studying approaches for students while maintaining attention span 
+Team Vision: A flashcard-based study application built to hold users' attention spans and increase productivity. 
+
+
+Completed Version of the Project:
+The complete version of this project involves creating a web application where users can upload study materials and they would be able to scroll through it like TikTok. The materials they uploaded will be read out to them for auditory stimuli, alongside visual stimuli which could be things such as Minecraft parkour videos, Slime videos, Subway Surfers gameplay, Family Guy Clips, Soap cutting videos, Hydraulic press videos, and other kinds of videos to retain users attention. The app will cycle through the different kinds of video or users can pick their preferences. Users will also be able to publish notes by putting tags on them to allow other users to use their notes and add them to their playlists.  
+
+
+Write 1 or 2 paragraphs describing a typical user (or users) of your project and how they would use it.
+* Generally, students across different age groups have very poor attention spans which creates an environment full of procrastination and lack of productivity in an academic setting. Serving an app based on retaining attention span whilst studying can be a big milestone for students between the ages of 15-25. Typically most students veer towards other software or sites that allow them to study in an organized manner, however, the excessive amount of text and documentation that they must read through to understand or test their knowledge is extensive beyond their attention span cycle. With our platform, such students can effectively mirror their favorite ‘brainrot’ videos at the bottom of their screen whilst reading through flashcards ensuring that they maintain better focus with more dopamine being fed into their brain through auditory or audio-visual stimuli regardless of their attention to the visuals. Similarly to Quizlet, students can receive knowledge checkpoints/achievement statuses upon completing an arbitrary amount of note cards for their learning
+
+
+Students between ages 15-25 with attention span / focusing problems
+
+
+2 Examples of Existing Sites for Inspiration:
+* quizlet.com: Allowing a user to study and increase their level of productivity 
+* Tiktok.com: Is very captivating to a lot of users holding their attention for extended periods
