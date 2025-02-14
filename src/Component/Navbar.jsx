@@ -8,7 +8,7 @@ import settingIcon from "../assets/settings.svg";
 import helpIcon from "../assets/help.svg";
 import exitIcon from "../assets/exit.png";
 import groupIcon from "../assets/group.png";
-
+import aboutIcon from "../assets/aboutusicon.png";
 
 /* The Navbar class provides navigation through react router links.  Note the callback
    to the parent app class in the last entry... this is an example of calling a function
@@ -77,6 +77,16 @@ const Navbar = ({ toggleModal, logout }) => {
               className="sidenav-icon"
               alt="groups"
               title="groups"
+            />
+          </Link>
+        </li>
+        <li className="pm admin">
+          <Link to="/aboutus">
+            <img
+              src={aboutIcon}
+              className="sidenav-icon"
+              alt="About Us"
+              title="About Us"
             />
           </Link>
         </li>
