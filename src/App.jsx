@@ -12,6 +12,7 @@ import RegisterForm from "./Component/RegisterForm";
 import ResetPassword from "./Component/ResetPassword";
 import Messaging from "./Component/Messaging";
 import { io } from "socket.io-client"
+import AboutMe from "./Component/AboutMe";
 
 // App.jsx is the starting point for the application.  This is the component called by index, which will be rendered when
 // a user goes to your app URL.  This component will handle routing to other parts of your app, and any initial setup.
@@ -110,7 +111,8 @@ function App() {
               You can see how this is used in the Messaging component 
               as well as how this path is being set up in the FriendList component */}
               <Route path="/messages/:roomID" element={<Messaging />} />
-            </Routes>
+              <Route path="/akibmahdi" element={<AboutMe />} />
+            </Routes> 
           </div>
         </header>
 
