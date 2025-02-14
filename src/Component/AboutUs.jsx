@@ -54,8 +54,9 @@ export default function AboutUs() {
     },
     {
       name: "Mieszawski Jacob",
-      bio: "Hi",
+      bio: "Hi, I'm Jacob and I'm a senior studying Computer Science. I aspire to be a full stack developer in the future, and my favorite dog breed are Bernese Mountain Dogs just incase you were curious ",
       imageSrc: jacobPic,
+      profileLink: "/jacobmie",
     },
     {
       name: "Biviji Tariq",
