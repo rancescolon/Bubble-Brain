@@ -39,6 +39,7 @@ export default function AboutUs() {
       name: "Rances Colon",
       bio: 'Hi, I\'m Rances a CS student graduating next spring, I like making game in Unreal Engine and made a game called "Bizarre Bender" last semester',
       imageSrc: rancesPic,
+      profileLink: "/rances",
     },
     {
       name: "Akib Mahdi",
