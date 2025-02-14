@@ -49,8 +49,9 @@ export default function AboutUs() {
     },
     {
       name: "Cayden La Bara",
-      bio: "Hi",
+      bio: "Hi, I'm Cayden and I'm a senior that is about to graduate this spring with a Computer Science Degree, I hope to make a lot of money and the future with this degree, and I know how to play the acoustic guitar.",
       imageSrc: caydenPic,
+      profileLink: "/caydenla",
     },
     {
       name: "Mieszawski Jacob",
