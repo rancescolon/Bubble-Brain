@@ -61,6 +61,7 @@ export default function AboutUs() {
       name: "Biviji Tariq",
       bio: "Hi",
       imageSrc: bivijPic,
+      profileLink: "/biviji",
     },
   ]
 
