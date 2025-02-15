@@ -2,7 +2,7 @@
 
 import { Link } from "react-router-dom"
 import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react"
-import profilePic from '../assets/Akibpfp.png';
+import profilePic from '../assets/tariqbiv.jpg';
 export default function AboutMe() {
   return (
     <div className="min-h-screen bg-black text-white ml-[90px]">
