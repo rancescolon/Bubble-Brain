@@ -43,7 +43,7 @@ export default function AboutUs() {
     },
     {
       name: "Akib Mahdi",
-      bio: "Hi",
+      bio: "Hi, im a senior CS major at UB looking for the nearest burger king to hopefully be employed as a cashier.",
       imageSrc: akibPic,
       profileLink: "/akibmahdi",
     },
