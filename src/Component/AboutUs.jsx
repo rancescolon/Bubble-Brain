@@ -61,7 +61,7 @@ export default function AboutUs() {
     },
     {
       name: "Biviji Tariq",
-      bio: "Hi",
+      bio: "Hello, I am Tariq Biviji a CS student and I like caffeine.",
       imageSrc: bivijPic,
       profileLink: "/biviji",
     },
