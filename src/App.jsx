@@ -85,10 +85,10 @@ function App() {
     <Router basename={process.env.PUBLIC_URL}>
       <div className="App">
         <header className="App-header">
-          <Navbar
+          {/* <Navbar
             toggleModal={(e) => toggleModal(e)}
             logout={(e) => logout(e)}
-          />
+          /> */}
           <div className="maincontent" id="mainContent">
             <Routes>
               <Route path="/settings" element={<Settings />} />
