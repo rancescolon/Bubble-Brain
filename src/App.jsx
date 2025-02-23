@@ -7,7 +7,7 @@ import Friends from "./Component/Friends";
 import Groups from "./Component/Groups";
 import Modal from "./Component/Modal";
 import PromiseComponent from "./Component/PromiseComponent";
-//import LoginForm from "./Component/LoginForm";
+import LoginForm from "./Component/LoginForm";
 import RegisterForm from "./Component/RegisterForm";
 import ResetPassword from "./Component/ResetPassword";
 import Messaging from "./Component/Messaging";
@@ -50,11 +50,11 @@ function App() {
     window.location.reload();
   };
 
-  //const login = (e) => {
-  //  e.preventDefault();
-  //  setRefreshPosts(true);
-  //  setLoggedIn(true);
-  //};
+  const login = (e) => {
+   e.preventDefault();
+   setRefreshPosts(true);
+   setLoggedIn(true);
+  };
 
   const doRefreshPosts = () => {
     console.log("CALLING DOREFRESHPOSTS IN APP.JSX");
@@ -85,10 +85,10 @@ function App() {
     <Router basename={process.env.PUBLIC_URL}>
       <div className="App">
         <header className="App-header">
-          {/* <Navbar
+          <Navbar
             toggleModal={(e) => toggleModal(e)}
             logout={(e) => logout(e)}
-          /> */}
+          />
           <div className="maincontent" id="mainContent">
             <Routes>
               <Route path="/settings" element={<Settings />} />
