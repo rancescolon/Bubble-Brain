@@ -169,7 +169,7 @@ const ResetPassword = () => {
     })
       .then((res) => {
         if (res.ok) {
-          navigate("/")
+          navigate("/login")
         }
       })
       .catch((error) => {
@@ -195,12 +195,12 @@ const ResetPassword = () => {
       <header className="bg-[#3A3A3A] px-4">
         <div className="max-w-7xl mx-auto flex items-center h-14">
           <img src={Logo} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
-          <Link to="/" className="text-white text-xl font-bold">
+          <Link to="/login" className="text-white text-xl font-bold">
             QuizRot
           </Link>
           <div className="flex-grow"></div>
           <Link
-            to="/"
+            to="/login"
             className="bg-[#00AEEF] text-white px-3 py-1 text-sm rounded hover:bg-[#00AEEF]/90 transition-colors"
           >
             Login
@@ -301,7 +301,7 @@ const ResetPassword = () => {
           )}
 
           <div className="mt-4 text-center text-sm">
-            <Link to="/" className="text-[#00aeef] hover:underline">
+            <Link to="/login" className="text-[#00aeef] hover:underline">
               Back to Login
             </Link>
           </div>

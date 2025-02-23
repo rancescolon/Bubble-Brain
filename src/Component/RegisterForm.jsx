@@ -268,7 +268,7 @@ const RegisterForm = ({ setLoggedIn }) => {
       .then((result) => {
         console.log(result)
         // Instead of setting logged in state and reloading, navigate to login page
-        navigate("/", { state: { message: "Registration successful! Please log in." } })
+        navigate("/login", { state: { message: "Registration successful! Please log in." } })
       })
       .catch((error) => {
         console.error("Error:", error)
@@ -280,7 +280,7 @@ const RegisterForm = ({ setLoggedIn }) => {
 
   useEffect(() => {
     if (sessionStorage.getItem("token")) {
-      navigate("/")
+      navigate("/login")
     }
   }, [navigate])
 
@@ -299,7 +299,7 @@ const RegisterForm = ({ setLoggedIn }) => {
       <header className="bg-[#3A3A3A] px-4">
         <div className="max-w-7xl mx-auto flex items-center h-14">
           <img src={Logo || "/placeholder.svg"} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
-          <Link to="/" className="text-white text-xl font-bold">
+          <Link to="/login" className="text-white text-xl font-bold">
             Bubble Brain
           </Link>
           <div className="flex-grow"></div>
@@ -361,7 +361,7 @@ const RegisterForm = ({ setLoggedIn }) => {
 
           <div className="mt-4 text-center text-sm">
             <span className="text-white">Have an account? </span>
-            <Link to="/" className="text-[#00aeef] hover:underline">
+            <Link to="/login" className="text-[#00aeef] hover:underline">
               Login
             </Link>
           </div>
