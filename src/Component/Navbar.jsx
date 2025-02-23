@@ -1,98 +1,60 @@
-import React from "react";
-import { Link } from "react-router-dom";
+"use client"
 
-// pull in the images for the menu items
-import postIcon from "../assets/post.svg";
-import friendIcon from "../assets/friends.svg";
-import settingIcon from "../assets/settings.svg";
-import helpIcon from "../assets/help.svg";
-import exitIcon from "../assets/exit.png";
-import groupIcon from "../assets/group.png";
-import aboutIcon from "../assets/aboutusicon.png";
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight } from "lucide-react"
 
-/* The Navbar class provides navigation through react router links.  Note the callback
-   to the parent app class in the last entry... this is an example of calling a function
-   passed in via props from a parent component */
-const Navbar = ({ toggleModal, logout }) => {
+const NavBar = ({ toggleModal, logout }) => {
+  const [isVisible, setIsVisible] = useState(true)
+
+  const navItems = [
+    { icon: Home, label: "Home", path: "/" },
+    { icon: MessageSquare, label: "Chat", path: "/chat" },
+    { icon: Upload, label: "Upload", path: "/upload" },
+    { icon: Users, label: "Community", path: "/community" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: User, label: "Profile", path: "/profile" },
+  ]
+
   return (
-    <div id="sidenav" className="sidenav">
-      <ul id="side-menu-items">
-        <li className="pm admin student">
-          <Link to="/">
-            <img
-              src={postIcon}
-              className="sidenav-icon"
-              alt="Posts"
-              title="Posts"
-            />
-          </Link>
-        </li>
-        <li className="pm admin">
-          <Link to="/friends">
-            <img
-              src={friendIcon}
-              className="sidenav-icon"
-              alt="Friends"
-              title="Friends"
-            />
-          </Link>
-        </li>
-        <li className="pm admin">
-          <Link to="/settings">
-            <img
-              src={settingIcon}
-              className="sidenav-icon"
-              alt="Settings"
-              title="Settings"
-            />
-          </Link>
-        </li>
-        <li className="pm admin">
-          <button
-            className="link-button"
-            onClick={toggleModal}
-          >
-            <img
-              src={helpIcon}
-              className="sidenav-icon"
-              alt="Modal"
-              title="Modal"
-            />
-          </button>
-        </li>
-        <li className="pm admin">
-          <button className="link-button" onClick={logout}>
-            <img
-              src={exitIcon}
-              className="sidenav-icon"
-              alt="Logout"
-              title="Logout"
-            />
-          </button>
-        </li>
-        <li className="pm admin">
-          <Link to="/groups">
-            <img
-              src={groupIcon}
-              className="sidenav-icon"
-              alt="groups"
-              title="groups"
-            />
-          </Link>
-        </li>
-        <li className="pm admin">
-          <Link to="/aboutus">
-            <img
-              src={aboutIcon}
-              className="sidenav-icon"
-              alt="About Us"
-              title="About Us"
-            />
-          </Link>
-        </li>
-      </ul>
-    </div>
-  );
-};
+    <nav
+      className={`fixed left-0 top-0 h-full bg-[#1b1b1b] w-20 flex flex-col justify-center items-center transition-transform duration-300 ${
+        isVisible ? "translate-x-0" : "-translate-x-16"
+      }`}
+    >
+      {/* NavBar Items */}
+      <div className="space-y-8">
+        {navItems.map((item, index) => {
+          const Icon = item.icon
+          return (
+            <Link
+              key={index}
+              to={item.path}
+              className="flex flex-col items-center justify-center w-full text-[#00AEEF] hover:text-white transition-colors group"
+            >
+              <div className="flex flex-col items-center">
+                <Icon className="w-6 h-6 mb-1" />
+                <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  {item.label}
+                </span>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
 
-export default Navbar;
+      {/* Toggle Button */}
+      <button
+        onClick={() => setIsVisible(!isVisible)}
+        className={`absolute ${
+          isVisible ? "-right-3" : "-right-7"
+        } top-1/2 transform -translate-y-1/2 bg-[#1b1b1b] p-1.5 rounded-full border border-[#3A3A3A] text-[#00AEEF] hover:text-white transition-colors`}
+      >
+        {isVisible ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+      </button>
+    </nav>
+  )
+}
+
+export default NavBar
+

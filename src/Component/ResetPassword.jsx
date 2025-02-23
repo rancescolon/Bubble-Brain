@@ -115,7 +115,8 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Eye, EyeOff } from "lucide-react"
-import Logo from "../assets/Frame.jpg"
+import Logo from "../assets/Frame.png"
+import background from "../assets/image3.png"
 
 const ResetPassword = () => {
   const [email, setEmail] = useState("")
@@ -180,7 +181,16 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#1b1b1b] flex flex-col">
+    <div 
+  className="min-h-screen flex flex-col"
+  style={{
+    backgroundImage: `url(${background})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: '#1b1b1b',
+  }}
+>
       {/* Header */}
       <header className="bg-[#3A3A3A] px-4">
         <div className="max-w-7xl mx-auto flex items-center h-14">

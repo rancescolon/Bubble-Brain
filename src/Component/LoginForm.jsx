@@ -89,6 +89,7 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import Frame from "../assets/Frame.jpg"
+import background from "../assets/image3.png"
 
 const LoginForm = ({ setLoggedIn }) => {
   const [email, setEmail] = useState("")
@@ -119,7 +120,7 @@ const LoginForm = ({ setLoggedIn }) => {
           sessionStorage.setItem("user", result.userID)
           setLoggedIn(true)
           setSessionToken(result.token)
-          console.log(sessionToken, " SESSION TOKEN")
+          console.log(sessionToken, "SESSION TOKEN")
           navigate("/")
           window.location.reload()
         }
@@ -133,13 +134,23 @@ const LoginForm = ({ setLoggedIn }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#1b1b1b] flex flex-col">
+    <div 
+  className="min-h-screen flex flex-col"
+  style={{
+    backgroundImage: `url(${background})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: '#1b1b1b',
+  }}
+>
+  {/* Rest of your component remains the same */}
       {/* Header */}
       <header className="bg-[#3A3A3A] px-4">
         <div className="max-w-7xl mx-auto flex items-center h-14">
         <img src={Frame} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
           <Link to="/" className="text-white text-xl font-bold">
-            QuizRot
+            Bubble Brain
           </Link>
           <div className="flex-grow"></div>
           <Link
