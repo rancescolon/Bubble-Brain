@@ -393,3 +393,10 @@
   color: #000;
   text-align: right;
 }
+/* Add this at the top of your App.css file */
+.font-sour-gummy {
+  font-family: "Sour_Gummy_Extra_Bold", sans-serif;
+}
+
+/* Rest of your App.css styles */
+
