@@ -4,6 +4,11 @@ module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}", "./index.html", "*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
+      animation: {
+        'spin-slow': 'spin 8s linear infinite',
+        'bounce-gentle': 'bounce 2s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.5s ease-in-out forwards',
+      },
       fontFamily: {
         "sour-gummy": ["Sour Gummy", "sans-serif"],
       },
