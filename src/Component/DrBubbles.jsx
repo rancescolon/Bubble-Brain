@@ -2,31 +2,35 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Box, Typography, Button, useMediaQuery } from "@mui/material"
+import { useTheme } from "@mui/material/styles"
 
 const DrBubbles = ({ onClose }) => {
   const [step, setStep] = useState(0)
   const [position, setPosition] = useState({ x: 50, y: 50 })
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
 
   const guideSteps = [
     {
       element: "nav-home",
       message: "Welcome! I'm Dr. Bubbles, and I'll help you navigate around. Let's start with the Home button!",
-      position: { x: -200, y: 100 }, // Adjusted x position
+      position: { x: -200, y: 100 },
     },
     {
       element: "nav-courses",
       message: "Here you'll find all our exciting courses about marine biology and ocean life!",
-      position: { x: -100, y: 100 }, // Adjusted x position
+      position: { x: -100, y: 100 },
     },
     {
       element: "nav-quizzes",
       message: "Test your knowledge with our fun quizzes in this section!",
-      position: { x: 0, y: 100 }, // Adjusted x position
+      position: { x: 0, y: 100 },
     },
     {
       element: "nav-contact",
       message: "Need help? You can reach out to us here!",
-      position: { x: 100, y: 100 }, // Adjusted x position
+      position: { x: 100, y: 100 },
     },
   ]
 
@@ -36,12 +40,12 @@ const DrBubbles = ({ onClose }) => {
       if (element) {
         const rect = element.getBoundingClientRect()
         setPosition({
-          x: rect.left - 250, // Adjusted to move Dr. Bubbles more to the left
-          y: rect.bottom + window.scrollY + 20,
+          x: isMobile ? 20 : rect.left - 250,
+          y: isMobile ? rect.bottom + window.scrollY + 20 : rect.bottom + window.scrollY + 20,
         })
       }
     }
-  }, [step])
+  }, [step, isMobile])
 
   const handleNext = () => {
     if (step < guideSteps.length - 1) {
@@ -53,11 +57,12 @@ const DrBubbles = ({ onClose }) => {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Box
+        component={motion.div}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         exit={{ scale: 0 }}
-        style={{
+        sx={{
           position: "fixed",
           zIndex: 1000,
           display: "flex",
@@ -71,7 +76,8 @@ const DrBubbles = ({ onClose }) => {
           damping: 20,
         }}
       >
-        <motion.div
+        <Box
+          component={motion.div}
           animate={{
             x: position.x,
             y: position.y,
@@ -81,16 +87,18 @@ const DrBubbles = ({ onClose }) => {
               damping: 10,
             },
           }}
-          style={{
+          sx={{
             position: "fixed",
             display: "flex",
+            flexDirection: isMobile ? "column" : "row",
             alignItems: "center",
             gap: "20px",
             pointerEvents: "auto",
           }}
         >
           {/* Dr. Bubbles Character */}
-          <motion.div
+          <Box
+            component={motion.div}
             animate={{
               y: [0, -10, 0],
             }}
@@ -99,23 +107,25 @@ const DrBubbles = ({ onClose }) => {
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
-            style={{
-              width: "80px",
-              height: "80px",
+            sx={{
+              width: isMobile ? "60px" : "80px",
+              height: isMobile ? "60px" : "80px",
               position: "relative",
             }}
           >
-            <img
+            <Box
+              component="img"
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame-sxeNjAKs5YePSv0ET618soWjWdT1wY.png"
               alt="Dr. Bubbles"
-              style={{
+              sx={{
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
               }}
             />
             {/* Bubble animations */}
-            <motion.div
+            <Box
+              component={motion.div}
               animate={{
                 scale: [1, 1.2, 1],
                 opacity: [0.7, 0.3, 0.7],
@@ -125,7 +135,7 @@ const DrBubbles = ({ onClose }) => {
                 repeat: Number.POSITIVE_INFINITY,
                 ease: "easeInOut",
               }}
-              style={{
+              sx={{
                 position: "absolute",
                 top: "-10%",
                 right: "-10%",
@@ -136,45 +146,52 @@ const DrBubbles = ({ onClose }) => {
                 filter: "blur(1px)",
               }}
             />
-          </motion.div>
+          </Box>
 
           {/* Message Bubble */}
-          <motion.div
+          <Box
+            component={motion.div}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            style={{
+            sx={{
               background: "rgba(255, 255, 255, 0.95)",
               padding: "15px 20px",
               borderRadius: "20px",
-              maxWidth: "300px",
+              maxWidth: isMobile ? "250px" : "300px",
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
               position: "relative",
-              fontFamily: "SourGummy, sans-serif",
-              fontSize: "16px",
-              color: "#333",
             }}
           >
-            <p>{guideSteps[step].message}</p>
-            <button
+            <Typography
+              variant="body1"
+              sx={{
+                fontFamily: "SourGummy, sans-serif",
+                fontSize: isMobile ? "14px" : "16px",
+                color: "#333",
+              }}
+            >
+              {guideSteps[step].message}
+            </Typography>
+            <Button
               onClick={handleNext}
-              style={{
+              variant="contained"
+              sx={{
                 background: "#00AEEF",
                 color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
                 marginTop: "10px",
-                cursor: "pointer",
                 fontFamily: "SourGummy, sans-serif",
-                fontSize: "14px",
+                fontSize: isMobile ? "12px" : "14px",
+                "&:hover": {
+                  background: "#0099cc",
+                },
               }}
             >
               {step < guideSteps.length - 1 ? "Next" : "Got it!"}
-            </button>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+            </Button>
+          </Box>
+        </Box>
+      </Box>
     </AnimatePresence>
   )
 }
