@@ -161,14 +161,14 @@ function App() {
               <Route path="/aboutus" element={<AboutUs />} />
               <Route path="/jacobmie" element={<AboutJacob />} />
               <Route path="/caydenla" element={<AboutCayden />} />
-              {/* <Route
+              { <Route
                 path="/profile"
                 element={
                   <ProtectedRoute>
                     <Profile />
                   </ProtectedRoute>
                 }
-              /> */}
+              /> }
             </Routes>
           </div>
         </header>
