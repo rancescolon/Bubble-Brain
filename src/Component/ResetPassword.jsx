@@ -1,120 +1,21 @@
-// import React, { useState } from "react";
-// import { Link, useNavigate } from "react-router-dom";
 
-// // example of how you can set up a component to request a password reset for an account
-// // The only thing you need to do is send the email of the account to the backend api route and then
-// // the email will get a code and you use that code with the reset-password route
-// // (You can see more on the swagger API documentation)
-// const ResetPassword = () => {
-//   const [email, setEmail] = useState("");
-//   // State used to conditionally render different forms
-//   // When the user gets the token, this is set to true to show the second form to input a new password
-//   const [gotToken, setGotToken] = useState(false);
-//   const [token, setToken] = useState("");
-//   const [password, setPassword] = useState("");
-//   const navigate = useNavigate();
 
-//   const handleResetRequest = (event) => {
-//     event.preventDefault();
-
-//     // fetch the api route to send a reset password request
-//     fetch(process.env.REACT_APP_API_PATH + "/auth/request-reset", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         email,
-//       }),
-//     }).then((res) => {
-//       // the request successfully worked, so set gotToken state to true
-//       if (res.ok) {
-//         setGotToken(true);
-//       }
-//     });
-//   };
-
-//   const handleResetPassword = (event) => {
-//     event.preventDefault();
-
-//     fetch(process.env.REACT_APP_API_PATH + "/auth/reset-password", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         token,
-//         password,
-//       }),
-//     }).then((res) => {
-//       if (res.ok) {
-//         // New password submitted, so have them go to login page to login with new password
-//         navigate("/");
-//       }
-//     });
-//   };
-
-//   return (
-//     <>
-//       <h1>Reset password</h1>
-//       {/* Conditionally render the different forms:
-//           When the user first see's this component, show them the form to enter their email to get the token
-//           Once they submit this form, they get the token in their email and the form changes to the form where
-//           they can enter a new password to reset it 
-//       */}
-//       {!gotToken ? (
-//         <form onSubmit={handleResetRequest}>
-//           <label>
-//             Email
-//             <input
-//               type="email"
-//               value={email}
-//               // event.target refers to the DOM that is triggered from an event, such as onChange, onClick, etc.
-//               // event.target.value holds the value that is passed in to the input field from the onChange
-//               onChange={(event) => setEmail(event.target.value)}
-//             />
-//           </label>
-//           <input type="submit" className="submitbutton" value="submit" />
-//         </form>
-//       ) : (
-//         <form onSubmit={handleResetPassword}>
-//           <label>
-//             Token
-//             <input
-//               type="text"
-//               value={token}
-//               // event.target refers to the DOM that is triggered from an event, such as onChange, onClick, etc.
-//               // event.target.value holds the value that is passed in to the input field from the onChange
-//               onChange={(event) => setToken(event.target.value)}
-//             />
-//           </label>
-//           <br />
-//           <label>
-//             New Password
-//             <input
-//               type="password"
-//               value={password}
-//               onChange={(event) => setPassword(event.target.value)}
-//             />
-//           </label>
-//           <input type="submit" className="submitbutton" value="submit" />
-//         </form>
-//       )}
-//       <div>
-//         <p>
-//           Login <Link to="/">here</Link>
-//         </p>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default ResetPassword;
 // "use client"
 
 // import { useState } from "react"
 // import { Link, useNavigate } from "react-router-dom"
 // import { Eye, EyeOff } from "lucide-react"
+// import {
+//   AppBar,
+//   Toolbar,
+//   Typography,
+//   Button,
+//   TextField,
+//   Box,
+//   Container,
+//   IconButton,
+//   InputAdornment,
+// } from "@mui/material"
 // import Logo from "../assets/Frame.png"
 // import background from "../assets/image3.png"
 
@@ -181,133 +82,249 @@
 //   }
 
 //   return (
-//     <div 
-//   className="min-h-screen flex flex-col"
-//   style={{
-//     backgroundImage: `url(${background})`,
-//     backgroundSize: 'cover',
-//     backgroundPosition: 'center',
-//     backgroundRepeat: 'no-repeat',
-//     backgroundColor: '#1b1b1b',
-//   }}
-// >
-//       {/* Header */}
-//       <header className="bg-[#3A3A3A] px-4">
-//         <div className="max-w-7xl mx-auto flex items-center h-14">
-//           <img src={Logo} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
-//           <Link to="/login" className="text-white text-xl font-bold">
-//             QuizRot
-//           </Link>
-//           <div className="flex-grow"></div>
-//           <Link
+//     <Box
+//       sx={{
+//         flexGrow: 1,
+//         bgcolor: "#1D1D20",
+//         minHeight: "100vh",
+//         backgroundImage: `url(${background})`,
+//         backgroundSize: "cover",
+//         backgroundPosition: "center",
+//         backgroundRepeat: "no-repeat",
+//         opacity: 1.0,
+//       }}
+//     >
+//       <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
+//         <Toolbar>
+//           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+//             <img
+//               src={Logo || "/placeholder.svg"}
+//               alt="Bubble Brain Logo"
+//               style={{ height: 80, width: 80, marginRight: 8 }}
+//             />
+//             <Typography
+//               variant="h6"
+//               component={Link}
+//               to="/login"
+//               sx={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 800,
+//                 fontSize: "52px",
+//                 color: "#F4FDFF",
+//                 textDecoration: "none",
+//               }}
+//             >
+//               Bubble Brain
+//             </Typography>
+//           </Box>
+//           <Button
+//             component={Link}
 //             to="/login"
-//             className="bg-[#00AEEF] text-white px-3 py-1 text-sm rounded hover:bg-[#00AEEF]/90 transition-colors"
+//             sx={{
+//               fontFamily: "SourGummy, sans-serif",
+//               fontWeight: 500,
+//               fontSize: "16px",
+//               color: "#F4FDFF",
+//               "&:hover": {
+//                 bgcolor: "rgba(244, 253, 255, 0.1)",
+//               },
+//             }}
 //           >
 //             Login
-//           </Link>
-//         </div>
-//       </header>
+//           </Button>
+//         </Toolbar>
+//       </AppBar>
 
-//       {/* Main Content */}
-//       <main className="flex-1 flex items-center justify-center p-4">
-//         <div className="w-full max-w-md bg-[#3a3a3a] p-8 rounded-lg">
+//       <Container maxWidth="sm">
+//         <Box
+//           sx={{
+//             bgcolor: "#FFFFFF",
+//             mt: 4,
+//             p: 4,
+//             borderRadius: 2,
+//             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+//           }}
+//         >
 //           {!gotToken ? (
 //             <>
-//               <h1 className="text-lg font-bold text-white text-center mb-2">Reset Password</h1>
-//               <p className="text-gray-300 text-center mb-6 text-sm">
+//               <Typography
+//                 variant="h4"
+//                 align="center"
+//                 gutterBottom
+//                 sx={{
+//                   fontFamily: "SourGummy, sans-serif",
+//                   fontWeight: 800,
+//                   fontSize: "40px",
+//                   color: "#1D1D20",
+//                 }}
+//               >
+//                 Reset Password
+//               </Typography>
+//               <Typography
+//                 align="center"
+//                 sx={{
+//                   fontFamily: "SourGummy, sans-serif",
+//                   fontWeight: 500,
+//                   fontSize: "14px",
+//                   color: "#1D1D20",
+//                   mb: 3,
+//                 }}
+//               >
 //                 Enter the email associated with your account below to receive instructions on resetting your account's
 //                 password.
-//               </p>
+//               </Typography>
 
-//               <form onSubmit={handleResetRequest} className="space-y-4">
-//                 <div className="space-y-2">
-//                   <label htmlFor="email" className="block text-base text-white font-medium">
-//                     Email
-//                   </label>
-//                   <input
-//                     type="email"
-//                     id="email"
-//                     value={email}
-//                     onChange={(event) => setEmail(event.target.value)}
-//                     placeholder="Enter your email"
-//                     className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400 text-sm"
-//                     required
-//                   />
-//                 </div>
-
-//                 <button
+//               <form onSubmit={handleResetRequest}>
+//                 <TextField
+//                   fullWidth
+//                   label="Email"
+//                   variant="outlined"
+//                   margin="normal"
+//                   type="email"
+//                   value={email}
+//                   onChange={(e) => setEmail(e.target.value)}
+//                   required
+//                   InputLabelProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                   }}
+//                   InputProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                   }}
+//                 />
+//                 <Button
 //                   type="submit"
+//                   fullWidth
+//                   variant="contained"
 //                   disabled={isLoading}
-//                   className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50 text-sm"
+//                   sx={{
+//                     mt: 3,
+//                     mb: 2,
+//                     bgcolor: "#EF7B6C",
+//                     "&:hover": {
+//                       bgcolor: "#e66a59",
+//                     },
+//                     fontFamily: "SourGummy, sans-serif",
+//                     fontWeight: 600,
+//                     fontSize: "24px",
+//                     color: "#F4FDFF",
+//                   }}
 //                 >
-//                   {isLoading ? "Sending..." : "Send Password Reset Instructions"}
-//                 </button>
+//                   {isLoading ? "Sending..." : "Send Reset Instructions"}
+//                 </Button>
 //               </form>
 //             </>
 //           ) : (
 //             <>
-//               <h1 className="text-xl font-bold text-white text-center mb-2">Change Your Password</h1>
-//               <p className="text-gray-300 text-center mb-6 text-sm">Enter a new password below to change your password.</p>
+//               <Typography
+//                 variant="h4"
+//                 align="center"
+//                 gutterBottom
+//                 sx={{
+//                   fontFamily: "SourGummy, sans-serif",
+//                   fontWeight: 800,
+//                   fontSize: "40px",
+//                   color: "#1D1D20",
+//                 }}
+//               >
+//                 Change Your Password
+//               </Typography>
+//               <Typography
+//                 align="center"
+//                 sx={{
+//                   fontFamily: "SourGummy, sans-serif",
+//                   fontWeight: 500,
+//                   fontSize: "14px",
+//                   color: "#1D1D20",
+//                   mb: 3,
+//                 }}
+//               >
+//                 Enter a new password below to change your password.
+//               </Typography>
 
-//               <form onSubmit={handleResetPassword} className="space-y-4">
-//                 <div className="space-y-2">
-//                   <label htmlFor="token" className="block text-base text-white font-medium">
-//                     Reset Token
-//                   </label>
-//                   <input
-//                     type="text"
-//                     id="token"
-//                     value={token}
-//                     onChange={(event) => setToken(event.target.value)}
-//                     placeholder="Enter reset token"
-//                     className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400 text-sm"
-//                     required
-//                   />
-//                 </div>
-
-//                 <div className="space-y-2">
-//                   <label htmlFor="password" className="block text-base text-white font-medium">
-//                     New Password
-//                   </label>
-//                   <div className="relative">
-//                     <input
-//                       type={showPassword ? "text" : "password"}
-//                       id="password"
-//                       value={password}
-//                       onChange={(event) => setPassword(event.target.value)}
-//                       placeholder="Enter new password"
-//                       className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400 text-sm"
-//                       required
-//                     />
-//                     <button
-//                       type="button"
-//                       onClick={() => setShowPassword(!showPassword)}
-//                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-//                     >
-//                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-//                     </button>
-//                   </div>
-//                 </div>
-
-//                 <button
+//               <form onSubmit={handleResetPassword}>
+//                 <TextField
+//                   fullWidth
+//                   label="Reset Token"
+//                   variant="outlined"
+//                   margin="normal"
+//                   value={token}
+//                   onChange={(e) => setToken(e.target.value)}
+//                   required
+//                   InputLabelProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                   }}
+//                   InputProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                   }}
+//                 />
+//                 <TextField
+//                   fullWidth
+//                   label="New Password"
+//                   variant="outlined"
+//                   margin="normal"
+//                   type={showPassword ? "text" : "password"}
+//                   value={password}
+//                   onChange={(e) => setPassword(e.target.value)}
+//                   required
+//                   InputLabelProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                   }}
+//                   InputProps={{
+//                     style: { fontFamily: "SourGummy, sans-serif" },
+//                     endAdornment: (
+//                       <InputAdornment position="end">
+//                         <IconButton
+//                           aria-label="toggle password visibility"
+//                           onClick={() => setShowPassword(!showPassword)}
+//                           edge="end"
+//                         >
+//                           {showPassword ? <EyeOff /> : <Eye />}
+//                         </IconButton>
+//                       </InputAdornment>
+//                     ),
+//                   }}
+//                 />
+//                 <Button
 //                   type="submit"
+//                   fullWidth
+//                   variant="contained"
 //                   disabled={isLoading}
-//                   className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50 text-sm"
+//                   sx={{
+//                     mt: 3,
+//                     mb: 2,
+//                     bgcolor: "#EF7B6C",
+//                     "&:hover": {
+//                       bgcolor: "#e66a59",
+//                     },
+//                     fontFamily: "SourGummy, sans-serif",
+//                     fontWeight: 600,
+//                     fontSize: "24px",
+//                     color: "#F4FDFF",
+//                   }}
 //                 >
 //                   {isLoading ? "Changing..." : "Change Password"}
-//                 </button>
+//                 </Button>
 //               </form>
 //             </>
 //           )}
 
-//           <div className="mt-4 text-center text-sm">
-//             <Link to="/login" className="text-[#00aeef] hover:underline">
+//           <Box sx={{ mt: 2, textAlign: "center" }}>
+//             <Link
+//               to="/login"
+//               style={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 500,
+//                 fontSize: "14px",
+//                 color: "#1D6EF1",
+//                 textDecoration: "none",
+//               }}
+//             >
 //               Back to Login
 //             </Link>
-//           </div>
-//         </div>
-//       </main>
-//     </div>
+//           </Box>
+//         </Box>
+//       </Container>
+//     </Box>
 //   )
 // }
 
@@ -318,6 +335,17 @@
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Eye, EyeOff } from "lucide-react"
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  TextField,
+  Box,
+  Container,
+  IconButton,
+  InputAdornment,
+} from "@mui/material"
 import Logo from "../assets/Frame.png"
 import background from "../assets/image3.png"
 
@@ -384,255 +412,261 @@ const ResetPassword = () => {
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: "#1D1D20",
+        minHeight: "100vh",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundColor: "#1b1b1b",
+        opacity: 1.0,
       }}
     >
-      {/* Header */}
-      <header className="bg-[#3A3A3A] px-4">
-        <div className="max-w-7xl mx-auto flex items-center h-14">
-          <img
-            src={Logo || "/placeholder.svg"}
-            height="80"
-            width="80"
-            alt="Bubble Brain Logo"
-            className="h-8 w-8 mr-2"
-          />
-          {/* Focus text - Logo */}
-          <Link
+      <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
+        <Toolbar>
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <img
+              src={Logo || "/placeholder.svg"}
+              alt="Bubble Brain Logo"
+              style={{ height: 80, width: 80, marginRight: 8 }}
+            />
+            <Typography
+              variant="h6"
+              component={Link}
+              to="/login"
+              sx={{
+                fontFamily: "SourGummy, sans-serif",
+                fontWeight: 800,
+                fontSize: "52px",
+                color: "#F4FDFF",
+                textDecoration: "none",
+              }}
+            >
+              Bubble Brain
+            </Typography>
+          </Box>
+          <Button
+            component={Link}
             to="/login"
-            style={{
-              fontFamily: "SourGummy, sans-serif",
-              fontWeight: 800,
-              fontSize: "52px",
-            }}
-            className="text-white"
-          >
-            Bubble Brain
-          </Link>
-          <div className="flex-grow"></div>
-          {/* Normal text */}
-          <Link
-            to="/login"
-            style={{
+            sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 500,
               fontSize: "16px",
+              color: "#F4FDFF",
+              "&:hover": {
+                bgcolor: "rgba(244, 253, 255, 0.1)",
+              },
             }}
-            className="bg-[#00AEEF] text-white px-3 py-1 rounded hover:bg-[#00AEEF]/90 transition-colors"
           >
             Login
-          </Link>
-        </div>
-      </header>
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#3a3a3a] p-8 rounded-lg">
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            bgcolor: "#FFFFFF",
+            mt: 4,
+            p: 4,
+            borderRadius: 2,
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          }}
+        >
           {!gotToken ? (
             <>
-              {/* Focus text - Heading */}
-              <h1
-                style={{
+              <Typography
+                variant="h4"
+                align="center"
+                gutterBottom
+                sx={{
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 800,
                   fontSize: "40px",
+                  color: "#1D1D20",
                 }}
-                className="text-white text-center mb-2"
               >
                 Reset Password
-              </h1>
-              {/* Normal text */}
-              <p
-                style={{
+              </Typography>
+              <Typography
+                align="center"
+                sx={{
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 500,
-                  fontSize: "14px",
+                  fontSize: "16px",
+                  color: "#1D1D20",
+                  mb: 3,
                 }}
-                className="text-gray-300 text-center mb-6"
               >
-                Enter the email associated with your account below to receive instructions on resetting your account's
-                password.
-              </p>
+                Follow these steps to reset your password:
+                <Box component="ol" sx={{ textAlign: "left", mt: 2 }}>
+                  <li>Enter your email address below</li>
+                  <li>Check your email for the reset token</li>
+                  <li>Return here to enter the token and set a new password</li>
+                </Box>
+              </Typography>
 
-              <form onSubmit={handleResetRequest} className="space-y-4">
-                <div className="space-y-2">
-                  {/* Semi focus - Form labels */}
-                  <label
-                    htmlFor="email"
-                    style={{
-                      fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 600,
-                      fontSize: "26px",
-                    }}
-                    className="block text-white"
-                  >
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Enter your email"
-                    style={{
-                      fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 500,
-                      fontSize: "16px",
-                    }}
-                    className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-                    required
-                  />
-                </div>
-
-                {/* Semi focus - Button */}
-                <button
+              <form onSubmit={handleResetRequest}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  variant="outlined"
+                  margin="normal"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  InputLabelProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                  }}
+                  InputProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                  }}
+                />
+                <Button
                   type="submit"
+                  fullWidth
+                  variant="contained"
                   disabled={isLoading}
-                  style={{
+                  sx={{
+                    mt: 3,
+                    mb: 2,
+                    bgcolor: "#EF7B6C",
+                    "&:hover": {
+                      bgcolor: "#e66a59",
+                    },
                     fontFamily: "SourGummy, sans-serif",
                     fontWeight: 600,
-                    fontSize: "32px",
+                    fontSize: "24px",
+                    color: "#F4FDFF",
                   }}
-                  className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50"
                 >
                   {isLoading ? "Sending..." : "Send Reset Instructions"}
-                </button>
+                </Button>
               </form>
             </>
           ) : (
             <>
-              {/* Focus text - Heading */}
-              <h1
-                style={{
+              <Typography
+                variant="h4"
+                align="center"
+                gutterBottom
+                sx={{
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 800,
                   fontSize: "40px",
+                  color: "#1D1D20",
                 }}
-                className="text-white text-center mb-2"
               >
                 Change Your Password
-              </h1>
-              {/* Normal text */}
-              <p
-                style={{
+              </Typography>
+              <Typography
+                align="center"
+                sx={{
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 500,
-                  fontSize: "14px",
+                  fontSize: "16px",
+                  color: "#1D1D20",
+                  mb: 3,
                 }}
-                className="text-gray-300 text-center mb-6"
               >
-                Enter a new password below to change your password.
-              </p>
+                Check your email for the reset token. Enter it below along with your new password. The token expires in
+                30 minutes for security.
+              </Typography>
 
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
-                  {/* Semi focus - Form labels */}
-                  <label
-                    htmlFor="token"
-                    style={{
+              <form onSubmit={handleResetPassword}>
+                <TextField
+                  fullWidth
+                  label="Reset Token"
+                  variant="outlined"
+                  margin="normal"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  required
+                  InputLabelProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                  }}
+                  InputProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="New Password"
+                  variant="outlined"
+                  margin="normal"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  InputLabelProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                  }}
+                  InputProps={{
+                    style: { fontFamily: "SourGummy, sans-serif" },
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? <EyeOff /> : <Eye />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  helperText="Password must contain at least 8 characters, including one uppercase letter, one number, and one special character"
+                  FormHelperTextProps={{
+                    sx: {
                       fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 600,
-                      fontSize: "26px",
-                    }}
-                    className="block text-white"
-                  >
-                    Reset Token
-                  </label>
-                  <input
-                    type="text"
-                    id="token"
-                    value={token}
-                    onChange={(event) => setToken(event.target.value)}
-                    placeholder="Enter reset token"
-                    style={{
-                      fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 500,
-                      fontSize: "16px",
-                    }}
-                    className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  {/* Semi focus - Form labels */}
-                  <label
-                    htmlFor="password"
-                    style={{
-                      fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 600,
-                      fontSize: "26px",
-                    }}
-                    className="block text-white"
-                  >
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      id="password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Enter new password"
-                      style={{
-                        fontFamily: "SourGummy, sans-serif",
-                        fontWeight: 500,
-                        fontSize: "16px",
-                      }}
-                      className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                    >
-                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Semi focus - Button */}
-                <button
+                      fontSize: "12px",
+                    },
+                  }}
+                />
+                <Button
                   type="submit"
+                  fullWidth
+                  variant="contained"
                   disabled={isLoading}
-                  style={{
+                  sx={{
+                    mt: 3,
+                    mb: 2,
+                    bgcolor: "#EF7B6C",
+                    "&:hover": {
+                      bgcolor: "#e66a59",
+                    },
                     fontFamily: "SourGummy, sans-serif",
                     fontWeight: 600,
-                    fontSize: "32px",
+                    fontSize: "24px",
+                    color: "#F4FDFF",
                   }}
-                  className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50"
                 >
                   {isLoading ? "Changing..." : "Change Password"}
-                </button>
+                </Button>
               </form>
             </>
           )}
 
-          {/* Normal text */}
-          <div className="mt-4 text-center">
+          <Box sx={{ mt: 2, textAlign: "center" }}>
             <Link
               to="/login"
               style={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 500,
                 fontSize: "14px",
+                color: "#1D6EF1",
+                textDecoration: "none",
               }}
-              className="text-[#00aeef] hover:underline"
             >
               Back to Login
             </Link>
-          </div>
-        </div>
-      </main>
-    </div>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   )
 }
 
