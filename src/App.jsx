@@ -43,7 +43,7 @@ const ProtectedRoute = ({ children }) => {
 
 function NavbarWrapper({ toggleModal, logout }) {
   const location = useLocation()
-  const hideNavbarPaths = ["/login", "/register"]
+  const hideNavbarPaths = ["/login", "/register","/style-guide"]
 
   if (hideNavbarPaths.includes(location.pathname)) {
     return null
