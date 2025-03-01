@@ -187,7 +187,7 @@ import { styled } from "@mui/material/styles"
 import { Upload } from "lucide-react"
 import background from "../assets/image3.png"
 
-// Custom styled components
+// Custom styled Component
 const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
     color: "white",

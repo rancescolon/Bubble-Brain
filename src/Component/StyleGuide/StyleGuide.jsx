@@ -39,7 +39,7 @@ import { styled } from "@mui/material/styles"
 import StyleGuideSidebar from "./Sidebar"
 import React from "react"
 
-// Custom styled components
+// Custom styled Component
 const GradientBackground = styled(Box)(({ theme }) => ({
     background: "linear-gradient(180deg, #F4FDFF 0%, #97C7F1 100%)",
     minHeight: "100vh",
