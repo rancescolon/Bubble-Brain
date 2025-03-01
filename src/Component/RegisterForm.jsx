@@ -1,245 +1,19 @@
-// import React, { useEffect, useState } from "react";
-// import { Link, useNavigate } from "react-router-dom";
-
-// const RegisterForm = ({ setLoggedIn }) => {
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   // You can assign the user extra attributes for when they register an account.
-//   // As you can see on swagger, attributes is optional where its an object and you
-//   // can store extra attributes like profile picture, favorite color, etc.
-//   // to fill out when the user creates an account.
-//   const [attributes, setAttributes] = useState({
-//     additionalProp1: {},
-//   });
-//   const navigate = useNavigate();
-
-//   const submitHandler = (event) => {
-//     // event.preventDefault() prevents the browser from performing its default action
-//     // In this instance, it will prevent the page from reloading
-//     // keeps the form from actually submitting as well
-//     event.preventDefault();
-
-//     fetch(process.env.REACT_APP_API_PATH + "/auth/signup", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         email,
-//         password,
-//       }),
-//     })
-//       .then((res) => res.json())
-//       .then((result) => {
-//         // Successfully registered an account
-//         console.log(result);
-//         // set the auth token and user ID in the session state
-//         sessionStorage.setItem("token", result.token);
-//         sessionStorage.setItem("user", result.userID);
-//         // call setLoggedIn hook from App.jsx to save the login state throughout the app
-//         setLoggedIn(true);
-//         // Reload the window for when the user logs in to show the posts
-//         navigate("/");
-//         window.location.reload();
-//       });
-//   };
-
-//   useEffect(() => {
-//     // If the user is logged in, make sure they cannot see the login form
-//     if (sessionStorage.getItem("token")) {
-//       navigate("/");
-//     }
-//   }, []);
-
-//   return (
-//     <>
-//       <h1>Register</h1>
-//       <form onSubmit={submitHandler}>
-//         <label>
-//           Email
-//           <input
-//             type="email"
-//             // event.target refers to the DOM that is triggered from an event, such as onChange, onClick, etc.
-//             // event.target.value holds the value that is passed in to the input field from the onChange
-//             onChange={(event) => setEmail(event.target.value)}
-//           />
-//         </label>
-//         <br />
-//         <label>
-//           Password
-//           <input
-//             type="password"
-//             onChange={(event) => setPassword(event.target.value)}
-//           />
-//         </label>
-//         <input type="submit" className="submitbutton" value="submit" />
-//       </form>
-//       <div>
-//         <p>
-//           Login <Link to="/">here</Link>
-//         </p>
-//       </div>
-//       <div>
-//         <p>
-//           Reset your password <Link to="/reset-password">here</Link>
-//         </p>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default RegisterForm;
-// "use client"
-
-// import { useEffect, useState } from "react"
-// import { Link, useNavigate } from "react-router-dom"
-// import Logo from "../assets/Frame.jpg"
-
-// const RegisterForm = ({ setLoggedIn }) => {
-//   const [email, setEmail] = useState("")
-//   const [password, setPassword] = useState("")
-//   const [attributes, setAttributes] = useState({
-//     additionalProp1: {},
-//   })
-//   const [isLoading, setIsLoading] = useState(false)
-//   const navigate = useNavigate()
-
-//   const submitHandler = (event) => {
-//     event.preventDefault()
-//     setIsLoading(true)
-
-//     fetch(process.env.REACT_APP_API_PATH + "/auth/signup", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         email,
-//         password,
-//       }),
-//     })
-//       .then((res) => res.json())
-//       .then((result) => {
-//         console.log(result)
-//         sessionStorage.setItem("token", result.token)
-//         sessionStorage.setItem("user", result.userID)
-//         setLoggedIn(true)
-//         navigate("/")
-//         window.location.reload()
-//       })
-//       .catch((error) => {
-//         console.error("Error:", error)
-//         // Handle error (you might want to show an error message to the user)
-//       })
-//       .finally(() => {
-//         setIsLoading(false)
-//       })
-//   }
-
-//   useEffect(() => {
-//     if (sessionStorage.getItem("token")) {
-//       navigate("/")
-//     }
-//   }, [navigate])
-
-//   return (
-//     <div className="min-h-screen bg-[#1b1b1b] flex flex-col">
-//       {/* Header */}
-//       <header className="bg-[#3A3A3A] px-4">
-//         <div className="max-w-7xl mx-auto flex items-center h-14">
-//           <img src={Logo} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
-//           <Link to="/" className="text-white text-xl font-bold">
-//             QuizRot
-//           </Link>
-//           <div className="flex-grow"></div>
-//           <Link
-//             to="/"
-//             className="bg-[#00AEEF] text-white px-3 py-1 text-sm rounded hover:bg-[#00AEEF]/90 transition-colors"
-//           >
-//             Login
-//           </Link>
-//         </div>
-//       </header>
-
-//       {/* Main Content */}
-//       <main className="flex-1 flex items-center justify-center p-4">
-//         <div className="w-full max-w-md bg-[#3a3a3a] p-8 rounded-lg">
-//           <h1 className="text-2xl font-bold text-white text-center mb-6">Create an Account</h1>
-
-//           <form onSubmit={submitHandler} className="space-y-4">
-//             <div className="space-y-2">
-//               <label htmlFor="email" className="block text-base text-white font-medium">
-//                 Email
-//               </label>
-//               <input
-//                 type="email"
-//                 id="email"
-//                 value={email}
-//                 onChange={(event) => setEmail(event.target.value)}
-//                 placeholder="Enter your email"
-//                 className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-//                 required
-//               />
-//             </div>
-
-//             <div className="space-y-2">
-//               <label htmlFor="password" className="block text-base text-white font-medium">
-//                 Password
-//               </label>
-//               <input
-//                 type="password"
-//                 id="password"
-//                 value={password}
-//                 onChange={(event) => setPassword(event.target.value)}
-//                 placeholder="Create a password"
-//                 className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-//                 required
-//               />
-//             </div>
-
-//             <button
-//               type="submit"
-//               disabled={isLoading}
-//               className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50"
-//             >
-//               {isLoading ? "Signing up..." : "Sign Up"}
-
-//             </button>
-//           </form>
-
-//           <div className="mt-4 text-center text-sm">
-//             <span className="text-white">Have an account? </span>
-//             <Link to="/" className="text-[#00aeef] hover:underline">
-//               Login
-//             </Link>
-//           </div>
-//           <div className="mt-2 text-center text-sm">
-//             <Link to="/reset-password" className="text-[#00aeef] hover:underline">
-//               Reset your password
-//             </Link>
-//           </div>
-//         </div>
-//       </main>
-//     </div>
-//   )
-// }
-
-// export default RegisterForm
 
 
 // "use client"
 
 // import { useEffect, useState } from "react"
 // import { Link, useNavigate } from "react-router-dom"
+// import { AppBar, Toolbar, Typography, Button, TextField, Box, Container } from "@mui/material"
 // import Logo from "../assets/Frame.png"
 // import background from "../assets/image3.png"
 
 // const RegisterForm = ({ setLoggedIn }) => {
 //   const [email, setEmail] = useState("")
 //   const [password, setPassword] = useState("")
-//   const [attributes, setAttributes] = useState({
-//     additionalProp1: {},
-//   })
+//   const [name, setName] = useState("")
+//   const [phonenumber, setPhoneNumber] = useState("")
+//   const [zipcode, setZipCode] = useState("")
 //   const [isLoading, setIsLoading] = useState(false)
 //   const [error, setError] = useState("")
 //   const navigate = useNavigate()
@@ -255,8 +29,11 @@
 //         "Content-Type": "application/json",
 //       },
 //       body: JSON.stringify({
+//         name,
 //         email,
 //         password,
+//         phonenumber,
+//         zipcode,
 //       }),
 //     })
 //       .then((res) => {
@@ -267,12 +44,14 @@
 //       })
 //       .then((result) => {
 //         console.log(result)
-//         // Instead of setting logged in state and reloading, navigate to login page
 //         navigate("/login", { state: { message: "Registration successful! Please log in." } })
 //       })
 //       .catch((error) => {
 //         console.error("Error:", error)
-//         setError("Registration failed. Ensure you are using a valid email with a special character, number, and letters.")      })
+//         setError(
+//           "Registration failed. Ensure you are using a valid email with a special character, number, and letters.",
+//         )
+//       })
 //       .finally(() => {
 //         setIsLoading(false)
 //       })
@@ -285,113 +64,258 @@
 //   }, [navigate])
 
 //   return (
-//     <div 
-//   className="min-h-screen flex flex-col"
-//   style={{
-//     backgroundImage: `url(${background})`,
-//     backgroundSize: 'cover',
-//     backgroundPosition: 'center',
-//     backgroundRepeat: 'no-repeat',
-//     backgroundColor: '#1b1b1b',
-//   }}
-// >
-//       {/* Header */}
-//       <header className="bg-[#3A3A3A] px-4">
-//         <div className="max-w-7xl mx-auto flex items-center h-14">
-//           <img src={Logo || "/placeholder.svg"} height="32" width="32" alt="QuizRot Logo" className="h-8 w-8 mr-2" />
-//           <Link to="/login" className="text-white text-xl font-bold font-Sour-Gummy-Medium">
-//             Bubble Brain
-//           </Link>
-//           <div className="flex-grow"></div>
-//           <Link
-//             to="/"
-//             className="bg-[#00AEEF] text-white px-3 py-1 text-sm rounded hover:bg-[#00AEEF]/90 transition-colors"
+//     <Box
+//       sx={{
+//         flexGrow: 1,
+//         bgcolor: "#1D1D20",
+//         minHeight: "100vh",
+//         backgroundImage: `url(${background})`,
+//         backgroundSize: "cover",
+//         backgroundPosition: "center",
+//         backgroundRepeat: "no-repeat",
+//         opacity: 1.0,
+//       }}
+//     >
+//       <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
+//         <Toolbar>
+//           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+//             <img
+//               src={Logo || "/placeholder.svg"}
+//               alt="Bubble Brain Logo"
+//               style={{ height: 80, width: 80, marginRight: 8 }}
+//             />
+//             <Typography
+//               variant="h6"
+//               component={Link}
+//               to="/login"
+//               sx={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 800,
+//                 fontSize: "52px",
+//                 color: "#F4FDFF",
+//                 textDecoration: "none",
+//               }}
+//             >
+//               Bubble Brain
+//             </Typography>
+//           </Box>
+//           <Button
+//             component={Link}
+//             to="/login"
+//             sx={{
+//               fontFamily: "SourGummy, sans-serif",
+//               fontWeight: 500,
+//               fontSize: "16px",
+//               color: "#F4FDFF",
+//               "&:hover": {
+//                 bgcolor: "rgba(244, 253, 255, 0.1)",
+//               },
+//             }}
 //           >
 //             Login
-//           </Link>
-//         </div>
-//       </header>
+//           </Button>
+//         </Toolbar>
+//       </AppBar>
 
-//       {/* Main Content */}
-//       <main className="flex-1 flex items-center justify-center p-4">
-//         <div className="w-full max-w-md bg-[#3a3a3a] p-8 rounded-lg">
-//           <h1 className="text-2xl font-bold text-white text-center mb-6">Create an Account</h1>
+//       <Container maxWidth="sm">
+//         <Box
+//           sx={{
+//             bgcolor: "#FFFFFF",
+//             mt: 4,
+//             p: 4,
+//             borderRadius: 2,
+//             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+//           }}
+//         >
+//           <Typography
+//             variant="h4"
+//             align="center"
+//             gutterBottom
+//             sx={{
+//               fontFamily: "SourGummy, sans-serif",
+//               fontWeight: 800,
+//               fontSize: "40px",
+//               color: "#1D1D20",
+//             }}
+//           >
+//             Create an Account
+//           </Typography>
 
-//           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+//           {error && (
+//             <Typography
+//               color="error"
+//               align="center"
+//               sx={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 500,
+//                 fontSize: "14px",
+//                 mb: 2,
+//               }}
+//             >
+//               {error}
+//             </Typography>
+//           )}
 
-//           <form onSubmit={submitHandler} className="space-y-4">
-//             <div className="space-y-2">
-//               <label htmlFor="email" className="block text-base text-white font-medium">
-//                 Email
-//               </label>
-//               <input
-//                 type="email"
-//                 id="email"
-//                 value={email}
-//                 onChange={(event) => setEmail(event.target.value)}
-//                 placeholder="Enter your email"
-//                 className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-//                 required
-//               />
-//             </div>
-
-//             <div className="space-y-2">
-//               <label htmlFor="password" className="block text-base text-white font-medium">
-//                 Password
-//               </label>
-//               <input
-//                 type="password"
-//                 id="password"
-//                 value={password}
-//                 onChange={(event) => setPassword(event.target.value)}
-//                 placeholder="Create a password"
-//                 className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-//                 required
-//               />
-//             </div>
-
-//             <button
+//           <form onSubmit={submitHandler}>
+//             <TextField
+//               fullWidth
+//               label="Name"
+//               variant="outlined"
+//               margin="normal"
+//               value={name}
+//               onChange={(e) => setName(e.target.value)}
+//               required
+//               InputLabelProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//               InputProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//             />
+//             <TextField
+//               fullWidth
+//               label="Email"
+//               variant="outlined"
+//               margin="normal"
+//               type="email"
+//               value={email}
+//               onChange={(e) => setEmail(e.target.value)}
+//               required
+//               InputLabelProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//               InputProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//             />
+//             <TextField
+//               fullWidth
+//               label="Password"
+//               variant="outlined"
+//               margin="normal"
+//               type="password"
+//               value={password}
+//               onChange={(e) => setPassword(e.target.value)}
+//               required
+//               InputLabelProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//               InputProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//             />
+//             <TextField
+//               fullWidth
+//               label="Phone Number"
+//               variant="outlined"
+//               margin="normal"
+//               value={phonenumber}
+//               onChange={(e) => setPhoneNumber(e.target.value)}
+//               required
+//               InputLabelProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//               InputProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//             />
+//             <TextField
+//               fullWidth
+//               label="Zip Code"
+//               variant="outlined"
+//               margin="normal"
+//               value={zipcode}
+//               onChange={(e) => setZipCode(e.target.value)}
+//               required
+//               InputLabelProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//               InputProps={{
+//                 style: { fontFamily: "SourGummy, sans-serif" },
+//               }}
+//             />
+//             <Button
 //               type="submit"
+//               fullWidth
+//               variant="contained"
 //               disabled={isLoading}
-//               className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50"
+//               sx={{
+//                 mt: 3,
+//                 mb: 2,
+//                 bgcolor: "#EF7B6C",
+//                 "&:hover": {
+//                   bgcolor: "#e66a59",
+//                 },
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 600,
+//                 fontSize: "24px",
+//                 color: "#F4FDFF",
+//               }}
 //             >
 //               {isLoading ? "Signing up..." : "Sign Up"}
-//             </button>
+//             </Button>
 //           </form>
 
-//           <div className="mt-4 text-center text-sm">
-//             <span className="text-white">Have an account? </span>
-//             <Link to="/login" className="text-[#00aeef] hover:underline">
-//               Login
-//             </Link>
-//           </div>
-//           <div className="mt-2 text-center text-sm">
-//             <Link to="/reset-password" className="text-[#00aeef] hover:underline">
+//           <Box sx={{ mt: 2, textAlign: "center" }}>
+//             <Typography
+//               sx={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 500,
+//                 fontSize: "14px",
+//                 color: "#1D1D20",
+//               }}
+//             >
+//               Have an account?{" "}
+//               <Link
+//                 to="/login"
+//                 style={{
+//                   fontFamily: "SourGummy, sans-serif",
+//                   fontWeight: 500,
+//                   fontSize: "14px",
+//                   color: "#1D6EF1",
+//                   textDecoration: "none",
+//                 }}
+//               >
+//                 Login
+//               </Link>
+//             </Typography>
+//           </Box>
+//           <Box sx={{ mt: 1, textAlign: "center" }}>
+//             <Link
+//               to="/reset-password"
+//               style={{
+//                 fontFamily: "SourGummy, sans-serif",
+//                 fontWeight: 500,
+//                 fontSize: "14px",
+//                 color: "#1D6EF1",
+//                 textDecoration: "none",
+//               }}
+//             >
 //               Reset your password
 //             </Link>
-//           </div>
-//         </div>
-//       </main>
-//     </div>
+//           </Box>
+//         </Box>
+//       </Container>
+//     </Box>
 //   )
 // }
 
 // export default RegisterForm
 
-
 "use client"
 
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { AppBar, Toolbar, Typography, Button, TextField, Box, Container } from "@mui/material"
 import Logo from "../assets/Frame.png"
 import background from "../assets/image3.png"
 
 const RegisterForm = ({ setLoggedIn }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [attributes, setAttributes] = useState({
-    additionalProp1: {},
-  })
+  const [name, setName] = useState("")
+  const [phonenumber, setPhoneNumber] = useState("")
+  const [zipcode, setZipCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const navigate = useNavigate()
@@ -401,14 +325,40 @@ const RegisterForm = ({ setLoggedIn }) => {
     setIsLoading(true)
     setError("")
 
+    // Validate password
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*]/.test(password)) {
+      setError(
+        "Password must be at least 8 characters long and include an uppercase letter, a number, and a special character.",
+      )
+      setIsLoading(false)
+      return
+    }
+
+    // Validate phone number
+    if (!/^$$\d{3}$$ \d{3}-\d{4}$/.test(phonenumber)) {
+      setError("Please enter a valid phone number in the format (XXX) XXX-XXXX.")
+      setIsLoading(false)
+      return
+    }
+
+    // Validate zip code
+    if (!/^\d{5}(-\d{4})?$/.test(zipcode)) {
+      setError("Please enter a valid 5-digit zip code or 9-digit ZIP+4 code.")
+      setIsLoading(false)
+      return
+    }
+
     fetch(process.env.REACT_APP_API_PATH + "/auth/signup", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        name,
         email,
         password,
+        phonenumber,
+        zipcode,
       }),
     })
       .then((res) => {
@@ -423,9 +373,7 @@ const RegisterForm = ({ setLoggedIn }) => {
       })
       .catch((error) => {
         console.error("Error:", error)
-        setError(
-          "Registration failed. Ensure you are using a valid email with a special character, number, and letters.",
-        )
+        setError("Registration failed. Please check your information and try again.")
       })
       .finally(() => {
         setIsLoading(false)
@@ -438,196 +386,268 @@ const RegisterForm = ({ setLoggedIn }) => {
     }
   }, [navigate])
 
+  const formatPhoneNumber = (value) => {
+    const phoneNumber = value.replace(/[^\d]/g, "")
+    if (phoneNumber.length < 4) return phoneNumber
+    if (phoneNumber.length < 7) return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`
+  }
+
+  const handlePhoneNumberChange = (e) => {
+    const formattedPhoneNumber = formatPhoneNumber(e.target.value)
+    setPhoneNumber(formattedPhoneNumber)
+  }
+
+  const formatZipCode = (value) => {
+    const digits = value.replace(/[^\d]/g, "")
+    if (digits.length <= 5) return digits
+    return `${digits.slice(0, 5)}-${digits.slice(5, 9)}`
+  }
+
+  const handleZipCodeChange = (e) => {
+    const formattedZipCode = formatZipCode(e.target.value)
+    setZipCode(formattedZipCode)
+  }
+
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: "#1D1D20",
+        minHeight: "100vh",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        backgroundColor: "#1b1b1b",
+        opacity: 1.0,
       }}
     >
-      <header className="bg-[#3A3A3A] px-4">
-        <div className="max-w-7xl mx-auto flex items-center h-14">
-          <img
-            src={Logo || "/placeholder.svg"}
-            height="80"
-            width="80"
-            alt="Bubble Brain Logo"
-            className="h-8 w-8 mr-2"
-          />
-          {/* Focus text - Logo */}
-          <Link
+      <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
+        <Toolbar>
+          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+            <img
+              src={Logo || "/placeholder.svg"}
+              alt="Bubble Brain Logo"
+              style={{ height: 80, width: 80, marginRight: 8 }}
+            />
+            <Typography
+              variant="h6"
+              component={Link}
+              to="/login"
+              sx={{
+                fontFamily: "SourGummy, sans-serif",
+                fontWeight: 800,
+                fontSize: "52px",
+                color: "#F4FDFF",
+                textDecoration: "none",
+              }}
+            >
+              Bubble Brain
+            </Typography>
+          </Box>
+          <Button
+            component={Link}
             to="/login"
-            style={{
-              fontFamily: "SourGummy, sans-serif",
-              fontWeight: 800,
-              fontSize: "52px",
-            }}
-            className="text-white"
-          >
-            Bubble Brain
-          </Link>
-          <div className="flex-grow"></div>
-          {/* Normal text */}
-          <Link
-            to="/"
-            style={{
+            sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 500,
               fontSize: "16px",
+              color: "#F4FDFF",
+              "&:hover": {
+                bgcolor: "rgba(244, 253, 255, 0.1)",
+              },
             }}
-            className="bg-[#00AEEF] text-white px-3 py-1 rounded hover:bg-[#00AEEF]/90 transition-colors"
           >
             Login
-          </Link>
-        </div>
-      </header>
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-[#3a3a3a] p-8 rounded-lg">
-          {/* Focus text - Heading */}
-          <h1
-            style={{
+      <Container maxWidth="sm">
+        <Box
+          sx={{
+            bgcolor: "#FFFFFF",
+            mt: 4,
+            p: 4,
+            borderRadius: 2,
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          }}
+        >
+          <Typography
+            variant="h4"
+            align="center"
+            gutterBottom
+            sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 800,
               fontSize: "40px",
+              color: "#1D1D20",
             }}
-            className="text-white text-center mb-6"
           >
             Create an Account
-          </h1>
+          </Typography>
 
           {error && (
-            <p
-              style={{
+            <Typography
+              color="error"
+              align="center"
+              sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 500,
                 fontSize: "14px",
+                mb: 2,
               }}
-              className="text-red-500 text-center mb-4"
             >
               {error}
-            </p>
+            </Typography>
           )}
 
-          <form onSubmit={submitHandler} className="space-y-4">
-            <div className="space-y-2">
-              {/* Semi focus - Form labels */}
-              <label
-                htmlFor="email"
-                style={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 600,
-                  fontSize: "26px",
-                }}
-                className="block text-white"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Enter your email"
-                style={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                }}
-                className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              {/* Semi focus - Form labels */}
-              <label
-                htmlFor="password"
-                style={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 600,
-                  fontSize: "26px",
-                }}
-                className="block text-white"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Create a password"
-                style={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                }}
-                className="w-full px-3 py-2 rounded bg-white text-black placeholder-gray-400"
-                required
-              />
-            </div>
-
-            {/* Semi focus - Button */}
-            <button
+          <form onSubmit={submitHandler}>
+            <TextField
+              fullWidth
+              label="Name"
+              variant="outlined"
+              margin="normal"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              InputLabelProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              InputProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              helperText="Enter your full name"
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              variant="outlined"
+              margin="normal"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              InputLabelProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              InputProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              helperText="Enter a valid email address"
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              variant="outlined"
+              margin="normal"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              InputLabelProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              InputProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              helperText="Password must be at least 8 characters long and include an uppercase letter, a number, and a special character"
+            />
+            <TextField
+              fullWidth
+              label="Phone Number"
+              variant="outlined"
+              margin="normal"
+              value={phonenumber}
+              onChange={handlePhoneNumberChange}
+              required
+              InputLabelProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              InputProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              helperText="Enter your phone number in the format (XXX) XXX-XXXX"
+            />
+            <TextField
+              fullWidth
+              label="Zip Code"
+              variant="outlined"
+              margin="normal"
+              value={zipcode}
+              onChange={handleZipCodeChange}
+              required
+              InputLabelProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              InputProps={{
+                style: { fontFamily: "SourGummy, sans-serif" },
+              }}
+              helperText="Enter a valid 5-digit zip code"
+            />
+            <Button
               type="submit"
+              fullWidth
+              variant="contained"
               disabled={isLoading}
-              style={{
+              sx={{
+                mt: 3,
+                mb: 2,
+                bgcolor: "#EF7B6C",
+                "&:hover": {
+                  bgcolor: "#e66a59",
+                },
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 600,
-                fontSize: "32px",
+                fontSize: "24px",
+                color: "#F4FDFF",
               }}
-              className="w-full bg-[#00aeef] hover:bg-[#00aeef]/90 text-white py-2 rounded transition-colors disabled:opacity-50"
             >
               {isLoading ? "Signing up..." : "Sign Up"}
-            </button>
+            </Button>
           </form>
 
-          <div className="mt-4 text-center">
-            {/* Normal text */}
-            <span
-              style={{
+          <Box sx={{ mt: 2, textAlign: "center" }}>
+            <Typography
+              sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 500,
                 fontSize: "14px",
+                color: "#1D1D20",
               }}
-              className="text-white"
             >
               Have an account?{" "}
-            </span>
-            <Link
-              to="/login"
-              style={{
-                fontFamily: "SourGummy, sans-serif",
-                fontWeight: 500,
-                fontSize: "14px",
-              }}
-              className="text-[#00aeef] hover:underline"
-            >
-              Login
-            </Link>
-          </div>
-          <div className="mt-2 text-center">
-            {/* Normal text */}
+              <Link
+                to="/login"
+                style={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 500,
+                  fontSize: "14px",
+                  color: "#1D6EF1",
+                  textDecoration: "none",
+                }}
+              >
+                Login
+              </Link>
+            </Typography>
+          </Box>
+          {/* <Box sx={{ mt: 1, textAlign: "center" }}>
             <Link
               to="/reset-password"
               style={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 500,
                 fontSize: "14px",
+                color: "#1D6EF1",
+                textDecoration: "none",
               }}
-              className="text-[#00aeef] hover:underline"
             >
               Reset your password
             </Link>
-          </div>
-        </div>
-      </main>
-    </div>
+          </Box> */}
+        </Box>
+      </Container>
+    </Box>
   )
 }
 
