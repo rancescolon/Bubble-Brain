@@ -24,7 +24,7 @@ import AboutCayden from "./Component/AboutCayden"
 import StyleGuidePage from "./Component/StyleGuide/StyleGuide"
 import Profile from "./Component/Profile"
 import BubbleTrapAnimation from "./Component/BubbleTrapAnimation"
-
+import Communities from "./Component/Communities"
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
   path: "/hci/api/realtime-socket/socket.io",
@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children }) => {
 
 function NavbarWrapper({ toggleModal, logout }) {
   const location = useLocation()
-  const hideNavbarPaths = ["/login", "/register","/style-guide"]
+  const hideNavbarPaths = ["/login", "/register", "/style-guide"]
 
   if (hideNavbarPaths.includes(location.pathname)) {
     return null
@@ -142,80 +142,88 @@ function App() {
   }
 
   return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Router basename={process.env.PUBLIC_URL}>
-          <div className="App">
-            <header className="App-header">
-              <NavbarWrapper toggleModal={toggleModal} logout={logout} />
-              <div className="maincontent" id="mainContent">
-                <Routes>
-                  <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute>
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                  />
-                  <Route
-                      path="/"
-                      element={
-                        loggedIn ? (
-                            <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
-                        ) : (
-                            <Navigate to="/login" replace />
-                        )
-                      }
-                  />
-                  <Route
-                      path="/login"
-                      element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
-                  />
-                  <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route
-                      path="/friends"
-                      element={
-                        <ProtectedRoute>
-                          <Friends />
-                        </ProtectedRoute>
-                      }
-                  />
-                  <Route
-                      path="/groups"
-                      element={
-                        <ProtectedRoute>
-                          <Groups />
-                        </ProtectedRoute>
-                      }
-                  />
-                  <Route path="/promise" element={<PromiseComponent />} />
-                  <Route
-                      path="/messages/:roomID"
-                      element={
-                        <ProtectedRoute>
-                          <Messaging />
-                        </ProtectedRoute>
-                      }
-                  />
-                  <Route path="/akibmahdi" element={<AboutMe />} />
-                  <Route path="/rances" element={<AboutRances />} />
-                  <Route path="/biviji" element={<AboutTariq />} />
-                  <Route path="/aboutus" element={<AboutUs />} />
-                  <Route path="/jacobmie" element={<AboutJacob />} />
-                  <Route path="/caydenla" element={<AboutCayden />} />
-                  <Route path="/style-guide" element={<StyleGuidePage />} />
-                </Routes>
-              </div>
-            </header>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router basename={process.env.PUBLIC_URL}>
+        <div className="App">
+          <header className="App-header">
+            <NavbarWrapper toggleModal={toggleModal} logout={logout} />
+            <div className="maincontent" id="mainContent">
+              <Routes>
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/"
+                  element={
+                    loggedIn ? (
+                      <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
+                />
+                <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                  path="/friends"
+                  element={
+                    <ProtectedRoute>
+                      <Friends />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/groups"
+                  element={
+                    <ProtectedRoute>
+                      <Groups />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/promise" element={<PromiseComponent />} />
+                <Route
+                  path="/messages/:roomID"
+                  element={
+                    <ProtectedRoute>
+                      <Messaging />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community"
+                  element={
+                    <ProtectedRoute>
+                      <Communities />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="/akibmahdi" element={<AboutMe />} />
+                <Route path="/rances" element={<AboutRances />} />
+                <Route path="/biviji" element={<AboutTariq />} />
+                <Route path="/aboutus" element={<AboutUs />} />
+                <Route path="/jacobmie" element={<AboutJacob />} />
+                <Route path="/caydenla" element={<AboutCayden />} />
+                <Route path="/style-guide" element={<StyleGuidePage />} />
+              </Routes>
+            </div>
+          </header>
 
-            <Modal show={openModal} onClose={toggleModal}>
-              This is a modal dialog!
-            </Modal>
-          </div>
-        </Router>
-      </ThemeProvider>
+          <Modal show={openModal} onClose={toggleModal}>
+            This is a modal dialog!
+          </Modal>
+        </div>
+      </Router>
+    </ThemeProvider>
   )
 }
 
