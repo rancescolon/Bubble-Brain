@@ -1,169 +1,198 @@
-import React, { useState, useEffect } from "react";
-import "../App.css";
+//"use client"
 
-// The Profile component shows data from the user table.  This is set up fairly generically to allow for you to customize
-// user data by adding it to the attributes for each user, which is just a set of name value pairs that you can add things to
-// in order to support your group specific functionality.  In this example, we store basic profile information for the user
-const Profile = (props) => {
-  // states which contain basic user information/attributes
-  // Initially set them all as empty strings to post them to the backend
+//import { useEffect, useState } from "react";
+//import { useNavigate } from "react-router-dom";  // Import useNavigate for redirecting
+//import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react";
+//import background from "../assets/image3.png"; // Use the same background as HomePage
+//
+//export default function Personal_Account() {
+//  const [profilePic, setProfilePic] = useState("");
+//  const [username, setUsername] = useState("");
+//  const [firstName, setFirstName] = useState("");
+//  const [lastName, setLastName] = useState("");
+//  const navigate = useNavigate();  // Initialize the navigate hook
+//
+//  useEffect(() => {
+//    // Get profile picture and username from sessionStorage
+//    const storedPic = sessionStorage.getItem("profilePicture");
+//    const storedUsername = sessionStorage.getItem("username");
+//    const storedFirstName = sessionStorage.getItem("firstname");
+//    const storedLastName = sessionStorage.getItem("lastname");
+//
+//    if (storedPic) {
+//      setProfilePic(storedPic);
+//    }
+//    if (storedUsername) setUsername(storedUsername);
+//    if (storedFirstName) setFirstName(storedFirstName);
+//    if (storedLastName) setLastName(storedLastName);
+//  }, []);
+//
+//  const handleUploadClick = () => {
+//    navigate('/upload');  // Redirect to /upload
+//  };
+//
+//  const handleCommunityClick = () => {
+//    navigate('/community');  // Redirect to /community
+//  };
+//
+//  return (
+//    <div 
+//      className="min-h-screen text-white ml-[30px]" 
+//      style={{
+//        backgroundColor: "#1b1b1b", // Matches HomePage's background color
+//        backgroundImage: `url(${background})`,
+//        backgroundSize: "cover",
+//        backgroundPosition: "center",
+//        backgroundRepeat: "no-repeat",
+//        fontFamily: "SourGummy, sans-serif", // Apply the same font
+//      }}
+//    >
+//      {/* Profile Section */}
+//      <div className="flex justify-center items-center flex-col pt-8">
+//        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white flex flex-col items-center shadow-xl">
+//          <img
+//            src={profilePic || "/placeholder.svg"}
+//            alt="Profile"
+//            className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4"
+//          />
+//          <h2 className="text-xl font-bold">{firstName && lastName ? `${firstName} ${lastName}` : username || "User"}</h2>
+//        </div>
+//      </div>
+//
+//      {/* Grid Layout */}
+//      <div className="grid md:grid-cols-2 gap-4 p-4">
+//        {/* Uploaded Materials */}
+//        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+//          <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
+//          <p>Currently no uploaded materials</p>
+//          <button 
+//            onClick={handleUploadClick} 
+//            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+//          >
+//            Go to Upload
+//          </button>
+//        </div>
+//
+//        {/* Study Groups */}
+//        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+//          <h2 className="text-xl font-bold mb-4">Study Groups</h2>
+//          <p>Currently in no study groups</p>
+//          <button 
+//            onClick={handleCommunityClick} 
+//            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+//          >
+//            Join a Community
+//          </button>
+//        </div>
+//
+//        {/* Favorite Videos */}
+//        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+//          <h2 className="text-xl font-bold mb-4">Friends</h2>
+//          <p>Currently has no friends added</p>
+//        </div>
+//
+//        {/* Achievements */}
+//        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+//          <h2 className="text-xl font-bold mb-4">Achievements</h2>
+//          <p>Currently no achievements</p>
+//        </div>
+//      </div>
+//    </div>
+//  );
+//}
+"use client"
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";  // Import useNavigate for redirecting
+import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react";
+import background from "../assets/image3.png"; // Use the same background as HomePage
+
+export default function Personal_Account() {
+  const [profilePic, setProfilePic] = useState("");
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [favoriteColor, setFavoriteColor] = useState("");
-  const [responseMessage, setResponseMessage] = useState("");
-  const [picture, setPicture] = useState("");
+  const navigate = useNavigate();  // Initialize the navigate hook
 
-  // Replace componentDidMount for fetching data
   useEffect(() => {
-    fetch(
-      `${process.env.REACT_APP_API_PATH}/users/${sessionStorage.getItem(
-        "user"
-      )}`,
-      {
-        method: "get",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((result) => {
-        if (result && result.attributes) {
-          // if the attributes already exists and they are stored, set the states to those attributes
-          // so that nothing gets overwritten
-          setUsername(result.attributes.username || "");
-          setFirstName(result.attributes.firstName || "");
-          setLastName(result.attributes.lastName || "");
-          setFavoriteColor(result.attributes.favoritecolor || "");
-          setPicture(result.attributes.picture || "");
-        }
-      })
-      .catch((error) => {
-        alert("error!");
-      });
+    // Get profile picture and username from sessionStorage
+    const storedPic = sessionStorage.getItem("profilePicture");
+    const storedUsername = sessionStorage.getItem("username");
+    const storedFirstName = sessionStorage.getItem("firstname");
+    const storedLastName = sessionStorage.getItem("lastname");
+
+    if (storedPic) {
+      setProfilePic(storedPic);
+    }
+    if (storedUsername) setUsername(storedUsername);
+    if (storedFirstName) setFirstName(storedFirstName);
+    if (storedLastName) setLastName(storedLastName);
   }, []);
 
-  // This is the function that will get called the first time that the component gets rendered.  This is where we load the current
-  // values from the database via the API, and put them in the state so that they can be rendered to the screen.
-  const submitHandler = (event) => {
-    //keep the form from actually submitting, since we are handling the action ourselves via
-    //the fetch calls to the API
-    event.preventDefault();
-
-    //make the api call to the user controller, and update the user fields (username, firstname, lastname)
-    fetch(
-      `${process.env.REACT_APP_API_PATH}/users/${sessionStorage.getItem(
-        "user"
-      )}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          attributes: {
-            username: username,
-            firstName: firstName,
-            lastName: lastName,
-            favoritecolor: favoriteColor,
-            picture: picture,
-          },
-        }),
-      }
-    )
-      .then((res) => res.json())
-      .then((result) => {
-        setResponseMessage(result.Status);
-      })
-      .catch((error) => {
-        alert("error!");
-      });
+  const handleUploadClick = () => {
+    navigate('/upload');  // Redirect to /upload
   };
 
-  const uploadPicture = (event) => {
-    event.preventDefault();
-
-    // event.target.files[0] holds the file object that the user is uploading
-    const file = event.target.files[0];
-
-    // FormData objects are used to capture HTML form and submit it using fetch or another network method.
-    // provides a way to construct a set of key/value pairs representing form fields and their values
-    // we can use this formData to send the attributes for the file-uploads endpoint
-    const formData = new FormData();
-
-    formData.append("uploaderID", sessionStorage.getItem("user")); // the id of the user who is uploading the file
-    formData.append("attributes", JSON.stringify({})); // attributes holds an empty object, can put whatever you want here
-    formData.append("file", file); // the file itself
-
-    // make api call to file-uploads endpoint to post the profile picture
-    fetch(process.env.REACT_APP_API_PATH + "/file-uploads", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + sessionStorage.getItem("token"),
-      },
-      body: formData, // send the formdata to the backend
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        // pictureURL holds the url of where the picture is stored to show on the page
-        let pictureURL = "https://webdev.cse.buffalo.edu" + result.path;
-        setPicture(pictureURL);
-      });
+  const handleCommunityClick = () => {
+    navigate('/community');  // Redirect to /community
   };
 
-  // This is the function that draws the component to the screen.  It will get called every time the
-  // state changes, automatically.  This is why you see the username and firstname change on the screen
-  // as you type them.
   return (
-    <>
-      <img src={picture} alt="picture" />
-      <form onSubmit={submitHandler} className="profileform">
-        <label>
-          Picture
-          <input type="file" accept="image/*" onChange={uploadPicture} />
-        </label>
-        <label>
-          Username
-          <input
-            type="text"
-            onChange={(e) => setUsername(e.target.value)}
-            value={username}
+    <div 
+      className="min-h-screen text-white ml-[30px]" 
+      style={{
+        backgroundColor: "#1b1b1b", // Matches HomePage's background color
+        backgroundImage: `url(${background})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        fontFamily: "SourGummy, sans-serif", // Apply the same font
+      }}
+    >
+      {/* Profile Section */}
+      <div className="flex justify-center items-center flex-col pt-8">
+        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white flex flex-col items-center shadow-xl">
+          <img
+            src={profilePic || "/placeholder.svg"}
+            alt="Profile"
+            className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4"
           />
-        </label>
-        <label>
-          First Name
-          <input
-            type="text"
-            onChange={(e) => setFirstName(e.target.value)}
-            value={firstName}
-          />
-        </label>
-        <label>
-          Last Name
-          <input
-            type="text"
-            onChange={(e) => setLastName(e.target.value)}
-            value={lastName}
-          />
-        </label>
-        <label>
-          Favorite Color
-          <input
-            type="text"
-            onChange={(e) => setFavoriteColor(e.target.value)}
-            value={favoriteColor}
-          />
-        </label>
-        <input type="submit" value="submit" />
-        <p>Username is : {username}</p>
-        <p>Firstname is : {firstName}</p>
-        {responseMessage}
-      </form>
-    </>
-  );
-};
+          <h2 className="text-xl font-bold">{firstName && lastName ? `${firstName} ${lastName}` : username || "User"}</h2>
+        </div>
+      </div>
 
-export default Profile;
+      {/* Grid Layout */}
+      <div className="grid md:grid-cols-2 gap-4 p-4">
+        {/* Uploaded Materials */}
+        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+          <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
+          <p>Currently no uploaded materials</p>
+          <button 
+            onClick={handleUploadClick} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+          >
+            Upload Now!
+          </button>
+        </div>
+
+        {/* Study Groups */}
+        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+          <h2 className="text-xl font-bold mb-4">Study Groups</h2>
+          <p>Currently in no study groups</p>
+          <button 
+            onClick={handleCommunityClick} 
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+          >
+            Join a Community
+          </button>
+        </div>
+
+        {/* Achievements (Stretched to full width) */}
+        <div className="col-span-2 bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+          <h2 className="text-xl font-bold mb-4">Achievements</h2>
+          <p>Currently no achievements</p>
+        </div>
+      </div>
+    </div>
+  );
+}
