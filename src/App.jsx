@@ -22,6 +22,8 @@ import AboutTariq from "./Component/AboutTariq"
 import AboutJacob from "./Component/AboutJacob"
 import AboutCayden from "./Component/AboutCayden"
 import StyleGuidePage from "./Component/StyleGuide/StyleGuide"
+import Profile from "./Component/Profile"
+import BubbleTrapAnimation from "./Component/BubbleTrapAnimation"
 import Communities from "./Component/Communities"
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
