@@ -26,6 +26,8 @@ import Profile from "./Component/Profile"
 import BubbleTrapAnimation from "./Component/BubbleTrapAnimation"
 import Communities from "./Component/Communities"
 import CommunityView from "./Component/CommunityView"
+import Upload from "./Component/Upload"
+import StudySetView from "./Component/StudySetView"
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
@@ -231,6 +233,22 @@ function App() {
                 <Route path="/jacobmie" element={<AboutJacob />} />
                 <Route path="/caydenla" element={<AboutCayden />} />
                 <Route path="/style-guide" element={<StyleGuidePage />} />
+                <Route
+                  path="/upload"
+                  element={
+                    <ProtectedRoute>
+                      <Upload />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community/:communityId/study-set/:studySetId"
+                  element={
+                    <ProtectedRoute>
+                      <StudySetView />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </div>
           </header>

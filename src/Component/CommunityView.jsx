@@ -56,6 +56,8 @@ const TopBar = () => {
   )
 }
 
+const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+
 const CommunityView = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -66,7 +68,8 @@ const CommunityView = () => {
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState("")
   const [members, setMembers] = useState([])
-  const [flashcards, setFlashcards] = useState([])
+  const [studySets, setStudySets] = useState([])
+  const [selectedType, setSelectedType] = useState("flashcards")
 
   const backgroundStyle = {
     backgroundImage: `url(${background})`,
@@ -89,7 +92,7 @@ const CommunityView = () => {
     }
 
     // Fetch community details
-    fetch(`${process.env.REACT_APP_API_PATH}/groups/${id}`, {
+    fetch(`${API_BASE_URL}/groups/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -120,8 +123,8 @@ const CommunityView = () => {
         // Fetch messages
         fetchMessages()
 
-        // Fetch flashcards
-        fetchFlashcards()
+        // Fetch study sets
+        fetchStudySets()
 
         setLoading(false)
       })
@@ -135,7 +138,7 @@ const CommunityView = () => {
   const fetchMembers = () => {
     const token = sessionStorage.getItem("token")
 
-    fetch(`${process.env.REACT_APP_API_PATH}/group-members?groupID=${id}`, {
+    fetch(`${API_BASE_URL}/group-members?groupID=${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -184,7 +187,7 @@ const CommunityView = () => {
   const fetchMessages = () => {
     const token = sessionStorage.getItem("token")
 
-    fetch(`${process.env.REACT_APP_API_PATH}/posts?parentID=${id}&type=message`, {
+    fetch(`${API_BASE_URL}/posts?parentID=${id}&type=message`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -225,10 +228,12 @@ const CommunityView = () => {
       })
   }
 
-  const fetchFlashcards = () => {
+  const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
 
-    fetch(`${process.env.REACT_APP_API_PATH}/posts?groupID=${id}&type=flashcard`, {
+    console.log("Fetching study sets for community:", id) // Debug log
+
+    fetch(`${API_BASE_URL}/posts?groupID=${id}&type=study_set`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -237,27 +242,51 @@ const CommunityView = () => {
     })
       .then((res) => {
         if (!res.ok) {
+          console.error("Study sets response not OK:", res.status, res.statusText) // Debug log
           throw new Error(`HTTP error! status: ${res.status}`)
         }
         return res.json()
       })
       .then((result) => {
+        console.log("Study sets response:", result) // Debug log
         if (result && result[0] && result[0].length > 0) {
           // Transform API data to match our component's expected format
-          const flashcardsData = result[0].map((post) => ({
-            id: post.id,
-            title: post.title || "Flashcard",
-            description: post.content || "No description available",
-            likes: post._count?.reactions || 0,
-          }))
-          setFlashcards(flashcardsData)
+          const studySetsData = result[0]
+            .map((post) => {
+              try {
+                const content = JSON.parse(post.content || "{}")
+                const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
+                // Only include study sets that have a name in their content
+                if (!content.name) {
+                  return null
+                }
+                return {
+                  id: post.id,
+                  title: content.name,
+                  description: `Created by ${creatorName}`,
+                  type: content.type || "flashcards",
+                  content: content.content, // Store the actual content for viewing
+                  fileId: post.fileId,
+                  likes: post._count?.reactions || 0,
+                }
+              } catch (error) {
+                console.error("Error parsing post content:", error) // Debug log
+                return null
+              }
+            })
+            .filter(Boolean) // Remove null entries
+          
+          console.log("Transformed study sets:", studySetsData) // Debug log
+          setStudySets(studySetsData)
         } else {
-          setFlashcards([])
+          console.log("No study sets found") // Debug log
+          setStudySets([])
         }
       })
       .catch((error) => {
-        console.error("Error fetching flashcards:", error)
-        setFlashcards([])
+        console.error("Error fetching study sets:", error)
+        console.error("Error details:", error.message) // Debug log
+        setStudySets([])
       })
   }
 
@@ -274,21 +303,21 @@ const CommunityView = () => {
       return
     }
 
-    const flashcardData = {
-      title: "New Flashcard",
-      content: "Edit this flashcard",
-      type: "flashcard",
+    const studySetData = {
+      title: "New Study Set",
+      content: "Edit this study set",
+      type: "study_set",
       groupID: id,
       authorID: user.id,
     }
 
-    fetch(`${process.env.REACT_APP_API_PATH}/posts`, {
+    fetch(`${API_BASE_URL}/posts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(flashcardData),
+      body: JSON.stringify(studySetData),
     })
       .then((res) => {
         if (!res.ok) {
@@ -297,19 +326,21 @@ const CommunityView = () => {
         return res.json()
       })
       .then((result) => {
-        // Add the new flashcard to the state
-        const newFlashcard = {
+        // Add the new study set to the state
+        const newStudySet = {
           id: result.id,
-          title: result.title || "New Flashcard",
-          description: result.content || "Edit this flashcard",
+          title: result.title || "New Study Set",
+          description: result.content || "Edit this study set",
+          type: result.type || "flashcards",
+          fileId: result.fileId,
           likes: 0,
         }
 
-        setFlashcards([...flashcards, newFlashcard])
+        setStudySets([...studySets, newStudySet])
       })
       .catch((error) => {
-        console.error("Error creating flashcard:", error)
-        alert("Failed to create flashcard. Please try again.")
+        console.error("Error creating study set:", error)
+        alert("Failed to create study set. Please try again.")
       })
   }
 
@@ -328,7 +359,7 @@ const CommunityView = () => {
     if (!userEmail) return
 
     // First, search for the user by email
-    fetch(`${process.env.REACT_APP_API_PATH}/users?email=${userEmail}`, {
+    fetch(`${API_BASE_URL}/users?email=${userEmail}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -346,7 +377,7 @@ const CommunityView = () => {
           const userId = result[0][0].id
 
           // Now add the user to the group using the correct endpoint
-          return fetch(`${process.env.REACT_APP_API_PATH}/group-members`, {
+          return fetch(`${API_BASE_URL}/group-members`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -378,19 +409,27 @@ const CommunityView = () => {
       })
   }
 
-  const handleShareFlashcard = (id) => {
-    console.log("Sharing flashcard with id:", id)
+  const handleViewStudySet = (studySet) => {
+    // Navigate to a new route for viewing the study set with state
+    navigate(`/community/${id}/study-set/${studySet.id}`, {
+      state: {
+        studySet: {
+          ...studySet,
+          content: studySet.content // Pass the actual content
+        }
+      }
+    })
   }
 
-  const handleDeleteFlashcard = (id) => {
+  const handleDeleteStudySet = (id) => {
     const token = sessionStorage.getItem("token")
 
     if (!token) {
-      alert("You must be logged in to delete a flashcard")
+      alert("You must be logged in to delete a study set")
       return
     }
 
-    fetch(`${process.env.REACT_APP_API_PATH}/posts/${id}`, {
+    fetch(`${API_BASE_URL}/posts/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -402,14 +441,18 @@ const CommunityView = () => {
           throw new Error(`HTTP error! status: ${res.status}`)
         }
 
-        // Remove the flashcard from state
-        const updatedFlashcards = flashcards.filter((card) => card.id !== id)
-        setFlashcards(updatedFlashcards)
+        // Remove the study set from state
+        const updatedStudySets = studySets.filter((set) => set.id !== id)
+        setStudySets(updatedStudySets)
       })
       .catch((error) => {
-        console.error("Error deleting flashcard:", error)
-        alert("Failed to delete flashcard. Please try again.")
+        console.error("Error deleting study set:", error)
+        alert("Failed to delete study set. Please try again.")
       })
+  }
+
+  const handleShareStudySet = (id) => {
+    console.log("Sharing study set with id:", id)
   }
 
   const handleOpenChatRoom = () => {
@@ -457,7 +500,7 @@ const CommunityView = () => {
     setMessages([...messages, optimisticMessage])
     setNewMessage("") // Clear input immediately
 
-    fetch(`${process.env.REACT_APP_API_PATH}/posts`, {
+    fetch(`${API_BASE_URL}/posts`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -670,48 +713,73 @@ const CommunityView = () => {
 
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white" style={fontStyle}>
-              Flashcards
-            </h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold text-white" style={fontStyle}>
+                Study Sets
+              </h2>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="bg-white rounded p-2 text-black"
+                style={fontStyle}
+              >
+                <option value="flashcards">Flashcards</option>
+                <option value="fill_in_blank">Fill in the Blank</option>
+                <option value="matching">Matching</option>
+                <option value="multiple_choice">Multiple Choice</option>
+              </select>
+            </div>
           </div>
 
-          {flashcards.length > 0 ? (
-            flashcards.map((flashcard, index) => (
-              <div key={flashcard.id || `flashcard-${index}`} className="bg-white rounded p-4 mb-4">
-                <div className="flex items-start">
-                  <div className="bg-red-500 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
-                    <span style={fontStyle}>{flashcard.title.charAt(0)}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-bold text-blue-500" style={fontStyle}>
-                      {flashcard.title}
-                    </h2>
-                    <p className="text-sm text-gray-600" style={fontStyle}>
-                      {flashcard.description}
-                    </p>
-                    <div className="flex justify-between mt-2">
-                      <div className="flex items-center">
-                        <button className="flex items-center text-gray-500 mr-4">
-                          <span className="mr-1">❤️</span>
-                          <span style={fontStyle}>{flashcard.likes}</span>
-                        </button>
-                      </div>
-                      <div className="flex items-center">
-                        <button className="text-blue-500 mr-2" onClick={() => handleShareFlashcard(flashcard.id)}>
-                          <span style={fontStyle}>Share</span>
-                        </button>
-                        <button className="text-red-500" onClick={() => handleDeleteFlashcard(flashcard.id)}>
-                          <span className="text-lg">×</span>
-                        </button>
+          {studySets.length > 0 ? (
+            studySets
+              .filter((set) => set.type === selectedType)
+              .map((studySet) => (
+                <div key={studySet.id} className="bg-white rounded p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="bg-red-500 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
+                      <span style={fontStyle}>{studySet.title.charAt(0)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h2 
+                        className="text-xl font-bold text-blue-500 cursor-pointer" 
+                        style={fontStyle}
+                        onClick={() => handleViewStudySet(studySet)}
+                      >
+                        {studySet.title}
+                      </h2>
+                      <p className="text-sm text-gray-600" style={fontStyle}>
+                        {studySet.description}
+                      </p>
+                      <div className="flex justify-between mt-2">
+                        <div className="flex items-center">
+                          <button className="flex items-center text-gray-500 mr-4">
+                            <span className="mr-1">❤️</span>
+                            <span style={fontStyle}>{studySet.likes}</span>
+                          </button>
+                        </div>
+                        <div className="flex items-center">
+                          <button 
+                            className="text-blue-500 mr-2" 
+                            onClick={() => handleShareStudySet(studySet.id)}
+                          >
+                            <span style={fontStyle}>Share</span>
+                          </button>
+                          <button 
+                            className="text-red-500" 
+                            onClick={() => handleDeleteStudySet(studySet.id)}
+                          >
+                            <span className="text-lg">×</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              ))
           ) : (
             <div className="bg-white bg-opacity-75 rounded p-4 text-center">
-              <p style={fontStyle}>No flashcards yet. Click "Add Study Material" to create one.</p>
+              <p style={fontStyle}>No study sets yet. Click "Add Study Material" to create one.</p>
             </div>
           )}
         </div>
