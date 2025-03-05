@@ -139,6 +139,26 @@ const NavBar = () => {
   return (
     <StyledDrawer variant="permanent" open={isExpanded}>
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+          <Box
+            onClick={toggleSidebar}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              backgroundColor: "#f5f5f5",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: "#e0e0e0",
+              },
+            }}
+          >
+            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </Box>
+        </Box>
         <Box
           sx={{
             height: 80,
@@ -248,7 +268,7 @@ const NavBar = () => {
           })}
         </List>
 
-        <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        {/* <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
           <Box
             onClick={toggleSidebar}
             sx={{
@@ -267,7 +287,7 @@ const NavBar = () => {
           >
             {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
           </Box>
-        </Box>
+        </Box> */}
       </Box>
     </StyledDrawer>
   )
