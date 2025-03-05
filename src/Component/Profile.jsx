@@ -37,9 +37,8 @@ export default function Personal_Account() {
 
   return (
     <div 
-      className="min-h-screen text-white ml-[30px]" 
+      className="min-h-screen text-white px-4 md:px-8 ml-[30px]" 
       style={{
-        backgroundColor: "#1b1b1b", // Matches HomePage's background color
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -48,8 +47,8 @@ export default function Personal_Account() {
       }}
     >
       {/* Profile Section */}
-      <div className="flex justify-center items-center flex-col pt-8">
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white flex flex-col items-center shadow-xl">
+      <div className="flex justify-end items-center flex-col pt-8 pr-8">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
           <img
             src={profilePic || "/placeholder.svg"}
             alt="Profile"
@@ -62,7 +61,7 @@ export default function Personal_Account() {
       {/* Grid Layout */}
       <div className="grid md:grid-cols-2 gap-4 p-4">
         {/* Uploaded Materials */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
           <p>Currently no uploaded materials</p>
           <button 
@@ -74,7 +73,7 @@ export default function Personal_Account() {
         </div>
 
         {/* Study Groups */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Study Groups</h2>
           <p>Currently in no study groups</p>
           <button 
@@ -86,7 +85,7 @@ export default function Personal_Account() {
         </div>
 
         {/* Achievements (Stretched to full width) */}
-        <div className="col-span-2 bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="col-span-2 bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Achievements</h2>
           <p>Currently no achievements</p>
         </div>
