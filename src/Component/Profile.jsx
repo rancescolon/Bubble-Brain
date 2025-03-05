@@ -153,6 +153,9 @@ export default function Personal_Account() {
       className="min-h-screen text-white"
       style={{
         backgroundColor: "#1b1b1b",
+    <div 
+      className="min-h-screen text-white px-4 md:px-8 ml-[30px]" 
+      style={{
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -177,13 +180,21 @@ export default function Personal_Account() {
           <h2 className="text-xl font-bold">
             {firstName && lastName ? `${firstName} ${lastName}` : username || "User"}
           </h2>
+      <div className="flex justify-end items-center flex-col pt-8 pr-8">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
+          <img
+            src={profilePic || "/placeholder.svg"}
+            alt="Profile"
+            className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4"
+          />
+          <h2 className="text-xl font-bold">{firstName && lastName ? `${firstName} ${lastName}` : username || "User"}</h2>
         </div>
       </div>
 
       {/* Grid Layout */}
       <div className="grid md:grid-cols-2 gap-4 p-4">
         {/* Uploaded Materials */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
           <p>Currently no uploaded materials</p>
           <button onClick={handleUploadClick} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
@@ -192,7 +203,7 @@ export default function Personal_Account() {
         </div>
 
         {/* Study Groups */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Study Groups</h2>
           <p>Currently in no study groups</p>
           <button onClick={handleCommunityClick} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
@@ -201,12 +212,15 @@ export default function Personal_Account() {
         </div>
 
         {/* Achievements (Stretched to full width) */}
-        <div className="col-span-2 bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="col-span-2 bg-white rounded-lg p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Achievements</h2>
           <p>Currently no achievements</p>
         </div>
       </div>
     </div>
   )
+}
+
+  );
 }
 
