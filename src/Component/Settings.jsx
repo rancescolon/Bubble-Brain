@@ -5,20 +5,43 @@ import {
   Box,
   Container,
   Typography,
-  TextField,
-  Button,
-  Switch,
   Card,
   CardContent,
   Grid,
   Avatar,
-  IconButton,
+  Divider,
+  Button,
+  Paper,
+  TextField,
+  Alert,
+  Snackbar,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
-import { Upload } from "lucide-react"
+import { LogOut, Save } from "lucide-react"
 import background from "../assets/image3.png"
 
 // Custom styled components
+const InfoCard = styled(Paper)(({ theme }) => ({
+  padding: "16px",
+  backgroundColor: "rgba(255, 255, 255, 0.1)",
+  color: "white",
+  borderRadius: "8px",
+  marginBottom: "16px",
+  width: "100%",
+}))
+
+const InfoLabel = styled(Typography)({
+  color: "rgba(255, 255, 255, 0.7)",
+  fontSize: "0.875rem",
+  marginBottom: "4px",
+})
+
+const InfoValue = styled(Typography)({
+  color: "white",
+  fontSize: "1rem",
+  fontWeight: 500,
+})
+
 const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
     color: "white",
@@ -35,6 +58,9 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiInputLabel-root": {
     color: "rgba(255, 255, 255, 0.7)",
   },
+  "& .MuiOutlinedInput-input": {
+    color: "white",
+  },
 }))
 
 const SaveButton = styled(Button)({
@@ -45,94 +71,153 @@ const SaveButton = styled(Button)({
   },
 })
 
-const Profile = () => {
-  const [username, setUsername] = useState("")
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [picture, setPicture] = useState("")
-  const [notifications, setNotifications] = useState(true)
-  const [privacy, setPrivacy] = useState(false)
-  const [responseMessage, setResponseMessage] = useState("")
+const LogoutButton = styled(Button)({
+  backgroundColor: "#f44336",
+  color: "white",
+  "&:hover": {
+    backgroundColor: "#d32f2f",
+  },
+})
+
+const Settings = () => {
+  const [userData, setUserData] = useState({
+    username: "",
+    email: "",
+    name: "",
+    picture: "",
+  })
+  const [newUsername, setNewUsername] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [notification, setNotification] = useState({ open: false, message: "", severity: "success" })
 
   useEffect(() => {
-    fetch(`${process.env.REACT_APP_API_PATH}/users/${sessionStorage.getItem("user")}`, {
-      method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        if (result && result.attributes) {
-          setUsername(result.attributes.username || "")
-          setFirstName(result.attributes.firstName || "")
-          setLastName(result.attributes.lastName || "")
-          setEmail(result.attributes.email || "")
-          setPicture(result.attributes.picture || "")
-          setNotifications(result.attributes.notifications || true)
-          setPrivacy(result.attributes.privacy || false)
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching user data:", error)
-      })
+    fetchUserData()
   }, [])
 
-  const handleSubmit = (field, value) => {
-    fetch(`${process.env.REACT_APP_API_PATH}/users/${sessionStorage.getItem("user")}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({
-        attributes: {
-          [field]: value,
+  const fetchUserData = async () => {
+    try {
+      const userId = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userId || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      }),
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        setResponseMessage(`${field} updated successfully`)
-        setTimeout(() => setResponseMessage(""), 3000)
-        if (field === "name") {
-          sessionStorage.setItem("firstname", value.firstName);
-          sessionStorage.setItem("lastname", value.lastName);
-        }
       })
-      .catch((error) => {
-        console.error("Error updating profile:", error)
-        setResponseMessage("Update failed")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data")
+      }
+
+      const data = await response.json()
+      console.log("User data:", data) // Debug log
+
+      // Get name from the correct field based on registration form
+      const name =
+        data.attributes?.name || // Check if name is in attributes
+        data.name || // Check if name is directly in data
+        sessionStorage.getItem("name") || // Check session storage
+        "Not provided" // Fallback
+
+      const username =
+        data.attributes?.username ||
+        data.username ||
+        data.email?.split("@")[0] || // Fallback to email username part
+        "Not provided"
+
+      setUserData({
+        username: username,
+        email: data.email || "Not provided",
+        name: name,
+        picture: data.attributes?.picture || data.picture || sessionStorage.getItem("profilePicture") || "",
       })
+
+      setNewUsername(username)
+    } catch (error) {
+      console.error("Error fetching user data:", error)
+      setError("Failed to load user data. Please try again later.")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const uploadPicture = (event) => {
-    const file = event.target.files[0]
-    const formData = new FormData()
-    formData.append("uploaderID", sessionStorage.getItem("user"))
-    formData.append("attributes", JSON.stringify({}))
-    formData.append("file", file)
+  const handleSaveUsername = async () => {
+    try {
+      const userId = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
 
-    fetch(process.env.REACT_APP_API_PATH + "/file-uploads", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + sessionStorage.getItem("token"),
-      },
-      body: formData,
-    })
-      .then((res) => res.json())
-      .then((result) => {
-        const pictureURL = "https://webdev.cse.buffalo.edu" + result.path
-        setPicture(pictureURL)
-        sessionStorage.setItem("profilePicture", pictureURL);
-        handleSubmit("picture", pictureURL)
+      if (!userId || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      if (!newUsername.trim()) {
+        setNotification({
+          open: true,
+          message: "Username cannot be empty",
+          severity: "error",
+        })
+        return
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          attributes: {
+            username: newUsername,
+          },
+        }),
       })
-      .catch((error) => {
-        console.error("Error uploading picture:", error)
+
+      if (!response.ok) {
+        throw new Error("Failed to update username")
+      }
+
+      // Update local state
+      setUserData((prev) => ({
+        ...prev,
+        username: newUsername,
+      }))
+
+      // Store in session storage for easy access
+      sessionStorage.setItem("username", newUsername)
+
+      setNotification({
+        open: true,
+        message: "Username updated successfully",
+        severity: "success",
       })
+    } catch (error) {
+      console.error("Error updating username:", error)
+      setNotification({
+        open: true,
+        message: "Failed to update username",
+        severity: "error",
+      })
+    }
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("token")
+    sessionStorage.removeItem("user")
+    sessionStorage.removeItem("name")
+    sessionStorage.removeItem("username")
+    sessionStorage.removeItem("profilePicture")
+    window.location.href = "/login"
+  }
+
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false })
   }
 
   return (
@@ -153,134 +238,115 @@ const Profile = () => {
               Account Settings
             </Typography>
             <Typography variant="body1" color="gray" gutterBottom>
-              Manage your personal information and settings
+              View and update your personal information
             </Typography>
 
-            <Box sx={{ mt: 4, display: "flex", alignItems: "center", mb: 4 }}>
-              <Avatar src={picture || "/placeholder.svg"} sx={{ width: 100, height: 100, mr: 2 }} />
-              <Box>
-                <input
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  id="icon-button-file"
-                  type="file"
-                  onChange={uploadPicture}
-                />
-                <label htmlFor="icon-button-file">
-                  <IconButton
-                    color="primary"
-                    aria-label="upload picture"
-                    component="span"
+            {loading ? (
+              <Typography color="white" sx={{ textAlign: "center", my: 4 }}>
+                Loading your information...
+              </Typography>
+            ) : error ? (
+              <Typography color="error" sx={{ textAlign: "center", my: 4 }}>
+                {error}
+              </Typography>
+            ) : (
+              <>
+                <Box sx={{ mt: 4, display: "flex", alignItems: "center", mb: 4 }}>
+                  <Avatar
+                    src={userData.picture || "/placeholder.svg"}
                     sx={{
-                      bgcolor: "#00AEEF",
-                      color: "white",
-                      "&:hover": { bgcolor: "#0099D4" },
+                      width: 100,
+                      height: 100,
+                      mr: 2,
+                      border: "2px solid #00AEEF",
                     }}
-                  >
-                    <Upload />
-                  </IconButton>
-                </label>
+                  />
+                  <Box>
+                    <Typography variant="h5" color="white">
+                      {userData.name}
+                    </Typography>
+                    <Typography variant="body2" color="gray">
+                      {userData.email}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={8}>
+                    <StyledTextField
+                      fullWidth
+                      label="Username"
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      placeholder="Set your username"
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <SaveButton
+                      variant="contained"
+                      onClick={handleSaveUsername}
+                      startIcon={<Save size={16} />}
+                      fullWidth
+                      sx={{ height: "56px" }}
+                    >
+                      Save
+                    </SaveButton>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <InfoCard>
+                      <InfoLabel>Email</InfoLabel>
+                      <InfoValue>{userData.email}</InfoValue>
+                    </InfoCard>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <InfoCard>
+                      <InfoLabel>Name</InfoLabel>
+                      <InfoValue>{userData.name}</InfoValue>
+                    </InfoCard>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <InfoCard>
+                      <InfoLabel>Password</InfoLabel>
+                      <InfoValue>••••••••</InfoValue>
+                    </InfoCard>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+
+            {/* Logout Section */}
+            <Box sx={{ mt: 6 }}>
+              <Divider sx={{ bgcolor: "rgba(255, 255, 255, 0.12)", my: 2 }} />
+              <Typography variant="h6" color="white" gutterBottom>
+                Account Actions
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <LogoutButton variant="contained" startIcon={<LogOut size={16} />} onClick={handleLogout} fullWidth>
+                  Logout
+                </LogoutButton>
               </Box>
             </Box>
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={8}>
-                <StyledTextField
-                  fullWidth
-                  label="Name"
-                  value={`${firstName} ${lastName}`}
-                  onChange={(e) => {
-                    const [first, ...rest] = e.target.value.split(" ")
-                    setFirstName(first)
-                    setLastName(rest.join(" "))
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <SaveButton variant="contained" onClick={() => handleSubmit("name", { firstName, lastName })}>
-                  Save
-                </SaveButton>
-              </Grid>
-
-              <Grid item xs={12} sm={8}>
-                <StyledTextField fullWidth label="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <SaveButton variant="contained" onClick={() => handleSubmit("email", email)}>
-                  Save
-                </SaveButton>
-              </Grid>
-
-              <Grid item xs={12} sm={8}>
-                <StyledTextField
-                  fullWidth
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <SaveButton variant="contained" onClick={() => handleSubmit("password", password)}>
-                  Save
-                </SaveButton>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
-                  <Typography color="white">Enable Notifications</Typography>
-                  <Switch
-                    checked={notifications}
-                    onChange={(e) => {
-                      setNotifications(e.target.checked)
-                      handleSubmit("notifications", e.target.checked)
-                    }}
-                    sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": {
-                        color: "#00AEEF",
-                      },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                        backgroundColor: "#00AEEF",
-                      },
-                    }}
-                  />
-                </Box>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <Typography color="white">Privacy Settings</Typography>
-                  <Switch
-                    checked={privacy}
-                    onChange={(e) => {
-                      setPrivacy(e.target.checked)
-                      handleSubmit("privacy", e.target.checked)
-                    }}
-                    sx={{
-                      "& .MuiSwitch-switchBase.Mui-checked": {
-                        color: "#00AEEF",
-                      },
-                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                        backgroundColor: "#00AEEF",
-                      },
-                    }}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-
-            {responseMessage && (
-              <Typography color="primary" sx={{ mt: 2, color: "#00AEEF" }}>
-                {responseMessage}
-              </Typography>
-            )}
           </CardContent>
         </Card>
       </Container>
+
+      {/* Notification */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseNotification} severity={notification.severity} variant="filled">
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }
 
-export default Profile
-
+export default Settings
 

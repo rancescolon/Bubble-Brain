@@ -25,6 +25,10 @@ import StyleGuidePage from "./Component/StyleGuide/StyleGuide"
 import Profile from "./Component/Profile"
 import BubbleTrapAnimation from "./Component/BubbleTrapAnimation"
 import Communities from "./Component/Communities"
+import CommunityView from "./Component/CommunityView"
+import Upload from "./Component/Upload"
+import StudySetView from "./Component/StudySetView"
+// import SideBar from "./Component/StyleGuide/SideBar"
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
   path: "/hci/api/realtime-socket/socket.io",
@@ -190,6 +194,14 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route path="/promise" element={<PromiseComponent />} />
                 <Route
                   path="/messages/:roomID"
@@ -207,6 +219,13 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                {/* <Route path="/community" element={<Communities />} /> */}
+                <Route path="/community/view/:id" element={
+                  <ProtectedRoute>
+                    <CommunityView />
+                  </ProtectedRoute>
+                  
+                  } />
                 <Route path="/akibmahdi" element={<AboutMe />} />
                 <Route path="/rances" element={<AboutRances />} />
                 <Route path="/biviji" element={<AboutTariq />} />
@@ -214,6 +233,22 @@ function App() {
                 <Route path="/jacobmie" element={<AboutJacob />} />
                 <Route path="/caydenla" element={<AboutCayden />} />
                 <Route path="/style-guide" element={<StyleGuidePage />} />
+                <Route
+                  path="/upload"
+                  element={
+                    <ProtectedRoute>
+                      <Upload />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/community/:communityId/study-set/:studySetId"
+                  element={
+                    <ProtectedRoute>
+                      <StudySetView />
+                    </ProtectedRoute>
+                  }
+                />
               </Routes>
             </div>
           </header>
