@@ -1023,6 +1023,7 @@ const CommunityView = () => {
                 className="bg-white rounded p-2 text-black"
                 style={fontStyle}
               >
+                <option value="all">View All</option>
                 <option value="flashcards">Flashcards</option>
                 <option value="fill_in_blank">Fill in the Blank</option>
                 <option value="matching">Matching</option>
@@ -1033,7 +1034,7 @@ const CommunityView = () => {
 
           {studySets.length > 0 ? (
             studySets
-              .filter((set) => set.type === selectedType)
+              .filter((set) => selectedType === "all" || set.type === selectedType)
               .map((studySet) => (
                 <div key={studySet.id} className="bg-white rounded p-4 mb-4">
                   <div className="flex items-start">
@@ -1041,16 +1042,24 @@ const CommunityView = () => {
                       <span style={fontStyle}>{studySet.title.charAt(0)}</span>
                     </div>
                     <div className="flex-1">
-                      <h2
-                        className="text-xl font-bold text-blue-500 cursor-pointer"
-                        style={fontStyle}
-                        onClick={() => handleViewStudySet(studySet)}
-                      >
-                        {studySet.title}
-                      </h2>
-                      <p className="text-sm text-gray-600" style={fontStyle}>
-                        {studySet.description}
-                      </p>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h2
+                            className="text-xl font-bold text-blue-500 cursor-pointer"
+                            style={fontStyle}
+                            onClick={() => handleViewStudySet(studySet)}
+                          >
+                            {studySet.title}
+                          </h2>
+                          <p className="text-sm text-gray-600" style={fontStyle}>
+                            {studySet.description}
+                          </p>
+                        </div>
+                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded" style={fontStyle}>
+                          {studySet.type === "fill_in_blank" ? "Fill in the Blank" :
+                           studySet.type.charAt(0).toUpperCase() + studySet.type.slice(1)}
+                        </span>
+                      </div>
                       <div className="flex justify-between mt-2">
                         <div className="flex items-center">
                           <button className="flex items-center text-gray-500 mr-4">

@@ -389,24 +389,96 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                   </Box>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
+                      <Box sx={{ display: "flex", gap: 1, mb: 1 }}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            const newQuestions = [...fillInBlank]
+                            newQuestions[index].question += " _____"
+                            setFillInBlank(newQuestions)
+                          }}
+                          sx={{ 
+                            ...fontStyle,
+                            borderColor: "#1D6EF1",
+                            color: "#1D6EF1",
+                            "&:hover": {
+                              borderColor: "#1557B0",
+                              backgroundColor: "rgba(29, 110, 241, 0.1)",
+                            }
+                          }}
+                        >
+                          Add Blank
+                        </Button>
+                      </Box>
                       <TextField
                         fullWidth
                         label="Question"
                         value={item.question}
                         onChange={(e) => handleFillInBlankChange(index, "question", e.target.value)}
-                        sx={{ ...fontStyle }}
+                        placeholder="Example: The capital of France is _____"
+                        multiline
+                        rows={2}
+                        sx={{ 
+                          ...fontStyle,
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#F8F9FA",
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        label="Answer"
+                        label="Correct Answer"
                         value={item.answer}
                         onChange={(e) => handleFillInBlankChange(index, "answer", e.target.value)}
-                        sx={{ ...fontStyle }}
+                        placeholder="Example: Paris"
+                        sx={{ 
+                          ...fontStyle,
+                          "& .MuiOutlinedInput-root": {
+                            backgroundColor: "#F8F9FA",
+                          }
+                        }}
                       />
                     </Grid>
                   </Grid>
+                  {item.question && (
+                    <Box sx={{ mt: 2, p: 2, bgcolor: "#F8F9FA", borderRadius: 1 }}>
+                      <Typography variant="body2" sx={{ color: "text.secondary", mb: 1, ...fontStyle }}>
+                        Preview:
+                      </Typography>
+                      <Typography sx={{ ...fontStyle }}>
+                        {item.question.split("_____").map((part, i, arr) => (
+                          <span key={i}>
+                            {part}
+                            {i < arr.length - 1 && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  display: "inline-block",
+                                  minWidth: "150px",
+                                  height: "24px",
+                                  borderBottom: "2px dashed #1D6EF1",
+                                  mx: 1,
+                                  verticalAlign: "middle",
+                                  position: "relative",
+                                  "&::after": {
+                                    content: '""',
+                                    position: "absolute",
+                                    bottom: "-2px",
+                                    left: 0,
+                                    right: 0,
+                                    height: "2px",
+                                    backgroundColor: "#1D6EF1",
+                                  }
+                                }}
+                              />
+                            )}
+                          </span>
+                        ))}
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -543,16 +615,17 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       sx={{
         flexGrow: 1,
         bgcolor: "#1D1D20",
-        minHeight: "100vh",
+        height: "100vh",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         opacity: 1.0,
+        overflow: "hidden",
       }}
     >
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+      <Container maxWidth="lg" sx={{ height: "100%", py: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Typography variant="h4" sx={{ color: "white", ...fontStyle }}>
             Template Manager
           </Typography>
@@ -568,14 +641,14 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
             <X size={24} />
           </IconButton>
         </Box>
-        <Box sx={{ display: "flex", gap: 4 }}>
+        <Box sx={{ display: "flex", gap: 2, height: "calc(100% - 80px)" }}>
           {/* Template Type Selection */}
-          <Box sx={{ width: "250px", flexShrink: 0 }}>
-            <Typography variant="h5" sx={{ color: "white", mb: 2, ...fontStyle }}>
+          <Box sx={{ width: "200px", flexShrink: 0 }}>
+            <Typography variant="h5" sx={{ color: "white", mb: 1, ...fontStyle }}>
               Template Types
             </Typography>
-            <Card>
-              <CardContent>
+            <Card sx={{ height: "calc(100% - 40px)" }}>
+              <CardContent sx={{ p: 1 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {["flashcards", "fill_in_blank", "matching", "multiple_choice"].map((type) => (
                     <Button
@@ -591,6 +664,8 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         "&:hover": {
                           bgcolor: selectedType === type ? "#1557B0" : "rgba(29, 110, 241, 0.1)",
                         },
+                        py: 1,
+                        px: 2,
                       }}
                     >
                       {type.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
@@ -602,21 +677,23 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
           </Box>
 
           {/* Template Form */}
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h5" sx={{ color: "white", mb: 2, ...fontStyle }}>
+          <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+            <Typography variant="h5" sx={{ color: "white", mb: 1, ...fontStyle }}>
               {selectedType.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())} Template
             </Typography>
-            <Card>
-              <CardContent>
+            <Card sx={{ flexGrow: 1, overflow: "auto" }}>
+              <CardContent sx={{ p: 2 }}>
                 <TextField
                   fullWidth
                   label="Template Name"
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
-                  sx={{ mb: 3, ...fontStyle }}
+                  sx={{ mb: 2, ...fontStyle }}
                 />
-                {renderTemplateForm()}
-                <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
+                <Box sx={{ height: "calc(100% - 120px)", overflow: "auto" }}>
+                  {renderTemplateForm()}
+                </Box>
+                <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
                   <Button
                     variant="contained"
                     onClick={handleSaveTemplate}
@@ -631,12 +708,12 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
           </Box>
 
           {/* Saved Templates */}
-          <Box sx={{ width: "250px", flexShrink: 0 }}>
-            <Typography variant="h5" sx={{ color: "white", mb: 2, ...fontStyle }}>
+          <Box sx={{ width: "250px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+            <Typography variant="h5" sx={{ color: "white", mb: 1, ...fontStyle }}>
               Saved Templates
             </Typography>
-            <Card>
-              <CardContent>
+            <Card sx={{ flexGrow: 1, overflow: "auto" }}>
+              <CardContent sx={{ p: 1 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   {templates.map((template) => (
                     <Box key={template.id}>
@@ -649,6 +726,8 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                           ...fontStyle,
                           color: "#1D1D20",
                           width: "100%",
+                          py: 1,
+                          px: 2,
                           "&:hover": {
                             bgcolor: "rgba(29, 110, 241, 0.1)",
                           },
@@ -658,13 +737,15 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         {template.name}
                       </Button>
                       {previewTemplate?.id === template.id && (
-                        <Box sx={{ mt: 2, p: 2, bgcolor: "#F8F9FA", borderRadius: 1 }}>
-                          {renderTemplatePreview(template)}
-                          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+                        <Box sx={{ mt: 1, p: 1, bgcolor: "#F8F9FA", borderRadius: 1 }}>
+                          <Box sx={{ maxHeight: "200px", overflow: "auto" }}>
+                            {renderTemplatePreview(template)}
+                          </Box>
+                          <Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end" }}>
                             <Button
                               variant="contained"
                               onClick={() => handleUseTemplate(template)}
-                              sx={{ bgcolor: "#1D6EF1" }}
+                              sx={{ bgcolor: "#1D6EF1", py: 0.5 }}
                             >
                               Use Template
                             </Button>
