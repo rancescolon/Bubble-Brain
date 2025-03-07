@@ -1067,13 +1067,13 @@ const CommunityView = () => {
                             <span style={fontStyle}>{studySet.likes}</span>
                           </button>
                         </div>
-                        <div className="flex items-center">
-                          <button className="text-blue-500 mr-2" onClick={() => handleShareStudySet(studySet.id)}>
-                            <span style={fontStyle}>Share</span>
-                          </button>
-                          <button className="text-red-500" onClick={() => handleDeleteStudySet(studySet.id)}>
-                            <span className="text-lg">×</span>
-                          </button>
+                        <div className="ml-3">
+                          <p className="font-semibold" style={fontStyle}>
+                            You
+                          </p>
+                          <span className="text-xs bg-[#97C7F1] px-2 py-1 rounded-full" style={fontStyle}>
+                            Admin
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1081,8 +1081,8 @@ const CommunityView = () => {
                 </div>
               ))
           ) : (
-            <div className="bg-white bg-opacity-75 rounded p-4 text-center">
-              <p style={fontStyle}>No study sets yet. Click "Add Study Material" to create one.</p>
+            <div className="text-center py-8">
+              <p className="text-white" style={fontStyle}>No study sets available.</p>
             </div>
           )}
         </div>
@@ -1538,6 +1538,3 @@ const CommunityView = () => {
 }
 
 export default CommunityView
-
-
-
