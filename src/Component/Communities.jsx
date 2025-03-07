@@ -11,7 +11,8 @@ const fontStyle = {
 
 // Adding global style for font
 const GlobalStyle = () => (
-  <style jsx global>{`
+  <style dangerouslySetInnerHTML={{
+    __html: `
     @font-face {
       font-family: 'Sour Gummy';
       src: url('/src/assets/fonts/SourGummy-VariableFont_wdth,wght.ttf') format('truetype');
@@ -22,7 +23,8 @@ const GlobalStyle = () => (
     body, button, input, h1, h2, h3, p, span {
       font-family: 'Sour Gummy', sans-serif;
     }
-  `}</style>
+  `
+  }} />
 )
 
 // TopBar Component

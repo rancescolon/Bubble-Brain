@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Box, Typography, Button, Card, CardContent, Container, TextField, Alert, Snackbar, Select, MenuItem, FormControl, InputLabel, IconButton, Grid, Dialog } from "@mui/material"
 import { Upload as UploadIcon, Share2, BookOpen, Plus, Trash2, X, CheckCircle2 } from "lucide-react"
 import background from "../assets/image3.png"
@@ -9,6 +10,7 @@ import TemplateManager from "./TemplateManager"
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 const Upload = () => {
+  const navigate = useNavigate()
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -74,40 +76,96 @@ const Upload = () => {
       throw new Error("User not found. Please log in again.")
     }
 
+    // Ensure we have valid content
+    if (!selectedTemplate || !selectedTemplate.content) {
+      throw new Error("Invalid template selected")
+    }
+
+    // Ensure we have a valid community ID
+    if (!selectedCommunity) {
+      throw new Error("Please select a community")
+    }
+
+    // Keep the original string value for attributes
+    const communityIdString = String(selectedCommunity)
+    
+    // Simplify the post data to match what works in CommunityView.jsx
     const postData = {
-      title: studySetName,
       content: JSON.stringify({
-        type: selectedTemplate.type,
-        content: selectedTemplate.content
+        name: studySetName,
+        type: selectedTemplate.type || "flashcards",
+        content: selectedTemplate.content || [],
+        communityId: communityIdString
       }),
       type: "study_set",
       authorID: parseInt(userId),
-      groupID: parseInt(selectedCommunity),
       attributes: {
-        description: "Study set created by Anonymous"
+        description: "Study set created by Anonymous",
+        communityId: communityIdString
       }
     }
 
-    console.log("Sending post data:", postData) // Debug log
+    console.log("Sending post data:", postData)
+    console.log("Creating study set for community ID:", communityIdString)
+    console.log("JSON content:", postData.content)
 
-    const response = await fetch(`${API_BASE_URL}/posts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(postData),
-    })
+    try {
+      const response = await fetch(`${API_BASE_URL}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(postData),
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error("Error response:", errorData)
-      throw new Error(errorData.message || "Failed to create study set")
+      if (!response.ok) {
+        let errorMessage = "Failed to create study set"
+        try {
+          const errorData = await response.json()
+          console.error("Error response:", errorData)
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          const errorText = await response.text()
+          console.error("Error response text:", errorText)
+        }
+        throw new Error(errorMessage)
+      }
+
+      const result = await response.json()
+      console.log("Success response:", result)
+      
+      // Now that we have the post ID, update it with the groupID
+      try {
+        console.log("Updating post with community information...")
+        const updateResponse = await fetch(`${API_BASE_URL}/posts/${result.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            attributes: {
+              ...result.attributes,
+              communityId: communityIdString
+            }
+          }),
+        })
+        
+        if (updateResponse.ok) {
+          console.log("Successfully updated post attributes")
+        } else {
+          console.warn("Failed to update post attributes, but post was created")
+        }
+      } catch (updateError) {
+        console.warn("Error updating post attributes, but post was created:", updateError)
+      }
+      
+      return result
+    } catch (error) {
+      console.error("Error creating post:", error)
+      throw error
     }
-
-    const result = await response.json()
-    console.log("Success response:", result)
-    return result
   }
 
   const handleUpload = async () => {
@@ -123,16 +181,38 @@ const Upload = () => {
         throw new Error("Please select a template")
       }
 
+      if (!studySetName.trim()) {
+        throw new Error("Please enter a name for your study set")
+      }
+
       // Create a post with the template content
-      await createPost()
+      console.log("Creating study set...")
+      const result = await createPost()
+      console.log("Study set created successfully:", result)
 
       setSuccess(true)
       // Reset form
       setStudySetName("")
       setSelectedCommunity("")
       setSelectedTemplate(null)
+      
+      // Show a more detailed success message
+      setTimeout(() => {
+        // If the user wants to view the study set in the community
+        if (window.confirm("Study set created successfully! Would you like to view it in the community?")) {
+          // Use the communityId from the result if available, otherwise use selectedCommunity
+          const communityToView = result.attributes?.communityId || selectedCommunity
+          
+          // Force a full page reload to ensure we get fresh data
+          window.location.href = `/community/view/${communityToView}`;
+        }
+      }, 500);
     } catch (err) {
-      setError(err.message)
+      console.error("Error in handleUpload:", err)
+      setError(err.message || "Failed to create study set. Please try again.")
+      
+      // Show a more detailed error message
+      alert(`Error: ${err.message || "Failed to create study set. Please try again."}`)
     } finally {
       setUploading(false)
     }
@@ -279,6 +359,30 @@ const Upload = () => {
                 ))}
               </Select>
             </FormControl>
+
+            {selectedCommunity && (
+              <Box sx={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: 2,
+                maxWidth: "600px",
+                width: "100%",
+                bgcolor: "#F8F9FA",
+                p: 2,
+                borderRadius: 1,
+                border: "1px solid #E9ECEF"
+              }}>
+                <CheckCircle2 size={20} color="#1D6EF1" />
+                <Typography sx={{ 
+                  ...fontStyle,
+                  color: "#1D1D20",
+                  fontWeight: 500,
+                  fontSize: "16px"
+                }}>
+                  Study set will be uploaded to: {communities.find(c => c.id === selectedCommunity)?.name || 'selected community'}
+                </Typography>
+              </Box>
+            )}
 
             <Button
               variant="contained"

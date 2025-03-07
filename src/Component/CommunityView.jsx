@@ -328,10 +328,12 @@ const CommunityView = () => {
 
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
+    const currentCommunityId = id // Keep as string for comparison
 
-    console.log("Fetching study sets for community:", id) // Debug log
+    console.log("Fetching study sets for community:", currentCommunityId) // Debug log
 
-    fetch(`${API_BASE_URL}/posts?groupID=${id}&type=study_set`, {
+    // Try to fetch study sets specifically for this community first
+    fetch(`${API_BASE_URL}/posts?type=study_set`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -346,29 +348,111 @@ const CommunityView = () => {
         return res.json()
       })
       .then((result) => {
-        console.log("Study sets response:", result) // Debug log
+        console.log("All study sets response:", result) // Debug log
+        
         if (result && result[0] && result[0].length > 0) {
+          console.log("Total study sets found:", result[0].length)
+          
+          // First, filter to only include study sets for this community
+          const communityStudySets = result[0].filter(post => {
+            // Try to parse the content to check for communityId
+            let contentObj = null;
+            try {
+              if (post.content && typeof post.content === 'string') {
+                contentObj = JSON.parse(post.content);
+              }
+            } catch (e) {
+              console.warn("Could not parse content for post", post.id);
+            }
+            
+            // Check if communityId is in the content
+            if (contentObj && contentObj.communityId === currentCommunityId) {
+              console.log(`Post ID ${post.id} belongs to community ${currentCommunityId} via content.communityId`);
+              return true;
+            }
+            
+            // Check if the post has our custom attribute that indicates the community
+            if (post.attributes && post.attributes.communityId === currentCommunityId) {
+              console.log(`Post ID ${post.id} belongs to community ${currentCommunityId} via attributes.communityId`);
+              return true;
+            }
+            
+            // Check if parentID matches the community ID
+            if (post.parentID && String(post.parentID) === currentCommunityId) {
+              console.log(`Post ID ${post.id} belongs to community ${currentCommunityId} via parentID`);
+              return true;
+            }
+            
+            // Also check the groupID as string comparison to handle potential NaN values
+            const postGroupId = String(post.groupID || "");
+            const belongsViaGroupId = postGroupId === currentCommunityId;
+            if (belongsViaGroupId) {
+              console.log(`Post ID ${post.id} belongs to community ${currentCommunityId} via groupID`);
+            }
+            
+            // For debugging
+            console.log(`Post ID ${post.id} check: content.communityId=${contentObj?.communityId}, attributes.communityId=${post.attributes?.communityId}, parentID=${post.parentID}, groupID=${postGroupId}, belongs: ${belongsViaGroupId || (contentObj && contentObj.communityId === currentCommunityId) || (post.attributes && post.attributes.communityId === currentCommunityId) || (post.parentID && String(post.parentID) === currentCommunityId)}`);
+            
+            return belongsViaGroupId || 
+                   (contentObj && contentObj.communityId === currentCommunityId) || 
+                   (post.attributes && post.attributes.communityId === currentCommunityId) ||
+                   (post.parentID && String(post.parentID) === currentCommunityId);
+          });
+          
+          console.log("Study sets for this community:", communityStudySets.length)
+          
           // Transform API data to match our component's expected format
-          const studySetsData = result[0]
+          const studySetsData = communityStudySets
             .map((post) => {
               try {
-                const content = JSON.parse(post.content || "{}")
-                const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-                // Only include study sets that have a name in their content
-                if (!content.name) {
-                  return null
+                // Try to parse the content as JSON, but handle invalid JSON gracefully
+                let content = {}
+                
+                try {
+                  if (post.content && typeof post.content === 'string') {
+                    content = JSON.parse(post.content)
+                    
+                    // If we don't have a name, use a default
+                    if (!content.name) {
+                      content.name = "Untitled Study Set"
+                    }
+                    
+                    // If we don't have a type, use a default
+                    if (!content.type) {
+                      content.type = "flashcards"
+                    }
+                    
+                    // If we don't have content array, use an empty array
+                    if (!Array.isArray(content.content)) {
+                      content.content = []
+                    }
+                  }
+                } catch (parseError) {
+                  console.warn("Could not parse post content as JSON:", parseError.message)
+                  // Create a default content object for non-JSON content
+                  content = {
+                    name: "Untitled Study Set",
+                    type: "flashcards",
+                    content: [{ front: post.content || "Content unavailable", back: "" }]
+                  }
                 }
+                
+                // Include all study sets with reasonable defaults
+                const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
+                
                 return {
                   id: post.id,
-                  title: content.name,
+                  title: content.name || "Untitled Study Set",
                   description: `Created by ${creatorName}`,
                   type: content.type || "flashcards",
-                  content: content.content, // Store the actual content for viewing
+                  content: content.content || [],
                   fileId: post.fileId,
                   likes: post._count?.reactions || 0,
+                  groupID: post.groupID, // Keep groupID for debugging
+                  communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID // Add communityId for debugging
                 }
               } catch (error) {
-                console.error("Error parsing post content:", error) // Debug log
+                console.error("Error processing post:", error)
                 return null
               }
             })
@@ -434,6 +518,7 @@ const CommunityView = () => {
 
       const token = sessionStorage.getItem("token")
       const userId = sessionStorage.getItem("user")
+      const currentCommunityId = id // Keep as string for consistency
 
       if (!token || !userId) {
         alert("You must be logged in to add study material")
@@ -446,16 +531,20 @@ const CommunityView = () => {
           name: studySetName,
           type: selectedTemplate.type,
           content: templateContent,
+          communityId: currentCommunityId // Add communityId to content as well
         }),
         type: "study_set",
-        authorID: Number.parseInt(userId),
-        groupID: Number.parseInt(id),
+        authorID: parseInt(userId),
+        groupID: parseInt(currentCommunityId) || 0, // Use 0 as fallback if parsing fails
         attributes: {
           description: "Study set created in community",
+          communityId: currentCommunityId // Store community ID in attributes
         },
       }
 
       console.log("Creating study set with data:", postData)
+      console.log("Creating study set for community ID:", currentCommunityId)
+      console.log("JSON content:", postData.content)
 
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: "POST",
@@ -483,6 +572,8 @@ const CommunityView = () => {
         type: selectedTemplate.type,
         content: templateContent,
         likes: 0,
+        groupID: parseInt(currentCommunityId) || 0,
+        communityId: currentCommunityId // Add communityId for consistency
       }
 
       // Update state in a safe way
@@ -494,6 +585,11 @@ const CommunityView = () => {
       setTemplateContent([])
       setCurrentStep(1)
       setShowAddStudySetDialog(false)
+
+      // Refresh the study sets to ensure we have the latest data
+      setTimeout(() => {
+        fetchStudySets();
+      }, 1000);
 
       alert("Study set created successfully!")
     } catch (error) {
