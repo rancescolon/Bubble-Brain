@@ -356,15 +356,14 @@ const Communities = () => {
 
   const handleJoinCommunity = (communityId) => {
     const token = sessionStorage.getItem("token")
-    const user = JSON.parse(sessionStorage.getItem("user"))
+    const user = sessionStorage.getItem("user") // Get user ID directly as stored in LoginForm
 
     if (!token || !user) {
       alert("You must be logged in to join a community")
       return
     }
 
-    const userId = user.id
-    console.log("User ID:", userId) // Debug log
+    console.log("User ID:", user) // Debug log
     console.log("Community ID:", communityId) // Debug log
 
     const joinButtonElement = document.querySelector(`button[data-community-id="${communityId}"]`)
@@ -373,11 +372,10 @@ const Communities = () => {
       joinButtonElement.disabled = true
     }
 
-    // Prepare the request body according to the API schema
+    // Format request body according to API requirements
     const requestBody = {
-      userID: Number(userId), // Ensure userID is a number
-      groupID: Number(communityId), // Ensure groupID is a number
-      attributes: {}, // Include empty attributes object as it's part of the schema
+      userID: user, // Use the user ID directly as stored in sessionStorage
+      groupID: communityId
     }
 
     console.log("Request body:", requestBody) // Debug log
@@ -407,7 +405,7 @@ const Communities = () => {
           if (community) {
             const updatedCommunity = {
               ...community,
-              members: [...(community.members || []), { id: userId, name: "You" }],
+              members: [...(community.members || []), { id: user, name: "You" }],
             }
 
             setCommunities(communities.map((c) => (c.id === communityId ? updatedCommunity : c)))
@@ -421,7 +419,7 @@ const Communities = () => {
         })
         .catch((error) => {
           console.error("Error joining community:", error)
-          alert(`Failed to join community: ${error.message}`)
+          alert(`Failed to join community. Please try again later.`)
         })
         .finally(() => {
           if (joinButtonElement) {
