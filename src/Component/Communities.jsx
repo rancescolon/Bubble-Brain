@@ -55,7 +55,7 @@ const TopBar = () => {
   const { navOpen, toggleNav } = useContext(NavContext)
 
   return (
-      <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 md:px-6 z-10 shadow-md">
+      <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 md:px-6 z-50 shadow-md">
         <div className="flex items-center flex-grow">
           <button className="mr-2 text-white md:hidden" onClick={toggleNav} aria-label="Toggle navigation">
             {navOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -375,8 +375,8 @@ const Communities = () => {
 
     // Prepare the request body according to the API schema
     const requestBody = {
-      userID: Number.parseInt(userId), // Ensure userID is a number
-      groupID: Number.parseInt(communityId), // Ensure groupID is a number
+      userID: Number(userId), // Ensure userID is a number
+      groupID: Number(communityId), // Ensure groupID is a number
       attributes: {}, // Include empty attributes object as it's part of the schema
     }
 
@@ -484,7 +484,8 @@ const Communities = () => {
         { id: 1, sender: "You", text: "Hello everyone!", timestamp: new Date().toISOString() },
         { id: 2, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
       ]
-      currentCommunity.messages = initialMessages
+      const updatedCommunity = { ...currentCommunity, messages: initialMessages }
+      setCurrentCommunity(updatedCommunity)
       setMessages(initialMessages)
     } else {
       setMessages(currentCommunity.messages)
@@ -513,17 +514,15 @@ const Communities = () => {
     const updatedCommunity = { ...currentCommunity, messages: updatedMessages }
     setCurrentCommunity(updatedCommunity)
 
-    // Clear the message after state updates
-    setTimeout(() => {
-      setNewMessage("")
-    }, 0)
+    // Clear the message input
+    setNewMessage("")
   }
 
   // Chat Room Component
   const ChatRoom = ({ community }) => {
     const messagesEndRef = useRef(null)
     const inputRef = useRef(null)
-    const { navOpen } = useContext(NavContext)
+    const { navOpen, toggleNav } = useContext(NavContext)
 
     // Auto-scroll to bottom of messages
     useEffect(() => {
@@ -698,7 +697,7 @@ const Communities = () => {
   const CommunityDetail = ({ community, onUpdate }) => {
     const [members, setMembers] = useState(community.members || [])
     const [flashcards, setFlashcards] = useState(community.flashcards || [])
-    const { navOpen } = useContext(NavContext)
+    const { navOpen, toggleNav } = useContext(NavContext)
 
     const handleAddStudyMaterial = () => {
       // Add a blank flashcard
@@ -709,11 +708,12 @@ const Communities = () => {
         likes: 0,
       }
 
-      setFlashcards([...flashcards, newFlashcard])
+      const updatedFlashcards = [...flashcards, newFlashcard]
+      setFlashcards(updatedFlashcards)
 
       // Update the community object
-      community.flashcards = [...flashcards, newFlashcard]
-      onUpdate({ ...community, flashcards: [...flashcards, newFlashcard] })
+      const updatedCommunity = { ...community, flashcards: updatedFlashcards }
+      onUpdate(updatedCommunity)
     }
 
     const handleAddMember = () => {
@@ -723,6 +723,18 @@ const Communities = () => {
 
     const handleShareFlashcard = (id) => {
       console.log("Sharing flashcard with id:", id)
+
+      // Simulate copying a link to clipboard
+      const flashcardLink = `${window.location.origin}/community/${community.id}/flashcard/${id}`
+
+      navigator.clipboard
+          .writeText(flashcardLink)
+          .then(() => {
+            alert("Flashcard link copied to clipboard!")
+          })
+          .catch((err) => {
+            console.error("Could not copy text: ", err)
+          })
     }
 
     const handleDeleteFlashcard = (id) => {
@@ -730,8 +742,8 @@ const Communities = () => {
       setFlashcards(updatedFlashcards)
 
       // Update the community object
-      community.flashcards = updatedFlashcards
-      onUpdate({ ...community, flashcards: updatedFlashcards })
+      const updatedCommunity = { ...community, flashcards: updatedFlashcards }
+      onUpdate(updatedCommunity)
     }
 
     return (
