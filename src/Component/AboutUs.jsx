@@ -1,6 +1,8 @@
 "use client"
 import { Link } from "react-router-dom"
 import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react"
+import { Palette } from "lucide-react"
+
 
 // Import profile images
 import rancesPic from "../assets/rancesco.jpg"
@@ -72,41 +74,42 @@ export default function AboutUs() {
       <div className="p-4">
         <h1 className="text-[#00aeef] text-xl mb-4">About Us</h1>
 
-        {/* Team Members */}
-        <div className="space-y-4">
-          {teamMembers.map((member, index) => (
-            <TeamMemberCard
-              key={index}
-              name={member.name}
-              bio={member.bio}
-              imageSrc={member.imageSrc}
-              profileLink={member.profileLink}
-            />
-          ))}
+          {/* Team Members */}
+          <div className="space-y-4">
+            {teamMembers.map((member, index) => (
+                <TeamMemberCard
+                    key={index}
+                    name={member.name}
+                    bio={member.bio}
+                    imageSrc={member.imageSrc}
+                    profileLink={member.profileLink}
+                />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-[100px] right-0 bg-black border-t border-gray-800">
-        <div className="flex justify-around p-4">
-          <NavLink to="/" icon={<Home className="w-6 h-6" />} label="Home" />
-          <NavLink to="/chat" icon={<MessageSquare className="w-6 h-6" />} label="Chat" />
-          <NavLink to="/upload" icon={<Upload className="w-6 h-6" />} label="Upload" />
-          <NavLink to="/community" icon={<Users className="w-6 h-6" />} label="Community" />
-          <NavLink to="/settings" icon={<Settings className="w-6 h-6" />} label="Settings" />
-          <NavLink to="/profile" icon={<User className="w-6 h-6" />} label="Profile" />
-        </div>
+        {/* Bottom Navigation */}
+        <div className="fixed bottom-0 left-[100px] right-0 bg-black border-t border-gray-800">
+          <div className="flex justify-around p-4">
+            <NavLink to="/" icon={<Home className="w-6 h-6"/>} label="Home"/>
+            <NavLink to="/chat" icon={<MessageSquare className="w-6 h-6"/>} label="Chat"/>
+            <NavLink to="/upload" icon={<Upload className="w-6 h-6"/>} label="Upload"/>
+            <NavLink to="/community" icon={<Users className="w-6 h-6"/>} label="Community"/>
+            <NavLink to="/settings" icon={<Settings className="w-6 h-6"/>} label="Settings"/>
+            <NavLink to="/profile" icon={<User className="w-6 h-6"/>} label="Profile"/>
+            <NavLink to="/style-guide" icon={<Palette className="w-6 h-6"/>} label="Style Guide"/>
+          </div>
       </div>
-    </div>
-  )
+</div>
+)
 }
 
-function NavLink({ to, icon, label }) {
+function NavLink({to, icon, label}) {
   return (
-    <Link to={to} className="flex flex-col items-center text-cyan-400">
-      {icon}
-      <span className="text-xs">{label}</span>
-    </Link>
+      <Link to={to} className="flex flex-col items-center text-cyan-400">
+        {icon}
+        <span className="text-xs">{label}</span>
+      </Link>
   )
 }
 
