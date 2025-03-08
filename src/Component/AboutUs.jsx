@@ -1,6 +1,6 @@
 "use client"
 import { Link } from "react-router-dom"
-import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react"
+import {Home, MessageSquare, Upload, Users, Settings, User, Palette} from "lucide-react"
 
 // Import profile images
 import rancesPic from "../assets/rancesco.jpg"
@@ -95,6 +95,8 @@ export default function AboutUs() {
           <NavLink to="/community" icon={<Users className="w-6 h-6" />} label="Community" />
           <NavLink to="/settings" icon={<Settings className="w-6 h-6" />} label="Settings" />
           <NavLink to="/profile" icon={<User className="w-6 h-6" />} label="Profile" />
+          <NavLink to="/style-guide" icon={<Palette className="w-6 h-6"/>} label="Style Guide"/>
+
         </div>
       </div>
     </div>
