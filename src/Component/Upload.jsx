@@ -23,6 +23,20 @@ const Upload = () => {
   const [templateContent, setTemplateContent] = useState("")
   const [templateName, setTemplateName] = useState("")
 
+  // Add this function to get the base URL
+  const getBaseUrl = () => {
+    // Check if we're in production by looking for the specific domain
+    const isProduction = window.location.hostname.includes('webdev.cse.buffalo.edu');
+    
+    if (isProduction) {
+      // In production, include the full path
+      return `${window.location.origin}/hci/teams/droptable`;
+    } else {
+      // In development, just use the origin
+      return window.location.origin;
+    }
+  };
+
   // Fetch communities when component mounts
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -203,8 +217,9 @@ const Upload = () => {
           // Use the communityId from the result if available, otherwise use selectedCommunity
           const communityToView = result.attributes?.communityId || selectedCommunity
           
-          // Force a full page reload to ensure we get fresh data
-          window.location.href = `/community/view/${communityToView}`;
+          // Use the correct URL format for both local and production environments
+          const communityViewUrl = `/community/view/${communityToView}`;
+          navigate(communityViewUrl);
         }
       }, 500);
     } catch (err) {
