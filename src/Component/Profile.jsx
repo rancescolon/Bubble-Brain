@@ -85,19 +85,19 @@ export default function Personal_Account() {
       }}
     >
       <div className="flex justify-center items-center flex-col pt-8">
-        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
+        <div className="bg-white rounded p-6 text-black shadow-xl">
           <img src={profilePic || "/placeholder.svg?height=96&width=96"} alt="Profile" className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4 object-cover" />
           <h2 className="text-xl font-bold">{firstName && lastName ? `${firstName} ${lastName}` : username || "User"}</h2>
         </div>
       </div>
       <div className="grid md:grid-cols-2 gap-4 p-4">
-        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
+        <div className="bg-white rounded p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Upload Study Set</h2>
           <button onClick={() => navigate("/upload")} className="px-6 py-3 bg-blue-500 text-white rounded-lg text-lg">
             Upload Now!
           </button>
         </div>
-        <div className="bg-white rounded-lg p-6 text-black shadow-xl">
+        <div className="bg-white rounded p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Your Communities</h2>
           <div className="max-h-40 overflow-y-auto border border-gray-600 rounded-lg p-2">
             {myCommunities.length > 0 ? (
