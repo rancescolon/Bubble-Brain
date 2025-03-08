@@ -30,6 +30,22 @@ export default function Personal_Account() {
     fetchUserStudySets()
     fetchUserCommunities()
   }, [])
+  const handleProfilePicClick = () => {
+    fileInputRef.current.click()
+  }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result
+        setProfilePic(base64String)
+        sessionStorage.setItem("profilePicture", base64String)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const fetchUserStudySets = async () => {
     try {
@@ -84,12 +100,26 @@ export default function Personal_Account() {
         fontFamily: "SourGummy, sans-serif",
       }}
     >
+      {/* Profile Section */}
       <div className="flex justify-center items-center flex-col pt-8">
-        <div className="bg-white rounded p-6 text-black shadow-xl">
-          <img src={profilePic || "/placeholder.svg?height=96&width=96"} alt="Profile" className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4 object-cover" />
-          <h2 className="text-xl font-bold">{firstName && lastName ? `${firstName} ${lastName}` : username || "User"}</h2>
+        <div className="bg-white rounded p-6 text-black flex flex-col items-center shadow-xl">
+          <div className="relative cursor-pointer group" onClick={handleProfilePicClick}>
+            <img
+              src={profilePic || "/placeholder.svg?height=96&width=96"}
+              alt="Profile"
+              className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4 object-cover"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-white text-sm">Change</span>
+            </div>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+          </div>
+          <h2 className="text-xl font-bold">
+            {firstName && lastName ? `${firstName} ${lastName}` : username || "User"}
+          </h2>
         </div>
       </div>
+
       <div className="grid md:grid-cols-2 gap-4 p-4">
         <div className="bg-white rounded p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Upload Study Set</h2>
