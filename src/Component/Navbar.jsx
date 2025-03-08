@@ -69,7 +69,9 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight } from "lucide-react"
+import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette} from "lucide-react"
+
+
 import {
   Box,
   Drawer,
@@ -134,6 +136,7 @@ const NavBar = () => {
     { icon: Users, label: "Community", path: "/community" },
     { icon: Settings, label: "Settings", path: "/settings" },
     { icon: User, label: "Profile", path: "/profile" },
+    { icon: Palette, label: "Style Guide", path: "/style-guide" },
   ]
 
   return (
