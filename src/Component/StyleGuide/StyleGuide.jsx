@@ -664,6 +664,7 @@ const StyleGuidePage = () => {
                                 <Typography variant="h2" sx={{ fontSize: "52px", fontWeight: 800, color: "#1D1D20" }}>
                                     Color Palette
                                 </Typography>
+
                                 <Button
                                     variant="contained"
                                     startIcon={<Download size={16} />}

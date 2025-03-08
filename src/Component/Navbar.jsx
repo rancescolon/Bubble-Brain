@@ -173,6 +173,7 @@ const NavBar = () => {
             }),
           }}
         >
+            
           <Box
             sx={{
               width: 60,
