@@ -70,6 +70,8 @@
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette} from "lucide-react"
+
+
 import {
   Box,
   Drawer,
@@ -173,7 +175,6 @@ const NavBar = () => {
             }),
           }}
         >
-
           <Box
             sx={{
               width: 60,
