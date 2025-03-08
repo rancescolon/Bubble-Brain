@@ -600,8 +600,7 @@ const StyleGuidePage = () => {
                                         "&:hover": { bgcolor: "#48BB78" },
                                         color: "white",
                                     }}
-                                    href="/SourGummy-VariableFont_wdth,wght.ttf"
-                                    download
+                                    href="https://fonts.google.com/specimen/Sour+Gummy"
                                 >
                                     Download Font
                                 </Button>
