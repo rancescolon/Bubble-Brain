@@ -373,11 +373,10 @@ const Communities = () => {
       joinButtonElement.disabled = true
     }
 
-    // Prepare the request body according to the API schema
+    // Simplified request body - the API might be expecting a simpler format
     const requestBody = {
-      userID: Number(userId), // Ensure userID is a number
-      groupID: Number(communityId), // Ensure groupID is a number
-      attributes: {}, // Include empty attributes object as it's part of the schema
+      userID: userId,
+      groupID: communityId
     }
 
     console.log("Request body:", requestBody) // Debug log
@@ -407,7 +406,7 @@ const Communities = () => {
           if (community) {
             const updatedCommunity = {
               ...community,
-              members: [...(community.members || []), { id: userId, name: "You" }],
+              members: [...(community.members || []), { id: userId, name: user.username || "You" }],
             }
 
             setCommunities(communities.map((c) => (c.id === communityId ? updatedCommunity : c)))
@@ -421,7 +420,7 @@ const Communities = () => {
         })
         .catch((error) => {
           console.error("Error joining community:", error)
-          alert(`Failed to join community: ${error.message}`)
+          alert(`Failed to join community. Please try again later.`)
         })
         .finally(() => {
           if (joinButtonElement) {
@@ -431,25 +430,41 @@ const Communities = () => {
         })
   }
 
+  // Add this function at the beginning of the Communities component to get the base URL
+  const getBaseUrl = () => {
+    // Check if we're in production by looking for the specific domain
+    const isProduction = window.location.hostname.includes('webdev.cse.buffalo.edu');
+    
+    if (isProduction) {
+      // In production, include the full path
+      return `${window.location.origin}/hci/teams/droptable`;
+    } else {
+      // In development, just use the origin
+      return window.location.origin;
+    }
+  };
+
   const handleShareCommunity = (communityId) => {
-    // Simulate copying a link to clipboard
-    const communityLink = `${window.location.origin}/community/${communityId}`
-    console.log("Link copied to clipboard:", communityLink)
+    // Use the getBaseUrl function to create the correct link
+    const communityLink = `${getBaseUrl()}/community/${communityId}`;
+    console.log("Link copied to clipboard:", communityLink);
 
     // In a real implementation, you would use the Clipboard API
     navigator.clipboard
         .writeText(communityLink)
         .then(() => {
-          alert("Community link copied to clipboard!")
+          alert("Community link copied to clipboard!");
         })
         .catch((err) => {
-          console.error("Could not copy text: ", err)
-        })
-  }
+          console.error("Could not copy text: ", err);
+        });
+  };
 
   const handleViewCommunity = (communityId) => {
-    navigate(`/community/view/${communityId}`)
-  }
+    // Use the getBaseUrl function for navigation
+    const communityUrl = `/community/view/${communityId}`;
+    navigate(communityUrl);
+  };
 
   // Add a function to update a community when changes are made
   const handleUpdateCommunity = (updatedCommunity) => {
@@ -722,19 +737,19 @@ const Communities = () => {
     }
 
     const handleShareFlashcard = (id) => {
-      console.log("Sharing flashcard with id:", id)
+      console.log("Sharing flashcard with id:", id);
 
-      // Simulate copying a link to clipboard
-      const flashcardLink = `${window.location.origin}/community/${community.id}/flashcard/${id}`
+      // Use the getBaseUrl function to create the correct link
+      const flashcardLink = `${getBaseUrl()}/community/${community.id}/flashcard/${id}`;
 
       navigator.clipboard
           .writeText(flashcardLink)
           .then(() => {
-            alert("Flashcard link copied to clipboard!")
+            alert("Flashcard link copied to clipboard!");
           })
           .catch((err) => {
-            console.error("Could not copy text: ", err)
-          })
+            console.error("Could not copy text: ", err);
+          });
     }
 
     const handleDeleteFlashcard = (id) => {

@@ -11,6 +11,8 @@ export default function Personal_Account() {
   const [username, setUsername] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [uploadedStudySets, setUploadedStudySets] = useState([])
+  const [myCommunities, setMyCommunities] = useState([])
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
   const [studyStats, setStudyStats] = useState({
@@ -21,20 +23,19 @@ export default function Personal_Account() {
   })
 
   useEffect(() => {
-    // Get profile picture and username from sessionStorage
     const storedPic = sessionStorage.getItem("profilePicture")
     const storedUsername = sessionStorage.getItem("username")
     const storedFirstName = sessionStorage.getItem("firstname")
     const storedLastName = sessionStorage.getItem("lastname")
 
-    if (storedPic) {
-      setProfilePic(storedPic)
-    }
+    if (storedPic) setProfilePic(storedPic)
     if (storedUsername) setUsername(storedUsername)
     if (storedFirstName) setFirstName(storedFirstName)
     if (storedLastName) setLastName(storedLastName)
 
     fetchStudyStats()
+    fetchUserStudySets()
+    fetchUserCommunities()
   }, [])
 
   const fetchStudyStats = async () => {
@@ -50,23 +51,18 @@ export default function Personal_Account() {
         return
       }
 
-      // Handle both object and direct ID formats
       let userId
       try {
-        // First try to parse as JSON in case it's an object
         const parsed = JSON.parse(userStr)
-        // If parsed is an object with id property, use that
         if (typeof parsed === 'object' && parsed !== null && parsed.id) {
           userId = parsed.id
         } else if (typeof parsed === 'number' || !isNaN(Number(parsed))) {
-          // If parsed is a number or can be converted to a number, use it directly
           userId = Number(parsed)
         } else {
           throw new Error("Invalid user data format")
         }
         console.log("Extracted user ID:", userId)
       } catch (e) {
-        // If JSON.parse fails, check if the raw string is a number
         if (!isNaN(Number(userStr))) {
           userId = Number(userStr)
           console.log("Using raw user ID:", userId)
@@ -77,7 +73,6 @@ export default function Personal_Account() {
         }
       }
 
-      // First fetch all posts for this user
       const postsUrl = `${API_BASE_URL}/posts?authorID=${userId}`
       console.log("Making posts API request to:", postsUrl)
 
@@ -95,17 +90,14 @@ export default function Personal_Account() {
       const postsData = await postsResponse.json()
       console.log("All posts response:", postsData)
 
-      // Filter for study time posts
       const studyTimeLogs = postsData[0]?.filter(post => {
         console.log("Checking post for study time:", post)
         
-        // Check postType first
         if (post.postType === 'study_time') {
           console.log("Found study time post by postType:", post.id)
           return true
         }
 
-        // Then check content
         try {
           const content = JSON.parse(post.content || '{}')
           console.log("Parsed content for post", post.id, ":", content)
@@ -115,7 +107,6 @@ export default function Personal_Account() {
             return true
           }
           
-          // Also check attributes
           if (post.attributes && post.attributes.type === 'study_time') {
             console.log("Found study time post by attributes:", post.id)
             return true
@@ -130,7 +121,6 @@ export default function Personal_Account() {
 
       console.log("Filtered study time logs:", studyTimeLogs)
 
-      // Calculate total study time and organize by study set
       let totalTime = 0
       const setStats = new Map()
 
@@ -150,7 +140,6 @@ export default function Personal_Account() {
             return
           }
 
-          // Check for study time data in both content and attributes
           const duration = content.duration || (log.attributes && log.attributes.duration)
           const studySetId = content.studySetId || (log.attributes && log.attributes.studySetId)
           const studySetTitle = content.studySetTitle || content.name || "Unknown Set"
@@ -185,7 +174,6 @@ export default function Personal_Account() {
         }
       })
 
-      // Get recent sets sorted by last studied time
       const recentSets = Array.from(setStats.values())
         .sort((a, b) => new Date(b.lastStudied) - new Date(a.lastStudied))
         .slice(0, 3)
@@ -251,6 +239,48 @@ export default function Personal_Account() {
     }
   }
 
+  const fetchUserStudySets = async () => {
+    try {
+      const token = sessionStorage.getItem("token")
+      const userId = sessionStorage.getItem("user")
+      if (!userId) return
+      const response = await fetch(`${API_BASE_URL}/posts?type=study_set&authorID=${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) throw new Error("Failed to fetch study sets")
+      const data = await response.json()
+      const parsedStudySets = data.map((set) => {
+        let studySetContent = {}
+        try {
+          studySetContent = JSON.parse(set.content)
+        } catch {}
+        return { id: set.id, name: studySetContent?.name || "Unnamed Study Set", communityId: set.attributes?.communityId || null }
+      })
+      setUploadedStudySets(parsedStudySets)
+    } catch (error) {
+      console.error("Error fetching study sets:", error)
+    }
+  }
+
+  const fetchUserCommunities = async () => {
+    try {
+      const token = sessionStorage.getItem("token")
+      if (!token) return
+      const response = await fetch(`${API_BASE_URL}/groups`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) throw new Error("Failed to fetch communities")
+      const data = await response.json()
+      const user = JSON.parse(sessionStorage.getItem("user"))
+      if (user) {
+        const userCommunities = data[0].filter((group) => group.ownerID === user.id)
+        setMyCommunities(userCommunities)
+      }
+    } catch (error) {
+      console.error("Error fetching communities:", error)
+    }
+  }
+
   return (
     <div
       className="min-h-screen text-white"
@@ -259,13 +289,12 @@ export default function Personal_Account() {
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
         fontFamily: "SourGummy, sans-serif",
       }}
     >
       {/* Profile Section */}
       <div className="flex justify-center items-center flex-col pt-8">
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white flex flex-col items-center shadow-xl">
+        <div className="bg-white rounded p-6 text-black flex flex-col items-center shadow-xl">
           <div className="relative cursor-pointer group" onClick={handleProfilePicClick}>
             <img
               src={profilePic || "/placeholder.svg?height=96&width=96"}
@@ -283,19 +312,17 @@ export default function Personal_Account() {
         </div>
       </div>
 
-      {/* Grid Layout */}
       <div className="grid md:grid-cols-2 gap-4 p-4">
-        {/* Uploaded Materials */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
-          <p>Currently no uploaded materials</p>
-          <button onClick={handleUploadClick} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
+        {/* Upload Study Set */}
+        <div className="bg-white rounded p-6 text-black shadow-xl">
+          <h2 className="text-xl font-bold mb-4">Upload Study Set</h2>
+          <button onClick={handleUploadClick} className="px-6 py-3 bg-blue-500 text-white rounded-lg text-lg">
             Upload Now!
           </button>
         </div>
 
         {/* Study Groups */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Study Groups</h2>
           <p>Currently in no study groups</p>
           <button onClick={handleCommunityClick} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
@@ -304,19 +331,19 @@ export default function Personal_Account() {
         </div>
 
         {/* Study Statistics */}
-        <div className="bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
+        <div className="bg-white rounded p-6 text-black shadow-xl">
           <h2 className="text-xl font-bold mb-4">Study Statistics</h2>
           {studyStats.loading ? (
             <div className="flex justify-center items-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
             </div>
           ) : studyStats.error ? (
-            <p className="text-red-400">{studyStats.error}</p>
+            <p className="text-red-500">{studyStats.error}</p>
           ) : (
             <div>
               <div className="mb-6">
                 <p className="text-lg mb-2">Total Study Time</p>
-                <p className="text-3xl font-bold text-cyan-400">{formatTime(studyStats.totalTime)}</p>
+                <p className="text-3xl font-bold text-blue-500">{formatTime(studyStats.totalTime)}</p>
               </div>
               
               {studyStats.recentSets.length > 0 && (
@@ -324,9 +351,12 @@ export default function Personal_Account() {
                   <p className="text-lg mb-2">Recently Studied Sets</p>
                   <div className="space-y-3">
                     {studyStats.recentSets.map(set => (
-                      <div key={set.id} className="bg-white bg-opacity-10 rounded-lg p-3">
-                        <p className="font-semibold text-cyan-400">{set.title}</p>
-                        <div className="flex justify-between text-sm mt-1">
+                      <div
+                        key={set.id}
+                        className="bg-[#C5EDFD] p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors"
+                      >
+                        <p className="font-semibold text-[#1D1D20]">{set.title}</p>
+                        <div className="flex justify-between text-sm mt-1 text-[#1D1D20]">
                           <span>Time: {formatTime(set.totalTime)}</span>
                           <span>Last: {formatDate(set.lastStudied)}</span>
                         </div>
@@ -339,13 +369,37 @@ export default function Personal_Account() {
           )}
         </div>
 
-        {/* Achievements (Stretched to full width) */}
-        <div className="col-span-2 bg-opacity-60 bg-black rounded-lg p-6 text-white shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Achievements</h2>
-          <p>Currently no achievements</p>
+        {/* Communities Section */}
+        <div className="bg-white rounded p-6 text-black shadow-xl">
+          <h2 className="text-xl font-bold mb-4">Your Communities</h2>
+          <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
+            {myCommunities.length > 0 ? (
+              <div className="grid grid-cols-1 gap-2">
+                {myCommunities.map((community) => (
+                  <div key={community.id} className="bg-[#C5EDFD] p-2 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center" onClick={() => navigate(`/community/view/${community.id}`)}>
+                    <div className="bg-[#1D6EF1] rounded-full w-6 h-6 flex items-center justify-center text-white mr-2">
+                      <span>{community.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <span className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+                      {community.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-100 p-3 rounded-lg text-center">
+                <p className="text-gray-600 text-sm">No communities yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Achievements Section */}
+        <div className="col-span-2 bg-white rounded-lg p-6 text-black shadow-xl">
+          <h2 className="text-xl font-bold text-center">Achievements</h2>
+          <p className="text-center text-gray-600 mt-2">No achievements yet</p>
         </div>
       </div>
     </div>
   )
 }
-

@@ -600,8 +600,7 @@ const StyleGuidePage = () => {
                                         "&:hover": { bgcolor: "#48BB78" },
                                         color: "white",
                                     }}
-                                    href="/SourGummy-VariableFont_wdth,wght.ttf"
-                                    download
+                                    href="https://fonts.google.com/specimen/Sour+Gummy"
                                 >
                                     Download Font
                                 </Button>
@@ -665,6 +664,7 @@ const StyleGuidePage = () => {
                                 <Typography variant="h2" sx={{ fontSize: "52px", fontWeight: 800, color: "#1D1D20" }}>
                                     Color Palette
                                 </Typography>
+
                                 <Button
                                     variant="contained"
                                     startIcon={<Download size={16} />}

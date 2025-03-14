@@ -169,6 +169,20 @@ const CommunityView = () => {
   const [editingItemIndex, setEditingItemIndex] = useState(null)
   const [newItem, setNewItem] = useState({})
 
+  // Add this function to get the base URL
+  const getBaseUrl = () => {
+    // Check if we're in production by looking for the specific domain
+    const isProduction = window.location.hostname.includes('webdev.cse.buffalo.edu');
+    
+    if (isProduction) {
+      // In production, include the full path
+      return `${window.location.origin}/hci/teams/droptable`;
+    } else {
+      // In development, just use the origin
+      return window.location.origin;
+    }
+  };
+
   const backgroundStyle = {
     backgroundImage: `url(${background})`,
     backgroundSize: "cover",
@@ -707,6 +721,18 @@ const CommunityView = () => {
 
   const handleShareStudySet = (id) => {
     console.log("Sharing study set with id:", id)
+    
+    // Use the getBaseUrl function to create the correct link
+    const studySetLink = `${getBaseUrl()}/community/${community.id}/study-set/${id}`;
+    
+    navigator.clipboard
+      .writeText(studySetLink)
+      .then(() => {
+        alert("Study set link copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err);
+      });
   }
 
   const handleOpenChatRoom = () => {
