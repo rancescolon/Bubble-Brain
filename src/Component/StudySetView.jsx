@@ -40,6 +40,9 @@ const StudySetView = () => {
   const [score, setScore] = useState(0)
   const [matchedPairs, setMatchedPairs] = useState(new Set())
   const [incorrectMatch, setIncorrectMatch] = useState(null)
+  const [studyStartTime, setStudyStartTime] = useState(null)
+  const [totalStudyTime, setTotalStudyTime] = useState(0)
+  const [isStudying, setIsStudying] = useState(false)
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState("")
   const [editingComment, setEditingComment] = useState(null)
@@ -110,6 +113,32 @@ const StudySetView = () => {
     }
   }, [studySetId])
 
+  useEffect(() => {
+    if (studySet) {
+      startStudySession()
+    }
+  }, [studySet])
+
+  useEffect(() => {
+    return () => {
+      if (isStudying) {
+        endStudySession()
+      }
+    }
+  }, [isStudying])
+
+  useEffect(() => {
+    let interval
+    if (isStudying) {
+      interval = setInterval(() => {
+        const currentTime = Date.now()
+        const elapsedSeconds = Math.floor((currentTime - studyStartTime) / 1000)
+        setTotalStudyTime(elapsedSeconds)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [isStudying, studyStartTime])
+
   const showSnackbar = (message) => {
     setSnackbarMessage(message)
     setSnackbarOpen(true)
@@ -140,12 +169,12 @@ const StudySetView = () => {
       }
 
       const data = await response.json()
-      console.log("Fetched study set data:", data) // Debug log
+      console.log("Fetched study set data:", data)
 
       let content
       try {
         content = JSON.parse(data.content || "{}")
-        console.log("Parsed content:", content) // Debug log
+        console.log("Parsed content:", content)
       } catch (parseError) {
         console.error("Error parsing content:", parseError)
         content = {}
@@ -161,7 +190,7 @@ const StudySetView = () => {
         fileId: data.fileId,
       }
 
-      console.log("Setting study set data:", studySetData) // Debug log
+      console.log("Setting study set data:", studySetData)
       setStudySet(studySetData)
       setLoading(false)
     } catch (err) {
@@ -201,7 +230,7 @@ const StudySetView = () => {
 
       // Transform post-reactions to comment format if needed and filter out invalid entries
       const formattedComments = data
-        .filter((reaction) => reaction.content && reaction.content.trim() !== "") // Filter out empty comments
+        .filter((reaction) => reaction.content && reaction.content.trim() !== "")
         .map((reaction) => ({
           id: reaction.id,
           content: reaction.content || "No content",
@@ -527,6 +556,98 @@ const StudySetView = () => {
     }
   }
 
+  const startStudySession = () => {
+    setStudyStartTime(Date.now())
+    setIsStudying(true)
+  }
+
+  const endStudySession = async () => {
+    if (!studyStartTime) {
+      console.log("No study start time found, cannot save study time")
+      return
+    }
+
+    const sessionDuration = Math.floor((Date.now() - studyStartTime) / 1000)
+    console.log("Calculated session duration:", sessionDuration, "seconds")
+
+    try {
+      const token = sessionStorage.getItem("token")
+      const userStr = sessionStorage.getItem("user")
+      console.log("Raw user string from session:", userStr)
+
+      if (!token || !userStr) {
+        console.error("Missing token or user data")
+        return
+      }
+
+      // Parse user data to get ID
+      let userId
+      try {
+        const parsed = JSON.parse(userStr)
+        userId = typeof parsed === 'object' && parsed !== null && parsed.id 
+          ? parsed.id 
+          : typeof parsed === 'number' 
+            ? parsed 
+            : Number(userStr)
+        console.log("Extracted user ID:", userId)
+      } catch (e) {
+        userId = Number(userStr)
+        console.log("Using raw user ID:", userId)
+      }
+
+      // Prepare study time data
+      const studyData = {
+        title: `Study Time Log - ${studySet.title}`,
+        content: JSON.stringify({
+          type: "study_time",
+          duration: sessionDuration,
+          studySetId: studySet.id,
+          studySetTitle: studySet.title,
+          timestamp: new Date().toISOString()
+        }),
+        postType: "study_time",
+        authorID: userId,
+        parentID: studySet.id,
+        groupID: parseInt(communityId) || 0,
+        attributes: {
+          type: "study_time",
+          duration: sessionDuration,
+          studySetId: studySet.id
+        }
+      }
+
+      console.log("Saving study time data:", studyData)
+
+      const response = await fetch(`${API_BASE_URL}/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(studyData)
+      })
+
+      console.log("Study time save response status:", response.status)
+      const responseBody = await response.json()
+      console.log("Study time save response body:", responseBody)
+
+      if (!response.ok) {
+        throw new Error(`Failed to save study time: ${response.status}`)
+      }
+    } catch (error) {
+      console.error("Error saving study time:", error)
+    }
+
+    setIsStudying(false)
+  }
+
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const remainingSeconds = seconds % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+  }
+
   const isCurrentUserComment = (comment) => {
     const userId = sessionStorage.getItem("userId")
 
@@ -546,17 +667,17 @@ const StudySetView = () => {
 
   const renderStudySetContent = () => {
     if (!studySet?.content) {
-      console.log("No content available:", studySet) // Debug log
+      console.log("No content available:", studySet)
       return null
     }
 
-    console.log("Rendering content for type:", studySet.type) // Debug log
-    console.log("Current content:", studySet.content) // Debug log
+    console.log("Rendering content for type:", studySet.type)
+    console.log("Current content:", studySet.content)
 
     switch (studySet.type) {
       case "flashcards":
         if (!studySet.content[currentIndex]) {
-          console.log("No content at current index:", currentIndex) // Debug log
+          console.log("No content at current index:", currentIndex)
           return null
         }
         return (
@@ -1393,6 +1514,34 @@ const StudySetView = () => {
           <Typography variant="h4" sx={{ color: "white", ...fontStyle }}>
             {studySet?.title}
           </Typography>
+          <Box sx={{ 
+            ml: "auto", 
+            bgcolor: "rgba(255, 255, 255, 0.9)",
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+          }}>
+            <Typography sx={{ 
+              color: "#1D1D20", 
+              ...fontStyle,
+              fontSize: "1.1rem",
+              fontWeight: 500
+            }}>
+              Study Time:
+            </Typography>
+            <Typography sx={{ 
+              color: "#1D6EF1", 
+              fontWeight: "bold",
+              ...fontStyle,
+              fontSize: "1.1rem"
+            }}>
+              {formatTime(totalStudyTime)}
+            </Typography>
+          </Box>
         </Box>
 
         <Card sx={{ mb: 4 }}>
@@ -1549,4 +1698,3 @@ const StudySetView = () => {
 }
 
 export default StudySetView
-
