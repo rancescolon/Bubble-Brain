@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, UserMinus, Ban, MessageCircle } from "lucide-react"
 import background from "../assets/image3.png"
+import { socket } from "../App"  // Import the shared socket instance
 
 const Friends = () => {
   const [connections, setConnections] = useState([])
@@ -450,8 +451,54 @@ const Friends = () => {
   }
 
   const handleStartChat = (friendId) => {
-    navigate(`/messages/${friendId}`)
-  }
+    console.log("Starting chat with friend:", friendId);
+    
+    if (!socket.connected) {
+      console.error("Socket not connected");
+      showNotification("Chat server connection failed", "error");
+      return;
+    }
+    
+    // First store the target user ID
+    sessionStorage.setItem("toUserID", friendId);
+    
+    // Create payload for room creation
+    const payload = {
+      fromUserID: parseInt(sessionStorage.getItem("user")),
+      toUserID: friendId
+    };
+    
+    console.log("Emitting join-room event with payload:", payload);
+    
+    // Remove any existing listeners to prevent duplicates
+    socket.off("/room-created");
+    
+    // Set up listener for room creation response
+    socket.on("/room-created", (data) => {
+      console.log("Room created response:", data);
+      if (data && data.roomID) {
+        console.log("Navigating to room:", data.roomID);
+        sessionStorage.setItem("roomID", data.roomID);
+        navigate(`/messages/${data.roomID}`);
+      } else {
+        console.error("No room ID received");
+        showNotification("Failed to create chat room", "error");
+      }
+    });
+    
+    // Emit socket event for room creation/joining
+    socket.emit("/chat/join-room", payload);
+
+    // Add a timeout to handle no response
+    setTimeout(() => {
+      if (!sessionStorage.getItem("roomID")) {
+        console.error("Room creation timed out");
+        showNotification("Failed to connect to chat server", "error");
+        // Clean up the listener after timeout
+        socket.off("/room-created");
+      }
+    }, 5000);
+  };
 
   const handleAddFriendFromList = async (targetUser) => {
     const userId = sessionStorage.getItem("user")

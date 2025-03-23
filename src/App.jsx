@@ -33,9 +33,80 @@ import StudySetView from "./Component/StudySetView"
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
   path: "/hci/api/realtime-socket/socket.io",
   query: {
-    tenantID: "example",
+    tenantID: "droptable",
   },
+  transports: ["websocket"],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  timeout: 10000,
+  autoConnect: true,
+  forceNew: true
 })
+
+// Enhanced socket connection handling
+socket.on("connect", () => {
+  console.log("Connected to chat server with socket ID:", socket.id)
+  const userId = sessionStorage.getItem("user")
+  if (userId) {
+    socket.emit("user_connected", { userId: parseInt(userId) })
+    console.log("Emitted user_connected event for user:", userId)
+  }
+})
+
+socket.on("connect_error", (error) => {
+  console.error("Socket connection error:", error)
+  console.log("Connection details:", {
+    url: process.env.REACT_APP_API_PATH_SOCKET,
+    transport: socket.io.engine.transport.name,
+    userId: sessionStorage.getItem("user"),
+    path: "/hci/api/realtime-socket/socket.io",
+    query: { tenantID: "droptable" }
+  })
+})
+
+socket.on("disconnect", (reason) => {
+  console.log("Disconnected from chat server. Reason:", reason)
+  if (reason === "io server disconnect" || reason === "transport close") {
+    console.log("Attempting to reconnect...")
+    socket.connect()
+  }
+})
+
+socket.on("reconnect", (attemptNumber) => {
+  console.log("Reconnected to chat server after", attemptNumber, "attempts")
+  const userId = sessionStorage.getItem("user")
+  if (userId) {
+    socket.emit("user_connected", { userId: parseInt(userId) })
+    console.log("Re-emitted user_connected event for user:", userId)
+  }
+})
+
+socket.on("reconnect_attempt", (attemptNumber) => {
+  console.log("Attempting to reconnect:", attemptNumber)
+})
+
+socket.on("reconnect_error", (error) => {
+  console.error("Reconnection error:", error)
+})
+
+socket.on("reconnect_failed", () => {
+  console.error("Failed to reconnect after all attempts")
+})
+
+// Chat event handlers
+socket.on("/chat/join-room", (data) => {
+  console.log("Join room event received:", data)
+})
+
+socket.on("/room-created", (data) => {
+  console.log("Room created event received:", data)
+})
+
+socket.on("/send-message", (data) => {
+  console.log("Message received:", data)
+})
+
 export { socket }
 
 const ProtectedRoute = ({ children }) => {
