@@ -54,37 +54,6 @@ const GlobalStyle = () => (
 const TopBar = () => {
   const { navOpen, toggleNav } = useContext(NavContext)
 
-  return (
-      <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 md:px-6 z-50 shadow-md">
-        <div className="flex items-center flex-grow">
-          <button className="mr-2 text-white md:hidden" onClick={toggleNav} aria-label="Toggle navigation">
-            {navOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
-          <div className="w-12 h-12 md:w-16 md:h-16 bg-white rounded-full flex items-center justify-center p-2 shadow-lg">
-            <img
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame-V163AsalyIRqbHW6Fe7OWFHHuwoL99.png"
-                alt="Bubble Brain Logo"
-                className="w-full h-full object-contain"
-            />
-          </div>
-          <h1 className="text-white text-2xl md:text-4xl ml-2 md:ml-4 font-extrabold" style={fontStyle}>
-            Bubble Brain
-          </h1>
-        </div>
-        <div className="hidden md:flex space-x-2 lg:space-x-6">
-          {["Home", "Courses", "Quizzes", "Contact"].map((item) => (
-              <Link
-                  key={item}
-                  to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                  className="text-white px-2 py-2 text-sm lg:px-4 lg:text-base hover:bg-white/10 rounded-lg transition-colors"
-                  style={fontStyle}
-              >
-                {item}
-              </Link>
-          ))}
-        </div>
-      </header>
-  )
 }
 
 const Communities = () => {
@@ -434,7 +403,7 @@ const Communities = () => {
   const getBaseUrl = () => {
     // Check if we're in production by looking for the specific domain
     const isProduction = window.location.hostname.includes('webdev.cse.buffalo.edu');
-    
+
     if (isProduction) {
       // In production, include the full path
       return `${window.location.origin}/hci/teams/droptable`;
@@ -1002,7 +971,7 @@ const Communities = () => {
                         <input
                             type="text"
                             placeholder="Search communities by name..."
-                            className="w-full p-3 md:p-4 pl-10 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
+                            className="w-full p-8 md:p-8 pl-14 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             style={fontStyle}
