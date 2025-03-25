@@ -311,6 +311,7 @@ const Upload = () => {
                   fontFamily: "SourGummy, sans-serif",
                 },
               }}
+              inputProps={{ maxLength: 30 }}
             />
 
             <Button

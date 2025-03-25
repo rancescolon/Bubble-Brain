@@ -494,8 +494,8 @@ const HomePage = () => {
         opacity: 1.0,
       }}
     >
-      <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
-        <Toolbar>
+      <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
+        <Toolbar sx={{ visibility: "hidden" }}>
           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
             <img
               src={logo || "/placeholder.svg"}
