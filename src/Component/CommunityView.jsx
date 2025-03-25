@@ -39,7 +39,7 @@ const GlobalStyle = () => (
 // TopBar Component
 const TopBar = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 z-10">
+    <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 z-10 opacity-0">
       <div className="flex items-center flex-grow">
         <div className="w-20 h-20 flex items-center justify-center">
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2">
