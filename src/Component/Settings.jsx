@@ -301,6 +301,7 @@ const Settings = () => {
                       value={newUsername}
                       onChange={(e) => setNewUsername(e.target.value)}
                       placeholder="Set your username"
+                      inputProps={{ maxLength: 20 }}
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>

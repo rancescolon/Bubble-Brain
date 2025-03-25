@@ -8,6 +8,8 @@ import background from "../assets/image3.png"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
 import fish3 from "../assets/fish3.png"
+import { socket } from "../App"
+import socketService from '../services/socketService';
 
 // Custom font import
 const fontStyle = {
@@ -37,7 +39,7 @@ const GlobalStyle = () => (
 // TopBar Component
 const TopBar = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 z-10">
+    <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] h-20 flex items-center px-4 z-10 opacity-0">
       <div className="flex items-center flex-grow">
         <div className="w-20 h-20 flex items-center justify-center">
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2">
@@ -168,6 +170,12 @@ const CommunityView = () => {
   const [currentStep, setCurrentStep] = useState(1) // 1: Name, 2: Template, 3: Content
   const [editingItemIndex, setEditingItemIndex] = useState(null)
   const [newItem, setNewItem] = useState({})
+  const [showChat, setShowChat] = useState(false)
+  // const [showChatRoom, setShowChatRoom] = useState(false)
+  const [showCommunityChat, setShowCommunityChat] = useState(false)
+  const [showCommunityChatRoom, setShowCommunityChatRoom] = useState(false)
+  const [Notification, setNotification] = useState([])
+
 
   // Add this function to get the base URL
   const getBaseUrl = () => {
@@ -735,17 +743,17 @@ const CommunityView = () => {
       });
   }
 
-  const handleOpenChatRoom = () => {
-    setShowChatRoom(true)
-    // Initialize with some sample messages
-    if (!messages.length) {
-      const initialMessages = [
-        { id: 1, sender: "You", text: "Hello everyone!", timestamp: new Date().toISOString() },
-        { id: 2, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
-      ]
-      setMessages(initialMessages)
-    }
-  }
+  // const handleOpenChatRoom = () => {
+  //   setShowChatRoom(true)
+  //   // Initialize with some sample messages
+  //   if (!messages.length) {
+  //     const initialMessages = [
+  //       { id: 1, sender: "You", text: "Hello everyone!", timestamp: new Date().toISOString() },
+  //       { id: 2, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
+  //     ]
+  //     setMessages(initialMessages)
+  //   }
+  // }
 
   const handleBackToCommunity = () => {
     setShowChatRoom(false)
@@ -1022,6 +1030,64 @@ const CommunityView = () => {
     return <ChatRoom />
   }
 
+
+  const handleOpenChatRoom = () => {
+    console.log("Opening community chat room for community ID:", id);
+    
+    if (!socket.connected) {
+      console.error("Socket not connected, attempting to connect");
+      socket.connect();
+      showNotification("Connecting to chat server...", "info");
+      
+      // Give the socket a moment to connect
+      setTimeout(() => {
+        if (!socket.connected) {
+          console.error("Failed to connect to chat server");
+          showNotification("Chat server connection failed. Please try again.", "error");
+          return;
+        }
+        navigateToChatRoom();
+      }, 2000);
+      return;
+    }
+    
+    navigateToChatRoom();
+  };
+  
+  // Helper function to navigate to the community chat room
+  const navigateToChatRoom = () => {
+    try {
+      // Store community ID for potential reconnections
+      sessionStorage.setItem("activeCommunityID", id);
+      sessionStorage.setItem("activeCommunityRoomID", `community-${id}`);
+      
+      // Create payload for room creation/joining
+      const payload = {
+        userID: parseInt(sessionStorage.getItem("user")),
+        communityID: parseInt(id),
+        roomID: `community-${id}`
+      };
+      
+      console.log("Emitting community join-room event with payload:", payload);
+      
+      // Emit socket event for joining community room (the server will create it if it doesn't exist)
+      socket.emit("/community/join-room", payload);
+      
+      // Navigate to the community chat page
+      navigate(`/community/${id}/chat`);
+    } catch (error) {
+      console.error("Error navigating to community chat:", error);
+      showNotification("Failed to open chat room", "error");
+    }
+  };
+  
+  // Add this to showNotification to handle info status
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "success" });
+    }, 3000);
+  };
   return (
     <div className="min-h-screen flex" style={backgroundStyle}>
       <GlobalStyle />
