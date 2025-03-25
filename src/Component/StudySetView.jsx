@@ -19,7 +19,7 @@ import {
   MenuItem,
   Snackbar,
 } from "@mui/material"
-import { ArrowLeft, Share2, Edit2, Trash2 } from "lucide-react"
+import { ArrowLeft, Edit2, Trash2 } from "lucide-react"
 import background from "../assets/image3.png"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
@@ -230,13 +230,13 @@ const StudySetView = () => {
 
       // Transform post-reactions to comment format if needed and filter out invalid entries
       const formattedComments = data
-        .filter((reaction) => reaction.content && reaction.content.trim() !== "")
-        .map((reaction) => ({
-          id: reaction.id,
-          content: reaction.content || "No content",
-          createdAt: reaction.createdAt || new Date().toISOString(),
-          author: reaction.author || { email: "Anonymous" },
-        }))
+          .filter((reaction) => reaction.content && reaction.content.trim() !== "")
+          .map((reaction) => ({
+            id: reaction.id,
+            content: reaction.content || "No content",
+            createdAt: reaction.createdAt || new Date().toISOString(),
+            author: reaction.author || { email: "Anonymous" },
+          }))
 
       // Get existing comments from local storage to merge with server data
       const localStorageKey = getLocalStorageKey(studySetId)
@@ -249,7 +249,7 @@ const StudySetView = () => {
           if (Array.isArray(parsedComments)) {
             // Keep only temporary comments (those not yet saved to server)
             localComments = parsedComments.filter(
-              (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
+                (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
             )
           }
         } catch (err) {
@@ -280,13 +280,13 @@ const StudySetView = () => {
           const fallbackData = await fallbackResponse.json()
           // Filter and format fallback data
           const formattedFallbackComments = fallbackData
-            .filter((comment) => comment.content && comment.content.trim() !== "")
-            .map((comment) => ({
-              id: comment.id,
-              content: comment.content || "No content",
-              createdAt: comment.createdAt || new Date().toISOString(),
-              author: comment.author || { email: "Anonymous" },
-            }))
+              .filter((comment) => comment.content && comment.content.trim() !== "")
+              .map((comment) => ({
+                id: comment.id,
+                content: comment.content || "No content",
+                createdAt: comment.createdAt || new Date().toISOString(),
+                author: comment.author || { email: "Anonymous" },
+              }))
 
           // Get existing comments from local storage
           const localStorageKey = getLocalStorageKey(studySetId)
@@ -299,7 +299,7 @@ const StudySetView = () => {
               if (Array.isArray(parsedComments)) {
                 // Keep only temporary comments
                 localComments = parsedComments.filter(
-                  (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
+                    (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
                 )
               }
             } catch (err) {
@@ -359,8 +359,19 @@ const StudySetView = () => {
       const localStorageKey = getLocalStorageKey(studySetId)
       localStorage.setItem(localStorageKey, JSON.stringify(updatedComments))
 
-      // Try the simplest possible approach
-      console.log("Posting comment using simplified approach")
+      // Make sure studySetId is properly parsed as a number
+      const postId = Number.parseInt(studySetId, 10)
+
+      if (isNaN(postId)) {
+        console.error("Invalid study set ID:", studySetId)
+        showSnackbar("Comment saved locally but couldn't be sent to server: Invalid study set ID")
+        setLoadingComments(false)
+        return
+      }
+
+      console.log("Posting comment with postId:", postId)
+
+      // Try the post-reactions endpoint with proper error handling
       const response = await fetch(`${API_BASE_URL}/post-reactions`, {
         method: "POST",
         headers: {
@@ -368,43 +379,77 @@ const StudySetView = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          postId: Number.parseInt(studySetId, 10),
+          postId: postId,
           type: "comment",
           content: tempComment.content,
         }),
       })
 
+      // Log the full response for debugging
+      console.log("Server response status:", response.status)
+
       if (!response.ok) {
-        console.error("Error posting comment:", response.status)
-        showSnackbar("Comment saved locally but couldn't be sent to server")
-        // Even if the server request fails, we keep the comment in the UI
-        // to avoid disrupting the user experience
+        // Try alternative endpoint if the first one fails
+        console.log("First endpoint failed, trying alternative...")
+
+        const alternativeResponse = await fetch(`${API_BASE_URL}/comments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            postId: postId,
+            content: tempComment.content,
+          }),
+        })
+
+        if (!alternativeResponse.ok) {
+          throw new Error(`Failed to post comment: ${response.status}, ${alternativeResponse.status}`)
+        }
+
+        const serverComment = await alternativeResponse.json()
+        console.log("Alternative endpoint success, server response:", serverComment)
+
+        // Replace the temporary comment with the server-generated one
+        const updatedWithServerComment = comments.map((comment) =>
+            comment.id === tempComment.id
+                ? {
+                  id: serverComment.id,
+                  content: serverComment.content || tempComment.content,
+                  createdAt: serverComment.createdAt || tempComment.createdAt,
+                  author: serverComment.author || tempComment.author,
+                }
+                : comment,
+        )
+
+        setComments(updatedWithServerComment)
+        localStorage.setItem(localStorageKey, JSON.stringify(updatedWithServerComment))
+        showSnackbar("Comment posted successfully!")
       } else {
-        console.log("Comment posted successfully")
+        console.log("Comment posted successfully to primary endpoint")
         const serverComment = await response.json()
         console.log("Server response for new comment:", serverComment)
 
         // Replace the temporary comment with the server-generated one
         const updatedWithServerComment = comments.map((comment) =>
-          comment.id === tempComment.id
-            ? {
-                id: serverComment.id,
-                content: serverComment.content || tempComment.content,
-                createdAt: serverComment.createdAt || tempComment.createdAt,
-                author: serverComment.author || tempComment.author,
-              }
-            : comment,
+            comment.id === tempComment.id
+                ? {
+                  id: serverComment.id,
+                  content: serverComment.content || tempComment.content,
+                  createdAt: serverComment.createdAt || tempComment.createdAt,
+                  author: serverComment.author || tempComment.author,
+                }
+                : comment,
         )
 
         setComments(updatedWithServerComment)
-
-        // Update local storage with the server comment
         localStorage.setItem(localStorageKey, JSON.stringify(updatedWithServerComment))
         showSnackbar("Comment posted successfully!")
       }
     } catch (err) {
       console.error("Network error posting comment:", err)
-      showSnackbar("Comment saved locally but couldn't be sent to server")
+      showSnackbar("Comment saved locally. We'll try to sync it when connection improves.")
       // We don't remove the comment from the UI even if there's an error
       // This provides a better user experience when there are network issues
     } finally {
@@ -418,7 +463,7 @@ const StudySetView = () => {
     try {
       // First update locally for immediate feedback
       const updatedComments = comments.map((comment) =>
-        comment.id === commentId ? { ...comment, content: newContent } : comment,
+          comment.id === commentId ? { ...comment, content: newContent } : comment,
       )
       setComments(updatedComments)
 
@@ -584,11 +629,12 @@ const StudySetView = () => {
       let userId
       try {
         const parsed = JSON.parse(userStr)
-        userId = typeof parsed === 'object' && parsed !== null && parsed.id 
-          ? parsed.id 
-          : typeof parsed === 'number' 
-            ? parsed 
-            : Number(userStr)
+        userId =
+            typeof parsed === "object" && parsed !== null && parsed.id
+                ? parsed.id
+                : typeof parsed === "number"
+                    ? parsed
+                    : Number(userStr)
         console.log("Extracted user ID:", userId)
       } catch (e) {
         userId = Number(userStr)
@@ -603,17 +649,17 @@ const StudySetView = () => {
           duration: sessionDuration,
           studySetId: studySet.id,
           studySetTitle: studySet.title,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }),
         postType: "study_time",
         authorID: userId,
         parentID: studySet.id,
-        groupID: parseInt(communityId) || 0,
+        groupID: Number.parseInt(communityId) || 0,
         attributes: {
           type: "study_time",
           duration: sessionDuration,
-          studySetId: studySet.id
-        }
+          studySetId: studySet.id,
+        },
       }
 
       console.log("Saving study time data:", studyData)
@@ -622,9 +668,9 @@ const StudySetView = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(studyData)
+        body: JSON.stringify(studyData),
       })
 
       console.log("Study time save response status:", response.status)
@@ -645,7 +691,7 @@ const StudySetView = () => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const remainingSeconds = seconds % 60
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
   const isCurrentUserComment = (comment) => {
@@ -660,8 +706,8 @@ const StudySetView = () => {
     // Check if the comment author ID matches the current user ID
     // Also consider temporary comments created by the current user
     return (
-      (comment.author && userId === String(comment.author.id)) ||
-      (typeof comment.id === "string" && comment.id.startsWith("temp-"))
+        (comment.author && userId === String(comment.author.id)) ||
+        (typeof comment.id === "string" && comment.id.startsWith("temp-"))
     )
   }
 
@@ -681,263 +727,263 @@ const StudySetView = () => {
           return null
         }
         return (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "400px",
-              perspective: "1000px",
-              mb: 8,
-              position: "relative",
-            }}
-          >
-            {/* Flashcard */}
             <Box
-              sx={{
-                width: "100%",
-                maxWidth: "600px",
-                height: "100%",
-                cursor: "pointer",
-                position: "relative",
-                transformStyle: "preserve-3d",
-                transition: "transform 0.6s",
-                transform: showAnswer ? "rotateY(180deg)" : "rotateY(0)",
-              }}
-              onClick={() => setShowAnswer(!showAnswer)}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "400px",
+                  perspective: "1000px",
+                  mb: 8,
+                  position: "relative",
+                }}
             >
-              {/* Front of card */}
-              <Card
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  position: "absolute",
-                  backfaceVisibility: "hidden",
-                  "&:hover": {
-                    boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-                  },
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: "linear-gradient(45deg, #1D6EF1 0%, #5B8C5A 100%)",
-                    opacity: 0.1,
-                    borderRadius: "inherit",
-                    zIndex: 0,
-                  },
-                }}
-              >
-                <CardContent
+              {/* Flashcard */}
+              <Box
                   sx={{
+                    width: "100%",
+                    maxWidth: "600px",
                     height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
+                    cursor: "pointer",
                     position: "relative",
-                    zIndex: 1,
-                    p: 4,
+                    transformStyle: "preserve-3d",
+                    transition: "transform 0.6s",
+                    transform: showAnswer ? "rotateY(180deg)" : "rotateY(0)",
                   }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 2,
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "text.secondary",
-                        ...fontStyle,
-                        textTransform: "uppercase",
-                        letterSpacing: "2px",
-                      }}
-                    >
-                      Question
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        textAlign: "center",
-                        ...fontStyle,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {studySet.content[currentIndex].front}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "text.secondary",
-                        mt: 2,
-                        textAlign: "center",
-                        ...fontStyle,
-                      }}
-                    >
-                      Click to see answer
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              {/* Back of card */}
-              <Card
-                sx={{
-                  width: "100%",
-                  height: "100%",
-                  position: "absolute",
-                  backfaceVisibility: "hidden",
-                  transform: "rotateY(180deg)",
-                  "&:hover": {
-                    boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
-                  },
-                  "&::before": {
-                    content: '""',
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: "linear-gradient(45deg, #1D6EF1 0%, #5B8C5A 100%)",
-                    opacity: 0.1,
-                    borderRadius: "inherit",
-                    zIndex: 0,
-                  },
-                }}
+                  onClick={() => setShowAnswer(!showAnswer)}
               >
-                <CardContent
+                {/* Front of card */}
+                <Card
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      backfaceVisibility: "hidden",
+                      "&:hover": {
+                        boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+                      },
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "linear-gradient(45deg, #1D6EF1 0%, #5B8C5A 100%)",
+                        opacity: 0.1,
+                        borderRadius: "inherit",
+                        zIndex: 0,
+                      },
+                    }}
+                >
+                  <CardContent
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        position: "relative",
+                        zIndex: 1,
+                        p: 4,
+                      }}
+                  >
+                    <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 2,
+                        }}
+                    >
+                      <Typography
+                          variant="h6"
+                          sx={{
+                            color: "text.secondary",
+                            ...fontStyle,
+                            textTransform: "uppercase",
+                            letterSpacing: "2px",
+                          }}
+                      >
+                        Question
+                      </Typography>
+                      <Typography
+                          variant="h4"
+                          sx={{
+                            textAlign: "center",
+                            ...fontStyle,
+                            fontWeight: 600,
+                          }}
+                      >
+                        {studySet.content[currentIndex].front}
+                      </Typography>
+                      <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.secondary",
+                            mt: 2,
+                            textAlign: "center",
+                            ...fontStyle,
+                          }}
+                      >
+                        Click to see answer
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+
+                {/* Back of card */}
+                <Card
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                      "&:hover": {
+                        boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
+                      },
+                      "&::before": {
+                        content: '""',
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "linear-gradient(45deg, #1D6EF1 0%, #5B8C5A 100%)",
+                        opacity: 0.1,
+                        borderRadius: "inherit",
+                        zIndex: 0,
+                      },
+                    }}
+                >
+                  <CardContent
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        position: "relative",
+                        zIndex: 1,
+                        p: 4,
+                      }}
+                  >
+                    <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 2,
+                        }}
+                    >
+                      <Typography
+                          variant="h6"
+                          sx={{
+                            color: "text.secondary",
+                            ...fontStyle,
+                            textTransform: "uppercase",
+                            letterSpacing: "2px",
+                          }}
+                      >
+                        Answer
+                      </Typography>
+                      <Typography
+                          variant="h4"
+                          sx={{
+                            textAlign: "center",
+                            ...fontStyle,
+                            fontWeight: 600,
+                          }}
+                      >
+                        {studySet.content[currentIndex].back}
+                      </Typography>
+                      <Typography
+                          variant="body2"
+                          sx={{
+                            color: "text.secondary",
+                            mt: 2,
+                            textAlign: "center",
+                            ...fontStyle,
+                          }}
+                      >
+                        Click to see question
+                      </Typography>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {/* Card Counter and Navigation */}
+              <Box
                   sx={{
-                    height: "100%",
+                    position: "absolute",
+                    bottom: -60,
+                    left: "50%",
+                    transform: "translateX(-50%)",
                     display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
                     alignItems: "center",
-                    position: "relative",
-                    zIndex: 1,
-                    p: 4,
+                    gap: 2,
+                    bgcolor: "rgba(255, 255, 255, 0.9)",
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    zIndex: 2,
                   }}
-                >
-                  <Box
+              >
+                <Button
+                    onClick={handlePrevious}
+                    disabled={currentIndex === 0}
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 2,
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 1)",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                      },
                     }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "text.secondary",
-                        ...fontStyle,
-                        textTransform: "uppercase",
-                        letterSpacing: "2px",
-                      }}
-                    >
-                      Answer
-                    </Typography>
-                    <Typography
-                      variant="h4"
-                      sx={{
-                        textAlign: "center",
-                        ...fontStyle,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {studySet.content[currentIndex].back}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "text.secondary",
-                        mt: 2,
-                        textAlign: "center",
-                        ...fontStyle,
-                      }}
-                    >
-                      Click to see question
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
+                >
+                  <ArrowLeft size={24} color="#1D6EF1" />
+                </Button>
+
+                <Typography
+                    variant="body1"
+                    sx={{
+                      ...fontStyle,
+                      color: "#1D1D20",
+                      fontWeight: 500,
+                    }}
+                >
+                  {currentIndex + 1} of {studySet.content.length}
+                </Typography>
+
+                <Button
+                    onClick={handleNext}
+                    disabled={currentIndex === studySet.content.length - 1}
+                    sx={{
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 1)",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                      },
+                    }}
+                >
+                  <ArrowLeft size={24} color="#1D6EF1" style={{ transform: "rotate(180deg)" }} />
+                </Button>
+              </Box>
             </Box>
-
-            {/* Card Counter and Navigation */}
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: -60,
-                left: "50%",
-                transform: "translateX(-50%)",
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                bgcolor: "rgba(255, 255, 255, 0.9)",
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                zIndex: 2,
-              }}
-            >
-              <Button
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-                sx={{
-                  minWidth: "40px",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255, 255, 255, 0.9)",
-                  "&:hover": {
-                    bgcolor: "rgba(255, 255, 255, 1)",
-                  },
-                  "&.Mui-disabled": {
-                    bgcolor: "rgba(255, 255, 255, 0.5)",
-                  },
-                }}
-              >
-                <ArrowLeft size={24} color="#1D6EF1" />
-              </Button>
-
-              <Typography
-                variant="body1"
-                sx={{
-                  ...fontStyle,
-                  color: "#1D1D20",
-                  fontWeight: 500,
-                }}
-              >
-                {currentIndex + 1} of {studySet.content.length}
-              </Typography>
-
-              <Button
-                onClick={handleNext}
-                disabled={currentIndex === studySet.content.length - 1}
-                sx={{
-                  minWidth: "40px",
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  bgcolor: "rgba(255, 255, 255, 0.9)",
-                  "&:hover": {
-                    bgcolor: "rgba(255, 255, 255, 1)",
-                  },
-                  "&.Mui-disabled": {
-                    bgcolor: "rgba(255, 255, 255, 0.5)",
-                  },
-                }}
-              >
-                <ArrowLeft size={24} color="#1D6EF1" style={{ transform: "rotate(180deg)" }} />
-              </Button>
-            </Box>
-          </Box>
         )
 
       case "fill_in_blank":
@@ -946,24 +992,24 @@ const StudySetView = () => {
           return null
         }
         return (
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Question {currentIndex + 1}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 2, ...fontStyle }}>
-                {studySet.content[currentIndex].question}
-              </Typography>
-              {showAnswer && (
-                <Typography variant="body1" sx={{ color: "success.main", ...fontStyle }}>
-                  Answer: {studySet.content[currentIndex].answer}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
+                  Question {currentIndex + 1}
                 </Typography>
-              )}
-              <Button variant="contained" onClick={() => setShowAnswer(!showAnswer)} sx={{ mt: 2, bgcolor: "#1D6EF1" }}>
-                {showAnswer ? "Hide Answer" : "Show Answer"}
-              </Button>
-            </CardContent>
-          </Card>
+                <Typography variant="body1" sx={{ mb: 2, ...fontStyle }}>
+                  {studySet.content[currentIndex].question}
+                </Typography>
+                {showAnswer && (
+                    <Typography variant="body1" sx={{ color: "success.main", ...fontStyle }}>
+                      Answer: {studySet.content[currentIndex].answer}
+                    </Typography>
+                )}
+                <Button variant="contained" onClick={() => setShowAnswer(!showAnswer)} sx={{ mt: 2, bgcolor: "#1D6EF1" }}>
+                  {showAnswer ? "Hide Answer" : "Show Answer"}
+                </Button>
+              </CardContent>
+            </Card>
         )
 
       case "matching":
@@ -972,177 +1018,177 @@ const StudySetView = () => {
           return null
         }
         return (
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 3, ...fontStyle }}>
-                Match the following
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  mb: 3,
-                  ...fontStyle,
-                  color: "text.secondary",
-                  textAlign: "center",
-                  bgcolor: "rgba(29, 110, 241, 0.1)",
-                  p: 2,
-                  borderRadius: 1,
-                }}
-              >
-                Click on a term or definition to select it, then click on its matching pair from the other column.
-                Correct matches will turn green, incorrect matches will briefly turn red.
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, ...fontStyle }}>
-                    Terms:
-                  </Typography>
-                  {studySet.content.map((item, index) => (
-                    <Button
-                      key={index}
-                      variant={selectedAnswer === `term-${index}` ? "contained" : "outlined"}
-                      onClick={() => {
-                        if (!selectedAnswer) {
-                          setSelectedAnswer(`term-${index}`)
-                          setIncorrectMatch(null)
-                        } else if (selectedAnswer.startsWith("def-")) {
-                          const defIndex = Number.parseInt(selectedAnswer.split("-")[1])
-                          if (defIndex === index) {
-                            // Check if this pair hasn't been matched before
-                            const pairKey = `${index}-${defIndex}`
-                            if (!matchedPairs.has(pairKey)) {
-                              setScore(score + 1)
-                              setMatchedPairs((prev) => new Set([...prev, pairKey]))
-                            }
-                            setSelectedAnswer(null)
-                            setIncorrectMatch(null)
-                          } else {
-                            setSelectedAnswer(null)
-                            setIncorrectMatch(`term-${index}`)
-                            setTimeout(() => setIncorrectMatch(null), 1000)
-                          }
-                        } else {
-                          setSelectedAnswer(`term-${index}`)
-                          setIncorrectMatch(null)
-                        }
-                      }}
-                      disabled={matchedPairs.has(`${index}-${index}`)}
-                      sx={{
-                        width: "100%",
-                        mb: 1,
-                        justifyContent: "flex-start",
-                        textAlign: "left",
-                        ...fontStyle,
-                        bgcolor: matchedPairs.has(`${index}-${index}`)
-                          ? "#4CAF50"
-                          : incorrectMatch === `term-${index}`
-                            ? "#DC2626"
-                            : selectedAnswer === `term-${index}`
-                              ? "#1D6EF1"
-                              : "transparent",
-                        color:
-                          matchedPairs.has(`${index}-${index}`) ||
-                          selectedAnswer === `term-${index}` ||
-                          incorrectMatch === `term-${index}`
-                            ? "white"
-                            : "inherit",
-                        "&:hover": {
-                          bgcolor: matchedPairs.has(`${index}-${index}`)
-                            ? "#4CAF50"
-                            : incorrectMatch === `term-${index}`
-                              ? "#DC2626"
-                              : selectedAnswer === `term-${index}`
-                                ? "#1557B0"
-                                : "rgba(29, 110, 241, 0.1)",
-                        },
-                      }}
-                    >
-                      {item.term}
-                    </Button>
-                  ))}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 3, ...fontStyle }}>
+                  Match the following
+                </Typography>
+                <Typography
+                    variant="body1"
+                    sx={{
+                      mb: 3,
+                      ...fontStyle,
+                      color: "text.secondary",
+                      textAlign: "center",
+                      bgcolor: "rgba(29, 110, 241, 0.1)",
+                      p: 2,
+                      borderRadius: 1,
+                    }}
+                >
+                  Click on a term or definition to select it, then click on its matching pair from the other column.
+                  Correct matches will turn green, incorrect matches will briefly turn red.
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" sx={{ mb: 2, ...fontStyle }}>
+                      Terms:
+                    </Typography>
+                    {studySet.content.map((item, index) => (
+                        <Button
+                            key={index}
+                            variant={selectedAnswer === `term-${index}` ? "contained" : "outlined"}
+                            onClick={() => {
+                              if (!selectedAnswer) {
+                                setSelectedAnswer(`term-${index}`)
+                                setIncorrectMatch(null)
+                              } else if (selectedAnswer.startsWith("def-")) {
+                                const defIndex = Number.parseInt(selectedAnswer.split("-")[1])
+                                if (defIndex === index) {
+                                  // Check if this pair hasn't been matched before
+                                  const pairKey = `${index}-${defIndex}`
+                                  if (!matchedPairs.has(pairKey)) {
+                                    setScore(score + 1)
+                                    setMatchedPairs((prev) => new Set([...prev, pairKey]))
+                                  }
+                                  setSelectedAnswer(null)
+                                  setIncorrectMatch(null)
+                                } else {
+                                  setSelectedAnswer(null)
+                                  setIncorrectMatch(`term-${index}`)
+                                  setTimeout(() => setIncorrectMatch(null), 1000)
+                                }
+                              } else {
+                                setSelectedAnswer(`term-${index}`)
+                                setIncorrectMatch(null)
+                              }
+                            }}
+                            disabled={matchedPairs.has(`${index}-${index}`)}
+                            sx={{
+                              width: "100%",
+                              mb: 1,
+                              justifyContent: "flex-start",
+                              textAlign: "left",
+                              ...fontStyle,
+                              bgcolor: matchedPairs.has(`${index}-${index}`)
+                                  ? "#4CAF50"
+                                  : incorrectMatch === `term-${index}`
+                                      ? "#DC2626"
+                                      : selectedAnswer === `term-${index}`
+                                          ? "#1D6EF1"
+                                          : "transparent",
+                              color:
+                                  matchedPairs.has(`${index}-${index}`) ||
+                                  selectedAnswer === `term-${index}` ||
+                                  incorrectMatch === `term-${index}`
+                                      ? "white"
+                                      : "inherit",
+                              "&:hover": {
+                                bgcolor: matchedPairs.has(`${index}-${index}`)
+                                    ? "#4CAF50"
+                                    : incorrectMatch === `term-${index}`
+                                        ? "#DC2626"
+                                        : selectedAnswer === `term-${index}`
+                                            ? "#1557B0"
+                                            : "rgba(29, 110, 241, 0.1)",
+                              },
+                            }}
+                        >
+                          {item.term}
+                        </Button>
+                    ))}
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="subtitle1" sx={{ mb: 2, ...fontStyle }}>
+                      Definitions:
+                    </Typography>
+                    {studySet.content.map((item, index) => (
+                        <Button
+                            key={index}
+                            variant={selectedAnswer === `def-${index}` ? "contained" : "outlined"}
+                            onClick={() => {
+                              if (!selectedAnswer) {
+                                setSelectedAnswer(`def-${index}`)
+                                setIncorrectMatch(null)
+                              } else if (selectedAnswer.startsWith("term-")) {
+                                const termIndex = Number.parseInt(selectedAnswer.split("-")[1])
+                                if (termIndex === index) {
+                                  // Check if this pair hasn't been matched before
+                                  const pairKey = `${termIndex}-${index}`
+                                  if (!matchedPairs.has(pairKey)) {
+                                    setScore(score + 1)
+                                    setMatchedPairs((prev) => new Set([...prev, pairKey]))
+                                  }
+                                  setSelectedAnswer(null)
+                                  setIncorrectMatch(null)
+                                } else {
+                                  setSelectedAnswer(null)
+                                  setIncorrectMatch(`def-${index}`)
+                                  setTimeout(() => setIncorrectMatch(null), 1000)
+                                }
+                              } else {
+                                setSelectedAnswer(`def-${index}`)
+                                setIncorrectMatch(null)
+                              }
+                            }}
+                            disabled={matchedPairs.has(`${index}-${index}`)}
+                            sx={{
+                              width: "100%",
+                              mb: 1,
+                              justifyContent: "flex-start",
+                              textAlign: "left",
+                              ...fontStyle,
+                              bgcolor: matchedPairs.has(`${index}-${index}`)
+                                  ? "#4CAF50"
+                                  : incorrectMatch === `def-${index}`
+                                      ? "#DC2626"
+                                      : selectedAnswer === `def-${index}`
+                                          ? "#1D6EF1"
+                                          : "transparent",
+                              color:
+                                  matchedPairs.has(`${index}-${index}`) ||
+                                  selectedAnswer === `def-${index}` ||
+                                  incorrectMatch === `def-${index}`
+                                      ? "white"
+                                      : "inherit",
+                              "&:hover": {
+                                bgcolor: matchedPairs.has(`${index}-${index}`)
+                                    ? "#4CAF50"
+                                    : incorrectMatch === `def-${index}`
+                                        ? "#DC2626"
+                                        : selectedAnswer === `def-${index}`
+                                            ? "#1557B0"
+                                            : "rgba(29, 110, 241, 0.1)",
+                              },
+                            }}
+                        >
+                          {item.definition}
+                        </Button>
+                    ))}
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, ...fontStyle }}>
-                    Definitions:
-                  </Typography>
-                  {studySet.content.map((item, index) => (
-                    <Button
-                      key={index}
-                      variant={selectedAnswer === `def-${index}` ? "contained" : "outlined"}
-                      onClick={() => {
-                        if (!selectedAnswer) {
-                          setSelectedAnswer(`def-${index}`)
-                          setIncorrectMatch(null)
-                        } else if (selectedAnswer.startsWith("term-")) {
-                          const termIndex = Number.parseInt(selectedAnswer.split("-")[1])
-                          if (termIndex === index) {
-                            // Check if this pair hasn't been matched before
-                            const pairKey = `${termIndex}-${index}`
-                            if (!matchedPairs.has(pairKey)) {
-                              setScore(score + 1)
-                              setMatchedPairs((prev) => new Set([...prev, pairKey]))
-                            }
-                            setSelectedAnswer(null)
-                            setIncorrectMatch(null)
-                          } else {
-                            setSelectedAnswer(null)
-                            setIncorrectMatch(`def-${index}`)
-                            setTimeout(() => setIncorrectMatch(null), 1000)
-                          }
-                        } else {
-                          setSelectedAnswer(`def-${index}`)
-                          setIncorrectMatch(null)
-                        }
-                      }}
-                      disabled={matchedPairs.has(`${index}-${index}`)}
-                      sx={{
-                        width: "100%",
-                        mb: 1,
-                        justifyContent: "flex-start",
-                        textAlign: "left",
-                        ...fontStyle,
-                        bgcolor: matchedPairs.has(`${index}-${index}`)
-                          ? "#4CAF50"
-                          : incorrectMatch === `def-${index}`
-                            ? "#DC2626"
-                            : selectedAnswer === `def-${index}`
-                              ? "#1D6EF1"
-                              : "transparent",
-                        color:
-                          matchedPairs.has(`${index}-${index}`) ||
-                          selectedAnswer === `def-${index}` ||
-                          incorrectMatch === `def-${index}`
-                            ? "white"
-                            : "inherit",
-                        "&:hover": {
-                          bgcolor: matchedPairs.has(`${index}-${index}`)
-                            ? "#4CAF50"
-                            : incorrectMatch === `def-${index}`
-                              ? "#DC2626"
-                              : selectedAnswer === `def-${index}`
-                                ? "#1557B0"
-                                : "rgba(29, 110, 241, 0.1)",
-                        },
-                      }}
-                    >
-                      {item.definition}
-                    </Button>
-                  ))}
-                </Grid>
-              </Grid>
-              <Typography
-                variant="h6"
-                sx={{
-                  mt: 4,
-                  textAlign: "center",
-                  ...fontStyle,
-                  color: score === studySet.content.length ? "success.main" : "text.primary",
-                }}
-              >
-                Score: {score} / {studySet.content.length}
-              </Typography>
-            </CardContent>
-          </Card>
+                <Typography
+                    variant="h6"
+                    sx={{
+                      mt: 4,
+                      textAlign: "center",
+                      ...fontStyle,
+                      color: score === studySet.content.length ? "success.main" : "text.primary",
+                    }}
+                >
+                  Score: {score} / {studySet.content.length}
+                </Typography>
+              </CardContent>
+            </Card>
         )
 
       case "multiple_choice":
@@ -1151,550 +1197,522 @@ const StudySetView = () => {
           return null
         }
         return (
-          <Card sx={{ mb: 4 }}>
-            <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Question {currentIndex + 1}
-              </Typography>
-              <Typography variant="body1" sx={{ mb: 2, ...fontStyle }}>
-                {studySet.content[currentIndex].question}
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {studySet.content[currentIndex].options.map((option, index) => {
-                  const isCorrectAnswer =
-                    option === studySet.content[currentIndex].options[studySet.content[currentIndex].correctAnswer]
-                  const isSelected = selectedAnswer === option
-                  const isIncorrectSelected = isSelected && !isCorrectAnswer
-
-                  return (
-                    <Button
-                      key={index}
-                      variant="outlined"
-                      onClick={() => {
-                        setSelectedAnswer(option)
-                        if (isCorrectAnswer) {
-                          setShowAnswer(true)
-                          if (!showAnswer) {
-                            setScore(score + 1)
-                          }
-                        } else {
-                          // For incorrect answers, briefly show red and then allow retry
-                          setTimeout(() => {
-                            setSelectedAnswer(null)
-                          }, 500)
-                        }
-                      }}
-                      disabled={showAnswer}
-                      sx={{
-                        justifyContent: "flex-start",
-                        textAlign: "left",
-                        ...fontStyle,
-                        bgcolor:
-                          isCorrectAnswer && showAnswer
-                            ? "#4CAF50"
-                            : isIncorrectSelected
-                              ? "#DC2626"
-                              : isSelected
-                                ? "#1D6EF1"
-                                : "transparent",
-                        color: (isCorrectAnswer && showAnswer) || isSelected ? "white" : "inherit",
-                        transition: "background-color 0.3s",
-                        "&:hover": {
-                          bgcolor:
-                            isCorrectAnswer && showAnswer
-                              ? "#4CAF50"
-                              : isIncorrectSelected
-                                ? "#DC2626"
-                                : isSelected
-                                  ? "#1557B0"
-                                  : "rgba(29, 110, 241, 0.1)",
-                        },
-                      }}
-                    >
-                      {option}
-                    </Button>
-                  )
-                })}
-              </Box>
-              {showAnswer && (
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "success.main",
-                    mt: 2,
-                    ...fontStyle,
-                    textAlign: "center",
-                    fontWeight: 600,
-                  }}
-                >
-                  Correct!
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
+                  Question {currentIndex + 1}
                 </Typography>
-              )}
-            </CardContent>
-          </Card>
+                <Typography variant="body1" sx={{ mb: 2, ...fontStyle }}>
+                  {studySet.content[currentIndex].question}
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {studySet.content[currentIndex].options.map((option, index) => {
+                    const isCorrectAnswer =
+                        option === studySet.content[currentIndex].options[studySet.content[currentIndex].correctAnswer]
+                    const isSelected = selectedAnswer === option
+                    const isIncorrectSelected = isSelected && !isCorrectAnswer
+
+                    return (
+                        <Button
+                            key={index}
+                            variant="outlined"
+                            onClick={() => {
+                              setSelectedAnswer(option)
+                              if (isCorrectAnswer) {
+                                setShowAnswer(true)
+                                if (!showAnswer) {
+                                  setScore(score + 1)
+                                }
+                              } else {
+                                // For incorrect answers, briefly show red and then allow retry
+                                setTimeout(() => {
+                                  setSelectedAnswer(null)
+                                }, 500)
+                              }
+                            }}
+                            disabled={showAnswer}
+                            sx={{
+                              justifyContent: "flex-start",
+                              textAlign: "left",
+                              ...fontStyle,
+                              bgcolor:
+                                  isCorrectAnswer && showAnswer
+                                      ? "#4CAF50"
+                                      : isIncorrectSelected
+                                          ? "#DC2626"
+                                          : isSelected
+                                              ? "#1D6EF1"
+                                              : "transparent",
+                              color: (isCorrectAnswer && showAnswer) || isSelected ? "white" : "inherit",
+                              transition: "background-color 0.3s",
+                              "&:hover": {
+                                bgcolor:
+                                    isCorrectAnswer && showAnswer
+                                        ? "#4CAF50"
+                                        : isIncorrectSelected
+                                            ? "#DC2626"
+                                            : isSelected
+                                                ? "#1557B0"
+                                                : "rgba(29, 110, 241, 0.1)",
+                              },
+                            }}
+                        >
+                          {option}
+                        </Button>
+                    )
+                  })}
+                </Box>
+                {showAnswer && (
+                    <Typography
+                        variant="body1"
+                        sx={{
+                          color: "success.main",
+                          mt: 2,
+                          ...fontStyle,
+                          textAlign: "center",
+                          fontWeight: 600,
+                        }}
+                    >
+                      Correct!
+                    </Typography>
+                )}
+              </CardContent>
+            </Card>
         )
 
       default:
         return (
-          <Typography variant="body1" sx={{ ...fontStyle }}>
-            Unsupported study set type: {studySet.type}
-          </Typography>
+            <Typography variant="body1" sx={{ ...fontStyle }}>
+              Unsupported study set type: {studySet.type}
+            </Typography>
         )
     }
   }
 
   const renderCommentSection = () => {
     return (
-      <Card sx={{ mt: 4, mb: 4 }}>
-        <CardContent>
-          <Typography variant="h5" sx={{ mb: 3, ...fontStyle }}>
-            Comments
-          </Typography>
-
-          {/* Add new comment */}
-          <Box sx={{ mb: 4, display: "flex", flexDirection: "column" }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              placeholder="Add a comment..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              sx={{
-                mb: 2,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  "&:hover fieldset": {
-                    borderColor: "#1D6EF1",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#1D6EF1",
-                  },
-                },
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleAddComment}
-              disabled={!newComment.trim() || loadingComments}
-              sx={{
-                alignSelf: "flex-end",
-                bgcolor: "#1D6EF1",
-                "&:hover": {
-                  bgcolor: "#1557B0",
-                },
-                borderRadius: 2,
-                ...fontStyle,
-              }}
-            >
-              {loadingComments ? "Posting..." : "Post Comment"}
-            </Button>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {/* Comments list */}
-          {loadingComments ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-              <CircularProgress size={30} sx={{ color: "#1D6EF1" }} />
-            </Box>
-          ) : comments.length === 0 ? (
-            <Typography
-              variant="body1"
-              sx={{
-                textAlign: "center",
-                py: 3,
-                color: "text.secondary",
-                ...fontStyle,
-              }}
-            >
-              No comments yet. Be the first to comment!
+        <Card sx={{ mt: 4, mb: 4 }}>
+          <CardContent>
+            <Typography variant="h5" sx={{ mb: 3, ...fontStyle }}>
+              Comments
             </Typography>
-          ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {comments.map((comment) => {
-                const isEditing = editingComment === comment.id
-                const isUserComment = isCurrentUserComment(comment)
 
-                // Format the date properly or use a fallback
-                let formattedDate = "Unknown date"
-                try {
-                  const date = new Date(comment.createdAt)
-                  // Check if date is valid
-                  if (!isNaN(date.getTime())) {
-                    formattedDate = date.toLocaleString()
-                  }
-                } catch (e) {
-                  console.error("Error formatting date:", e)
-                }
-
-                return (
-                  <Box
-                    key={comment.id}
-                    sx={{
-                      display: "flex",
-                      gap: 2,
-                      p: 2,
+            {/* Add new comment */}
+            <Box sx={{ mb: 4, display: "flex", flexDirection: "column" }}>
+              <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      bgcolor: isUserComment ? "rgba(29, 110, 241, 0.05)" : "transparent",
-                      border: isUserComment ? "1px solid rgba(29, 110, 241, 0.2)" : "none",
-                    }}
-                  >
-                    <Avatar
-                      sx={{
-                        bgcolor: "#1D6EF1",
-                        width: 40,
-                        height: 40,
-                      }}
-                    >
-                      {comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "?"}
-                    </Avatar>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ ...fontStyle }}>
-                            {comment.author?.email ? comment.author.email.split("@")[0] : "Anonymous"}
-                            {isUserComment && (
-                              <Typography
-                                component="span"
-                                sx={{
-                                  ml: 1,
-                                  fontSize: "0.75rem",
-                                  bgcolor: "#1D6EF1",
-                                  color: "white",
-                                  px: 1,
-                                  py: 0.25,
-                                  borderRadius: 1,
-                                }}
-                              >
-                                You
-                              </Typography>
-                            )}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: "text.secondary", ...fontStyle }}>
-                            {formattedDate}
-                          </Typography>
-                        </Box>
-                        {isUserComment && (
-                          <Box sx={{ display: "flex", gap: 1 }}>
-                            {!isEditing && (
-                              <>
-                                <Button
-                                  size="small"
-                                  startIcon={<Edit2 size={16} />}
-                                  onClick={() => startEditingComment(comment)}
-                                  sx={{
-                                    color: "#1D6EF1",
-                                    borderColor: "#1D6EF1",
-                                    "&:hover": { bgcolor: "rgba(29, 110, 241, 0.1)" },
-                                    textTransform: "none",
-                                  }}
-                                  variant="outlined"
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="small"
-                                  startIcon={<Trash2 size={16} />}
-                                  onClick={() => handleDeleteComment(comment.id)}
-                                  sx={{
-                                    color: "#DC2626",
-                                    borderColor: "#DC2626",
-                                    "&:hover": { bgcolor: "rgba(220, 38, 38, 0.1)" },
-                                    textTransform: "none",
-                                  }}
-                                  variant="outlined"
-                                >
-                                  Delete
-                                </Button>
-                              </>
-                            )}
-                          </Box>
-                        )}
-                      </Box>
-
-                      {isEditing ? (
-                        <Box sx={{ mt: 2 }}>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={2}
-                            value={editedCommentText}
-                            onChange={(e) => setEditedCommentText(e.target.value)}
-                            sx={{
-                              mb: 2,
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
-                            }}
-                          />
-                          <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                            <Button
-                              size="small"
-                              onClick={cancelEditingComment}
-                              sx={{
-                                ...fontStyle,
-                                color: "text.secondary",
-                                "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" },
-                              }}
-                              variant="text"
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={() => handleEditComment(comment.id, editedCommentText)}
-                              sx={{ bgcolor: "#1D6EF1", ...fontStyle }}
-                            >
-                              Save Changes
-                            </Button>
-                          </Box>
-                        </Box>
-                      ) : (
-                        <Typography variant="body2" sx={{ mt: 1, ...fontStyle }}>
-                          {comment.content || "No content"}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                )
-              })}
+                      "&:hover fieldset": {
+                        borderColor: "#1D6EF1",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#1D6EF1",
+                      },
+                    },
+                  }}
+              />
+              <Button
+                  variant="contained"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || loadingComments}
+                  sx={{
+                    alignSelf: "flex-end",
+                    bgcolor: "#1D6EF1",
+                    "&:hover": {
+                      bgcolor: "#1557B0",
+                    },
+                    borderRadius: 2,
+                    ...fontStyle,
+                  }}
+              >
+                {loadingComments ? "Posting..." : "Post Comment"}
+              </Button>
             </Box>
-          )}
 
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCommentMenuClose}>
-            <MenuItem
-              onClick={() => {
-                const comment = comments.find((c) => c.id === selectedCommentId)
-                if (comment) startEditingComment(comment)
-              }}
-            >
-              <Edit2 size={16} style={{ marginRight: 8 }} />
-              Edit
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                handleDeleteComment(selectedCommentId)
-                handleCommentMenuClose()
-              }}
-            >
-              <Trash2 size={16} style={{ marginRight: 8 }} />
-              Delete
-            </MenuItem>
-          </Menu>
-        </CardContent>
-      </Card>
+            <Divider sx={{ mb: 3 }} />
+
+            {/* Comments list */}
+            {loadingComments ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                  <CircularProgress size={30} sx={{ color: "#1D6EF1" }} />
+                </Box>
+            ) : comments.length === 0 ? (
+                <Typography
+                    variant="body1"
+                    sx={{
+                      textAlign: "center",
+                      py: 3,
+                      color: "text.secondary",
+                      ...fontStyle,
+                    }}
+                >
+                  No comments yet. Be the first to comment!
+                </Typography>
+            ) : (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {comments.map((comment) => {
+                    const isEditing = editingComment === comment.id
+                    const isUserComment = isCurrentUserComment(comment)
+
+                    // Format the date properly or use a fallback
+                    let formattedDate = "Unknown date"
+                    try {
+                      const date = new Date(comment.createdAt)
+                      // Check if date is valid
+                      if (!isNaN(date.getTime())) {
+                        formattedDate = date.toLocaleString()
+                      }
+                    } catch (e) {
+                      console.error("Error formatting date:", e)
+                    }
+
+                    return (
+                        <Box
+                            key={comment.id}
+                            sx={{
+                              display: "flex",
+                              gap: 2,
+                              p: 2,
+                              borderRadius: 2,
+                              bgcolor: isUserComment ? "rgba(29, 110, 241, 0.05)" : "transparent",
+                              border: isUserComment ? "1px solid rgba(29, 110, 241, 0.2)" : "none",
+                            }}
+                        >
+                          <Avatar
+                              sx={{
+                                bgcolor: "#1D6EF1",
+                                width: 40,
+                                height: 40,
+                              }}
+                          >
+                            {comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "?"}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+                              <Typography variant="subtitle2" sx={{ ...fontStyle }}>
+                                {isUserComment
+                                    ? "You"
+                                    : comment.author?.email
+                                        ? comment.author.email.split("@")[0]
+                                        : "Anonymous"}
+                              </Typography>
+                              <Typography variant="caption" sx={{ color: "text.secondary", ...fontStyle }}>
+                                {formattedDate}
+                              </Typography>
+                            </Box>
+
+                            {isEditing ? (
+                                <Box sx={{ mt: 2 }}>
+                                  <TextField
+                                      fullWidth
+                                      multiline
+                                      rows={2}
+                                      value={editedCommentText}
+                                      onChange={(e) => setEditedCommentText(e.target.value)}
+                                      sx={{
+                                        mb: 2,
+                                        "& .MuiOutlinedInput-root": {
+                                          borderRadius: 2,
+                                        },
+                                      }}
+                                  />
+                                  <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
+                                    <Button
+                                        size="small"
+                                        onClick={cancelEditingComment}
+                                        sx={{
+                                          ...fontStyle,
+                                          color: "text.secondary",
+                                          "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" },
+                                        }}
+                                        variant="text"
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="contained"
+                                        onClick={() => handleEditComment(comment.id, editedCommentText)}
+                                        sx={{ bgcolor: "#1D6EF1", ...fontStyle }}
+                                    >
+                                      Save Changes
+                                    </Button>
+                                  </Box>
+                                </Box>
+                            ) : (
+                                <>
+                                  <Typography variant="body2" sx={{ mt: 1, ...fontStyle, textAlign: "left" }}>
+                                    {comment.content || "No content"}
+                                  </Typography>
+
+                                  {isUserComment && (
+                                      <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", mt: 2 }}>
+                                        <Button
+                                            size="small"
+                                            startIcon={<Edit2 size={16} />}
+                                            onClick={() => startEditingComment(comment)}
+                                            sx={{
+                                              color: "#1D6EF1",
+                                              borderColor: "#1D6EF1",
+                                              "&:hover": { bgcolor: "rgba(29, 110, 241, 0.1)" },
+                                              textTransform: "none",
+                                            }}
+                                            variant="outlined"
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            startIcon={<Trash2 size={16} />}
+                                            onClick={() => handleDeleteComment(comment.id)}
+                                            sx={{
+                                              color: "#DC2626",
+                                              borderColor: "#DC2626",
+                                              "&:hover": { bgcolor: "rgba(220, 38, 38, 0.1)" },
+                                              textTransform: "none",
+                                            }}
+                                            variant="outlined"
+                                        >
+                                          Delete
+                                        </Button>
+                                      </Box>
+                                  )}
+                                </>
+                            )}
+                          </Box>
+                        </Box>
+                    )
+                  })}
+                </Box>
+            )}
+
+            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCommentMenuClose}>
+              <MenuItem
+                  onClick={() => {
+                    const comment = comments.find((c) => c.id === selectedCommentId)
+                    if (comment) startEditingComment(comment)
+                  }}
+              >
+                <Edit2 size={16} style={{ marginRight: 8 }} />
+                Edit
+              </MenuItem>
+              <MenuItem
+                  onClick={() => {
+                    handleDeleteComment(selectedCommentId)
+                    handleCommentMenuClose()
+                  }}
+              >
+                <Trash2 size={16} style={{ marginRight: 8 }} />
+                Delete
+              </MenuItem>
+            </Menu>
+          </CardContent>
+        </Card>
     )
   }
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-        <CircularProgress />
-      </Box>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+          <CircularProgress />
+        </Box>
     )
   }
 
   if (error) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+          <Alert severity="error">{error}</Alert>
+        </Box>
     )
   }
 
   return (
-    <Box sx={backgroundStyle}>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
-          <Button startIcon={<ArrowLeft />} onClick={handleBack} sx={{ color: "white", mr: 2 }}>
-            Back to Community
-          </Button>
-          <Typography variant="h4" sx={{ color: "white", ...fontStyle }}>
-            {studySet?.title}
-          </Typography>
-          <Box sx={{ 
-            ml: "auto", 
-            bgcolor: "rgba(255, 255, 255, 0.9)",
-            px: 3,
-            py: 1,
-            borderRadius: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-          }}>
-            <Typography sx={{ 
-              color: "#1D1D20", 
-              ...fontStyle,
-              fontSize: "1.1rem",
-              fontWeight: 500
-            }}>
-              Study Time:
+      <Box sx={backgroundStyle}>
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 4 }}>
+            <Button startIcon={<ArrowLeft />} onClick={handleBack} sx={{ color: "white", mr: 2 }}>
+              Back to Community
+            </Button>
+            <Typography variant="h4" sx={{ color: "white", ...fontStyle }}>
+              {studySet?.title}
             </Typography>
-            <Typography sx={{ 
-              color: "#1D6EF1", 
-              fontWeight: "bold",
-              ...fontStyle,
-              fontSize: "1.1rem"
-            }}>
-              {formatTime(totalStudyTime)}
-            </Typography>
-          </Box>
-        </Box>
-
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Typography variant="body1" sx={{ mb: 2, ...fontStyle }}>
-              {studySet?.description}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button
-                variant="outlined"
-                startIcon={<Share2 />}
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/community/${communityId}/study-set/${studySetId}`
-                  navigator.clipboard.writeText(shareUrl)
-                  alert("Link copied to clipboard!")
+            <Box
+                sx={{
+                  ml: "auto",
+                  bgcolor: "rgba(255, 255, 255, 0.9)",
+                  px: 3,
+                  py: 1,
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}
-                sx={{ color: "#1D6EF1", borderColor: "#1D6EF1" }}
+            >
+              <Typography
+                  sx={{
+                    color: "#1D1D20",
+                    ...fontStyle,
+                    fontSize: "1.1rem",
+                    fontWeight: 500,
+                  }}
               >
-                Share
-              </Button>
+                Study Time:
+              </Typography>
+              <Typography
+                  sx={{
+                    color: "#1D6EF1",
+                    fontWeight: "bold",
+                    ...fontStyle,
+                    fontSize: "1.1rem",
+                  }}
+              >
+                {formatTime(totalStudyTime)}
+              </Typography>
             </Box>
-          </CardContent>
-        </Card>
+          </Box>
 
-        {renderStudySetContent()}
+          {/* Card with description and share button removed */}
 
-        {studySet?.type !== "flashcards" && studySet?.type !== "matching" && (
-          <Box
+          {renderStudySetContent()}
+
+          {studySet?.type !== "flashcards" && studySet?.type !== "matching" && (
+              <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: 2,
+                    bgcolor: "rgba(255, 255, 255, 0.9)",
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    width: "fit-content",
+                    mx: "auto",
+                    mt: 4,
+                  }}
+              >
+                <Button
+                    onClick={handlePrevious}
+                    disabled={currentIndex === 0}
+                    sx={{
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 1)",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                      },
+                    }}
+                >
+                  <ArrowLeft size={24} color="#1D6EF1" />
+                </Button>
+
+                <Typography
+                    variant="body1"
+                    sx={{
+                      ...fontStyle,
+                      color: "#1D1D20",
+                      fontWeight: 500,
+                    }}
+                >
+                  {currentIndex + 1} of {studySet?.content?.length}
+                </Typography>
+
+                <Button
+                    onClick={handleNext}
+                    disabled={currentIndex === studySet?.content?.length - 1}
+                    sx={{
+                      minWidth: "40px",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      bgcolor: "rgba(255, 255, 255, 0.9)",
+                      "&:hover": {
+                        bgcolor: "rgba(255, 255, 255, 1)",
+                      },
+                      "&.Mui-disabled": {
+                        bgcolor: "rgba(255, 255, 255, 0.5)",
+                      },
+                    }}
+                >
+                  <ArrowLeft size={24} color="#1D6EF1" style={{ transform: "rotate(180deg)" }} />
+                </Button>
+              </Box>
+          )}
+
+          {studySet?.type === "multiple_choice" && (
+              <Box
+                  sx={{
+                    mt: 4,
+                    textAlign: "center",
+                    bgcolor: "rgba(255, 255, 255, 0.9)",
+                    p: 3,
+                    borderRadius: 2,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    maxWidth: "300px",
+                    mx: "auto",
+                  }}
+              >
+                <Typography
+                    variant="h5"
+                    sx={{
+                      ...fontStyle,
+                      color: "#1D1D20",
+                      fontWeight: 700,
+                      mb: 1,
+                    }}
+                >
+                  Score
+                </Typography>
+                <Typography
+                    variant="h4"
+                    sx={{
+                      ...fontStyle,
+                      color: score === studySet.content.length ? "#4CAF50" : "#1D1D20",
+                      fontWeight: 800,
+                    }}
+                >
+                  {score} / {studySet.content.length}
+                </Typography>
+              </Box>
+          )}
+
+          {renderCommentSection()}
+        </Container>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={4000}
+            onClose={handleCloseSnackbar}
+            message={snackbarMessage}
+            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: 2,
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-              px: 3,
-              py: 1,
-              borderRadius: 2,
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              width: "fit-content",
-              mx: "auto",
-              mt: 4,
-            }}
-          >
-            <Button
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-              sx={{
-                minWidth: "40px",
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                bgcolor: "rgba(255, 255, 255, 0.9)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 1)",
-                },
-                "&.Mui-disabled": {
-                  bgcolor: "rgba(255, 255, 255, 0.5)",
-                },
-              }}
-            >
-              <ArrowLeft size={24} color="#1D6EF1" />
-            </Button>
-
-            <Typography
-              variant="body1"
-              sx={{
-                ...fontStyle,
-                color: "#1D1D20",
+              "& .MuiSnackbarContent-root": {
+                bgcolor: "#1D6EF1",
+                color: "white",
                 fontWeight: 500,
-              }}
-            >
-              {currentIndex + 1} of {studySet?.content?.length}
-            </Typography>
-
-            <Button
-              onClick={handleNext}
-              disabled={currentIndex === studySet?.content?.length - 1}
-              sx={{
-                minWidth: "40px",
-                width: "40px",
-                height: "40px",
-                borderRadius: "50%",
-                bgcolor: "rgba(255, 255, 255, 0.9)",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 1)",
-                },
-                "&.Mui-disabled": {
-                  bgcolor: "rgba(255, 255, 255, 0.5)",
-                },
-              }}
-            >
-              <ArrowLeft size={24} color="#1D6EF1" style={{ transform: "rotate(180deg)" }} />
-            </Button>
-          </Box>
-        )}
-
-        {studySet?.type === "multiple_choice" && (
-          <Box
-            sx={{
-              mt: 4,
-              textAlign: "center",
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-              p: 3,
-              borderRadius: 2,
-              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              maxWidth: "300px",
-              mx: "auto",
+              },
             }}
-          >
-            <Typography
-              variant="h5"
-              sx={{
-                ...fontStyle,
-                color: "#1D1D20",
-                fontWeight: 700,
-                mb: 1,
-              }}
-            >
-              Score
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                ...fontStyle,
-                color: score === studySet.content.length ? "#4CAF50" : "#1D1D20",
-                fontWeight: 800,
-              }}
-            >
-              {score} / {studySet.content.length}
-            </Typography>
-          </Box>
-        )}
-
-        {renderCommentSection()}
-      </Container>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
-        message={snackbarMessage}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        sx={{
-          "& .MuiSnackbarContent-root": {
-            bgcolor: "#1D6EF1",
-            color: "white",
-            fontWeight: 500,
-          },
-        }}
-      />
-    </Box>
+        />
+      </Box>
   )
 }
 
 export default StudySetView
+
