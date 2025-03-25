@@ -38,6 +38,20 @@ export default function CommunityView() {
     }
   }
 
+  // Helper function to format study set type for display
+  const formatStudySetType = (type) => {
+    if (!type) return ""
+
+    // Replace underscores with spaces
+    const typeWithSpaces = type.replace(/_/g, " ")
+
+    // Capitalize first letter of each word
+    return typeWithSpaces
+        .split(" ")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+  }
+
   useEffect(() => {
     fetchCommunityDetails()
   }, [id])
@@ -567,6 +581,46 @@ export default function CommunityView() {
         })
   }
 
+  // Add this new function after the handleShareStudySet function
+  const handleLikeStudySet = (studySetId) => {
+    const token = sessionStorage.getItem("token")
+    const user = JSON.parse(sessionStorage.getItem("user"))
+
+    if (!token || !user) return
+
+    const reactionData = {
+      userID: user.id,
+      postID: studySetId,
+      type: "like",
+    }
+
+    fetch(`${API_BASE_URL}/reactions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(reactionData),
+    })
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+          return res.json()
+        })
+        .catch((error) => {
+          console.error("Error liking study set:", error)
+        })
+
+    // Update the UI optimistically
+    const updatedStudySets = studySets.map((set) => {
+      if (set.id === studySetId) {
+        return { ...set, likes: set.likes + 1 }
+      }
+      return set
+    })
+
+    setStudySets(updatedStudySets)
+  }
+
   const handleOpenChatRoom = () => {
     setShowChatRoom(true)
     // Initialize with some sample messages if empty
@@ -868,17 +922,20 @@ export default function CommunityView() {
                                       >
                                         {studySet.title}
                                       </h2>
-                                      <p className="text-[14px] text-[#1D1D20]/70 truncate">{studySet.description}</p>
+                                      <p className="text-[14px] text-[#1D1D20]/70 truncate text-left w-full">
+                                        {studySet.description}
+                                      </p>
                                     </div>
-                                    <span className="text-[14px] bg-[#F4FDFF] px-3 py-1 rounded-xl ml-2 flex-shrink-0">
-                              {studySet.type === "fill_in_blank"
-                                  ? "Fill in the Blank"
-                                  : studySet.type.charAt(0).toUpperCase() + studySet.type.slice(1)}
+                                    <span className="text-[14px] bg-[#1D6EF1] px-3 py-1 rounded-xl ml-2 flex-shrink-0">
+                              {formatStudySetType(studySet.type)}
                             </span>
                                   </div>
                                   <div className="flex justify-between items-center mt-3">
                                     <div className="flex items-center">
-                                      <button className="flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-3 rounded-xl mr-2">
+                                      <button
+                                          className="flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-3 rounded-xl mr-2"
+                                          onClick={() => handleLikeStudySet(studySet.id)}
+                                      >
                                         <Heart size={16} className="mr-1" fill="#EF7B6C" />
                                         <span className="text-[14px]">{studySet.likes}</span>
                                       </button>
@@ -896,15 +953,15 @@ export default function CommunityView() {
                                         )}
                                       </button>
                                       <button
-                                          className="text-[14px] text-[#DC2626] flex items-center hover:bg-[#F4FDFF] p-1 rounded-full"
+                                          className="text-[14px] text-[#F4FDFF] flex items-center bg-[#1D1D20] hover:bg-[#DC2626] p-1 px-3 rounded-xl transition-colors"
                                           onClick={() => handleDeleteStudySet(studySet.id)}
                                       >
-                                        <Trash2 size={16} className="mr-1" />
+                                        <Trash2 size={16} className="mr-1 text-[#F4FDFF]" />
                                         <span>Delete</span>
                                       </button>
                                     </div>
-                                    <div className="flex items-center">
-                                      <p className="text-[14px] font-semibold">You</p>
+                                    <div className="flex-shrink-0 ml-4">
+                                      <p className="text-[14px] font-semibold text-left">You</p>
                                     </div>
                                   </div>
                                 </div>
@@ -928,13 +985,6 @@ export default function CommunityView() {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-[26px] font-semibold text-[#1D1D20]">Members</h2>
                   <div className="flex items-center gap-2">
-                    <button
-                        className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white p-2 rounded-xl flex items-center justify-center"
-                        onClick={handleAddMember}
-                        aria-label="Add member"
-                    >
-                      <Plus size={16} />
-                    </button>
                     <button
                         className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-1 rounded-full"
                         onClick={toggleMembers}
@@ -1080,7 +1130,7 @@ export default function CommunityView() {
                                 onClick={() => handleTemplateSelect(template)}
                             >
                               <h3 className="text-[16px] font-semibold mb-2 text-[#1D1D20]">{template.name}</h3>
-                              <p className="text-[14px] text-[#1D1D20]/70">Type: {template.type}</p>
+                              <p className="text-[14px] text-[#1D1D20]/70">Type: {formatStudySetType(template.type)}</p>
                             </div>
                         ))}
                       </div>
@@ -1103,7 +1153,7 @@ export default function CommunityView() {
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-[16px] font-semibold text-[#1D1D20]">{selectedTemplate.name} Content</h3>
                           <button
-                              className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-1 px-3 rounded-xl text-[14px] flex items-center"
+                              className="bg-[#1D1D20] hover:bg-[#1D6EF1]/90 text-white py-1 px-3 rounded-xl text-[14px] flex items-center"
                               onClick={handleAddItem}
                           >
                             <Plus size={16} className="mr-1" />
