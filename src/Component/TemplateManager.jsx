@@ -350,6 +350,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         value={card.front}
                         onChange={(e) => handleFlashcardChange(index, "front", e.target.value)}
                         sx={{ ...fontStyle }}
+                        inputProps={{ maxLength: 50 }}
                       />
                     </Grid>
                     <Grid item xs={6}>
@@ -359,6 +360,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         value={card.back}
                         onChange={(e) => handleFlashcardChange(index, "back", e.target.value)}
                         sx={{ ...fontStyle }}
+                        inputProps={{ maxLength: 50 }}
                       />
                     </Grid>
                   </Grid>
@@ -424,6 +426,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                             backgroundColor: "#F8F9FA",
                           }
                         }}
+                        inputProps={{ maxLength: 80 }}
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -439,6 +442,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                             backgroundColor: "#F8F9FA",
                           }
                         }}
+                        inputProps={{ maxLength: 50 }}
                       />
                     </Grid>
                   </Grid>
@@ -512,6 +516,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         value={item.term}
                         onChange={(e) => handleMatchingChange(index, "term", e.target.value)}
                         sx={{ ...fontStyle }}
+                        inputProps={{ maxLength: 50 }}
                       />
                     </Grid>
                     <Grid item xs={6}>
@@ -521,6 +526,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         value={item.definition}
                         onChange={(e) => handleMatchingChange(index, "definition", e.target.value)}
                         sx={{ ...fontStyle }}
+                        inputProps={{ maxLength: 100 }}
                       />
                     </Grid>
                   </Grid>
@@ -557,6 +563,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         value={item.question}
                         onChange={(e) => handleMultipleChoiceChange(index, "question", e.target.value)}
                         sx={{ ...fontStyle }}
+                        inputProps={{ maxLength: 80 }}
                       />
                     </Grid>
                     {item.options.map((option, optionIndex) => (
@@ -570,6 +577,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                             text: e.target.value
                           })}
                           sx={{ ...fontStyle }}
+                          inputProps={{ maxLength: 50 }}
                         />
                       </Grid>
                     ))}
@@ -689,6 +697,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   sx={{ mb: 2, ...fontStyle }}
+                  inputProps={{ maxLength: 20 }}
                 />
                 <Box sx={{ height: "calc(100% - 120px)", overflow: "auto" }}>
                   {renderTemplateForm()}

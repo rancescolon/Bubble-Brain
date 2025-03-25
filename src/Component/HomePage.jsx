@@ -14,7 +14,6 @@ import {
   Box,
   Avatar,
   CircularProgress,
-  Alert,
 } from "@mui/material"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
@@ -167,15 +166,15 @@ const HomePage = () => {
                   headers: {
                     Authorization: `Bearer ${token}`,
                   },
-                }
+                },
               )
-              
+
               if (!studyTimeResponse.ok) {
                 throw new Error(`Failed to fetch study time: ${studyTimeResponse.status}`)
               }
 
               const studyTimeData = await studyTimeResponse.json()
-              
+
               // Calculate total study time from all study time posts
               let totalStudyTime = 0
               if (studyTimeData && studyTimeData[0]) {
@@ -190,11 +189,38 @@ const HomePage = () => {
                 }, 0)
               }
 
-              // Format the description
-              let description = post.content || "No description available"
-              
-              // Clean up any JSON-like content from the description
-              description = description.replace(/\{.*?\}/g, "").trim()
+              // Better handling of JSON content in description
+              let description = "No description available"
+              try {
+                if (post.content) {
+                  // Check if the content is JSON
+                  if (post.content.startsWith("{") && post.content.endsWith("}")) {
+                    // Try to parse it as JSON
+                    const contentObj = JSON.parse(post.content)
+                    // Extract description from JSON if available
+                    if (contentObj.description) {
+                      description = contentObj.description
+                    } else if (contentObj.text) {
+                      description = contentObj.text
+                    } else {
+                      // If no specific description field, use the first string property we find
+                      for (const key in contentObj) {
+                        if (typeof contentObj[key] === "string" && contentObj[key].length > 10) {
+                          description = contentObj[key]
+                          break
+                        }
+                      }
+                    }
+                  } else {
+                    // Not JSON, use as is
+                    description = post.content
+                  }
+                }
+              } catch (e) {
+                console.error("Error parsing course description:", e)
+                // Fallback to raw content with basic cleanup
+                description = post.content ? post.content.replace(/\{.*?\}/g, "").trim() : "No description available"
+              }
 
               // Format time as HH:MM:SS
               const hours = Math.floor(totalStudyTime / 3600)
@@ -255,13 +281,17 @@ const HomePage = () => {
 
     if (!token) {
       console.log("No token found, using mock data")
-      setActiveUsers(MOCK_USERS)
+      // Filter mock users to only show those active in the last 30 minutes
+      const thirtyMinutesAgo = Date.now() - 1800000
+      const recentlyActiveMockUsers = MOCK_USERS.filter((user) => user.lastActivity >= thirtyMinutesAgo)
+      setActiveUsers(recentlyActiveMockUsers)
       setLoadingUsers(false)
       return
     }
 
     console.log("Fetching users from:", `${process.env.REACT_APP_API_PATH}/users`)
 
+    // First get all users
     fetch(`${process.env.REACT_APP_API_PATH}/users`, {
       method: "GET",
       headers: {
@@ -276,7 +306,7 @@ const HomePage = () => {
         }
         return res.json()
       })
-      .then((result) => {
+      .then(async (result) => {
         console.log("API Response:", result)
 
         // Extract users array from various possible response formats
@@ -297,92 +327,70 @@ const HomePage = () => {
           }
         }
 
-        console.log("Raw API Response:", result)
         console.log("Extracted users array:", usersArray)
 
         if (usersArray && usersArray.length > 0) {
-          const processedUsers = usersArray
-            .map((user) => {
-              console.log("Processing individual user:", user)
-
-              // Extract user ID
+          // For each user, fetch their detailed information to get last activity
+          const userDetailsPromises = usersArray.map(async (user) => {
+            try {
               const userId = user.id || user._id || `user-${Math.random()}`
               const isCurrentUser = currentUser && currentUser.toString() === userId.toString()
 
-              console.log("User ID comparison:", {
-                userId,
-                currentUserId: currentUser,
-                isMatch: isCurrentUser,
-              })
+              // If this is the current user or we need detailed info, fetch user details
+              if (isCurrentUser || true) {
+                // Always fetch details for now
+                const detailsResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                })
 
-              // Get last activity time - consider them active if logged in
-              const lastActivityTime = Date.now() // Consider them active now since they're logged in
-              const lastActive = lastActivityTime
-              const isRecentlyActive = true // If they're in the users list, consider them active
+                if (detailsResponse.ok) {
+                  const userDetails = await detailsResponse.json()
+                  console.log(`User details for ${userId}:`, userDetails)
 
-              // Extract username with better fallback handling
-              let userName = null
-              if (user.attributes && user.attributes.username) {
-                userName = user.attributes.username
-              } else if (user.attributes && user.attributes.firstName && user.attributes.lastName) {
-                userName = `${user.attributes.firstName} ${user.attributes.lastName}`
-              } else if (user.username) {
-                userName = user.username
-              } else if (user.firstName && user.lastName) {
-                userName = `${user.firstName} ${user.lastName}`
+                  // Extract last activity time from user details if available
+                  // This assumes the API returns lastActivity in the user details
+                  // If not, we'll use the current time as a fallback
+                  const lastActivityTime =
+                    (userDetails.lastActivity ? new Date(userDetails.lastActivity).getTime() : null) ||
+                    (userDetails.attributes && userDetails.attributes.lastActivity
+                      ? new Date(userDetails.attributes.lastActivity).getTime()
+                      : null) ||
+                    Date.now() // Fallback to current time
+
+                  return processUserData(user, userDetails, isCurrentUser, lastActivityTime)
+                }
               }
 
-              // If still no username found, try to get it from email
-              if (!userName && user.attributes && user.attributes.email) {
-                userName = user.attributes.email.split("@")[0]
-              } else if (!userName && user.email) {
-                userName = user.email.split("@")[0]
-              }
+              // If we couldn't get details or didn't need to, process with basic info
+              return processUserData(user, null, isCurrentUser, Date.now())
+            } catch (error) {
+              console.error(`Error fetching details for user:`, error)
+              return processUserData(user, null, false, Date.now())
+            }
+          })
 
-              // Final fallback for username
-              userName = userName || "Anonymous User"
+          // Wait for all user details to be fetched
+          const processedUsers = await Promise.all(userDetailsPromises)
 
-              // Extract email
-              const email =
-                (user.attributes && user.attributes.email) ||
-                user.email ||
-                (userName !== "Anonymous User"
-                  ? `${userName.toLowerCase().replace(/\s+/g, ".")}@bubblebrain.com`
-                  : "no-email@bubblebrain.com")
+          // Sort users: current user first, then by last activity
+          const sortedUsers = processedUsers.sort((a, b) => {
+            if (a.isCurrentUser) return -1
+            if (b.isCurrentUser) return 1
+            return b.lastActivity - a.lastActivity
+          })
 
-              // Extract avatar/profile picture
-              const avatar =
-                (user.attributes && user.attributes.profilePicture) || user.avatar || user.profilePicture || null
+          console.log("All processed users:", sortedUsers)
 
-              // Determine online status - consider them online if they're in the list
-              const status = "online"
+          // Filter users to only show those active in the last 30 minutes
+          const thirtyMinutesAgo = Date.now() - 1800000
+          const recentlyActiveUsers = sortedUsers.filter((user) => user.lastActivity >= thirtyMinutesAgo)
 
-              // Format activity text
-              const activity = isCurrentUser ? "Online now (You)" : "Online now"
-
-              const processedUser = {
-                id: userId,
-                name: userName,
-                activity: activity,
-                status: status,
-                avatar: avatar,
-                email: email,
-                isCurrentUser: isCurrentUser,
-                lastActivity: lastActive,
-              }
-
-              console.log("Processed user data:", processedUser)
-              return processedUser
-            })
-            // Sort with current user first, then by last activity
-            .sort((a, b) => {
-              if (a.isCurrentUser) return -1
-              if (b.isCurrentUser) return 1
-              return b.lastActivity - a.lastActivity
-            })
-
-          console.log("Final processed users:", processedUsers)
-          setActiveUsers(processedUsers)
+          console.log("Users active in last 30 minutes:", recentlyActiveUsers)
+          setActiveUsers(recentlyActiveUsers)
         } else {
           console.log("No users found in response")
           setActiveUsers([])
@@ -393,9 +401,83 @@ const HomePage = () => {
       .catch((error) => {
         console.error("Error fetching users:", error)
         console.log("Using mock data due to error")
-        setActiveUsers(MOCK_USERS)
+        // Filter mock users to only show those active in the last 30 minutes
+        const thirtyMinutesAgo = Date.now() - 1800000
+        const recentlyActiveMockUsers = MOCK_USERS.filter((user) => user.lastActivity >= thirtyMinutesAgo)
+        setActiveUsers(recentlyActiveMockUsers)
         setLoadingUsers(false)
       })
+  }
+
+  // Helper function to process user data consistently
+  const processUserData = (user, userDetails, isCurrentUser, lastActivityTime) => {
+    console.log("Processing user data:", { user, userDetails, isCurrentUser, lastActivityTime })
+
+    // Combine basic user data with details if available
+    const combinedUser = userDetails ? { ...user, ...userDetails } : user
+
+    // Extract username with better fallback handling
+    let userName = null
+    if (combinedUser.attributes && combinedUser.attributes.username) {
+      userName = combinedUser.attributes.username
+    } else if (combinedUser.attributes && combinedUser.attributes.firstName && combinedUser.attributes.lastName) {
+      userName = `${combinedUser.attributes.firstName} ${combinedUser.attributes.lastName}`
+    } else if (combinedUser.username) {
+      userName = combinedUser.username
+    } else if (combinedUser.firstName && combinedUser.lastName) {
+      userName = `${combinedUser.firstName} ${combinedUser.lastName}`
+    }
+
+    // If still no username found, try to get it from email
+    if (!userName && combinedUser.attributes && combinedUser.attributes.email) {
+      userName = combinedUser.attributes.email.split("@")[0]
+    } else if (!userName && combinedUser.email) {
+      userName = combinedUser.email.split("@")[0]
+    }
+
+    // Final fallback for username
+    userName = userName || "Anonymous User"
+
+    // Extract email
+    const email =
+      (combinedUser.attributes && combinedUser.attributes.email) ||
+      combinedUser.email ||
+      (userName !== "Anonymous User"
+        ? `${userName.toLowerCase().replace(/\s+/g, ".")}@bubblebrain.com`
+        : "no-email@bubblebrain.com")
+
+    // Extract avatar/profile picture
+    const avatar =
+      (combinedUser.attributes && combinedUser.attributes.profilePicture) ||
+      combinedUser.avatar ||
+      combinedUser.profilePicture ||
+      null
+
+    // Determine online status based on last activity
+    const now = Date.now()
+    const fiveMinutesAgo = now - 300000 // 5 minutes in milliseconds
+    const status = lastActivityTime >= fiveMinutesAgo ? "online" : "offline"
+
+    // Format activity text based on last activity time
+    let activity
+    if (isCurrentUser) {
+      activity = "Online now (You)"
+    } else if (status === "online") {
+      activity = "Online now"
+    } else {
+      activity = `Last active ${formatLastActive(lastActivityTime)}`
+    }
+
+    return {
+      id: combinedUser.id || combinedUser._id || `user-${Math.random()}`,
+      name: userName,
+      activity: activity,
+      status: status,
+      avatar: avatar,
+      email: email,
+      isCurrentUser: isCurrentUser,
+      lastActivity: lastActivityTime,
+    }
   }
 
   const formatLastActive = (timestamp) => {
@@ -494,8 +576,8 @@ const HomePage = () => {
         opacity: 1.0,
       }}
     >
-      <AppBar position="static" sx={{ bgcolor: "#1D6EF1", boxShadow: "none" }}>
-        <Toolbar>
+      <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
+        <Toolbar sx={{ visibility: "hidden" }}>
           <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
             <img
               src={logo || "/placeholder.svg"}
@@ -925,7 +1007,7 @@ const HomePage = () => {
                           letterSpacing: "0.3px",
                         }}
                       >
-                        {course.description || "No description available"}
+                        {typeof course.description === "string" ? course.description : "No description available"}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -1129,7 +1211,7 @@ const HomePage = () => {
                     fontSize: "16px",
                   }}
                 >
-                  No active users found. Be the first to engage with the community!
+                  No users active in the last 30 minutes. Be the first to engage with the community!
                 </Typography>
               </Box>
             )}

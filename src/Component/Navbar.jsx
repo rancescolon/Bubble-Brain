@@ -64,7 +64,7 @@ const NavBar = () => {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
-    { icon: MessageSquare, label: "Chat", path: "/chat" },
+    { icon: MessageSquare, label: "Friends", path: "/friends" },
     { icon: Upload, label: "Upload", path: "/upload" },
     { icon: Users, label: "Community", path: "/community" },
     { icon: User, label: "Profile", path: "/profile" },
