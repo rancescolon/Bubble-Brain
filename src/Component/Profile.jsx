@@ -2,41 +2,166 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
+import {
+  Box,
+  Container,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Button,
+  TextField,
+  Alert,
+  Snackbar,
+  Stack,
+} from "@mui/material"
+import { styled } from "@mui/material/styles"
+import { LogOut, Save, Upload, Users } from "lucide-react"
 import background from "../assets/image3.png"
+
+// Custom styled components following style guide
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  "& .MuiOutlinedInput-root": {
+    color: "black",
+    fontSize: "1.2rem",
+    "& fieldset": {
+      borderColor: "rgba(0, 0, 0, 0.23)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(0, 0, 0, 0.5)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#1D6EF1",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    color: "rgba(0, 0, 0, 0.7)",
+    fontSize: "1.1rem",
+    fontWeight: 500,
+  },
+}))
+
+const SaveButton = styled(Button)({
+  backgroundColor: "#5B8C5A",
+  color: "white",
+  fontSize: "1.1rem",
+  fontWeight: 600,
+  "&:hover": {
+    backgroundColor: "#48BB78",
+  },
+})
+
+const ActionButton = styled(Button)({
+  backgroundColor: "#1D6EF1",
+  color: "white",
+  fontSize: "1.1rem",
+  fontWeight: 600,
+  "&:hover": {
+    backgroundColor: "#1555BC",
+  },
+})
+
+const LogoutButton = styled(Button)({
+  backgroundColor: "#DC2626",
+  color: "white",
+  "&:hover": {
+    backgroundColor: "#B91C1C",
+  },
+})
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
-export default function Personal_Account() {
+export default function Profile() {
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [email, setEmail] = useState("")
   const [uploadedStudySets, setUploadedStudySets] = useState([])
   const [myCommunities, setMyCommunities] = useState([])
-  const fileInputRef = useRef(null)
-  const navigate = useNavigate()
   const [studyStats, setStudyStats] = useState({
     totalTime: 0,
     recentSets: [],
     loading: true,
     error: null
   })
+  const [notification, setNotification] = useState({ open: false, message: "", severity: "success" })
+  const fileInputRef = useRef(null)
+  const navigate = useNavigate()
+  const [userData, setUserData] = useState({
+    username: "",
+    email: "",
+    name: "",
+    picture: "",
+  })
+  const [newUsername, setNewUsername] = useState("")
 
   useEffect(() => {
     const storedPic = sessionStorage.getItem("profilePicture")
     const storedUsername = sessionStorage.getItem("username")
     const storedFirstName = sessionStorage.getItem("firstname")
     const storedLastName = sessionStorage.getItem("lastname")
+    const storedEmail = sessionStorage.getItem("email")
 
     if (storedPic) setProfilePic(storedPic)
     if (storedUsername) setUsername(storedUsername)
     if (storedFirstName) setFirstName(storedFirstName)
     if (storedLastName) setLastName(storedLastName)
+    if (storedEmail) setEmail(storedEmail)
 
+    fetchUserData()
     fetchStudyStats()
     fetchUserStudySets()
     fetchUserCommunities()
   }, [])
+
+  const fetchUserData = async () => {
+    try {
+      const userId = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userId || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data")
+      }
+
+      const data = await response.json()
+      console.log("User data:", data)
+
+      const name =
+        data.attributes?.name ||
+        data.name ||
+        sessionStorage.getItem("name")
+
+      const username =
+        data.attributes?.username ||
+        data.username ||
+        data.email?.split("@")[0] ||
+        "Not provided"
+
+      setUserData({
+        username: username,
+        email: data.email || "Not provided",
+        name: name,
+        picture: data.attributes?.picture || data.picture || sessionStorage.getItem("profilePicture") || "",
+      })
+
+      setNewUsername(username)
+    } catch (error) {
+      console.error("Error fetching user data:", error)
+    }
+  }
 
   const fetchStudyStats = async () => {
     try {
@@ -214,16 +339,76 @@ export default function Personal_Account() {
     return new Date(dateString).toLocaleDateString()
   }
 
-  const handleUploadClick = () => {
-    navigate("/upload")
+  const handleSaveUsername = async () => {
+    try {
+      const userId = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userId || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      if (!username.trim()) {
+        setNotification({
+          open: true,
+          message: "Username cannot be empty",
+          severity: "error",
+        })
+        return
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          attributes: {
+            username: username,
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to update username")
+      }
+
+      // Update local state
+      setUserData((prev) => ({
+        ...prev,
+        username: username,
+      }))
+
+      // Store in session storage for easy access
+      sessionStorage.setItem("username", username)
+
+      setNotification({
+        open: true,
+        message: "Username updated successfully",
+        severity: "success",
+      })
+    } catch (error) {
+      console.error("Error updating username:", error)
+      setNotification({
+        open: true,
+        message: "Failed to update username",
+        severity: "error",
+      })
+    }
   }
 
-  const handleCommunityClick = () => {
-    navigate("/community")
-  }
-
-  const handleProfilePicClick = () => {
-    fileInputRef.current.click()
+  const handleLogout = () => {
+    // Implement the logic to log out the user
+    console.log("Logging out")
+    sessionStorage.removeItem("token")
+    sessionStorage.removeItem("user")
+    sessionStorage.removeItem("profilePicture")
+    sessionStorage.removeItem("username")
+    sessionStorage.removeItem("firstname")
+    sessionStorage.removeItem("lastname")
+    sessionStorage.removeItem("email")
+    navigate("/login")
   }
 
   const handleFileChange = (event) => {
@@ -282,81 +467,317 @@ export default function Personal_Account() {
   }
 
   return (
-    <div
-      className="min-h-screen text-white"
-      style={{
-        backgroundColor: "#1b1b1b",
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#1b1b1b",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        fontFamily: "SourGummy, sans-serif",
+        py: 3,
+        px: { xs: 2, sm: 3 },
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
-      {/* Profile Section */}
-      <div className="flex justify-center items-center flex-col pt-8">
-        <div className="bg-white rounded p-6 text-black flex flex-col items-center shadow-xl">
-          <div className="relative cursor-pointer group" onClick={handleProfilePicClick}>
-            <img
-              src={profilePic || "/placeholder.svg?height=96&width=96"}
+      <Container maxWidth="xl" sx={{ maxHeight: "90vh", overflowY: "auto" }}>
+        <Stack spacing={2}>
+          {/* Top Row */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            {/* Profile Information */}
+            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
+              <CardContent sx={{ p: 1 }}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: "row",
+                  gap: 2, 
+                  alignItems: "center",
+                  height: "100%",
+                  pl: 4
+                }}>
+                  <Box sx={{ 
+                    display: "flex", 
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 0.5,
+                    pl: 2
+                  }}>
+                    <Box
+                      component="img"
+                      src={profilePic || "/placeholder.svg"}
               alt="Profile"
-              className="w-24 h-24 rounded-full border-4 border-cyan-400 mb-4 object-cover"
-            />
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-white text-sm">Change</span>
-            </div>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
-          </div>
-          <h2 className="text-xl font-bold">
-            {firstName && lastName ? `${firstName} ${lastName}` : username || "User"}
-          </h2>
-        </div>
-      </div>
+                      sx={{
+                        width: 100,
+                        height: 100,
+                        borderRadius: "50%",
+                        border: "3px solid #1D6EF1",
+                        cursor: "pointer",
+                        objectFit: "cover",
+                      }}
+                      onClick={() => fileInputRef.current.click()}
+                    />
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      style={{ display: "none" }}
+                    />
+                  </Box>
+                  <Box sx={{ 
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%"
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      color: "#1D1D20", 
+                      fontWeight: 800, 
+                      fontSize: "1.1rem",
+                      textAlign: "center"
+                    }}>
+                      Profile Information
+                    </Typography>
+                    <Box sx={{ 
+                      display: "flex", 
+                      flexDirection: "column",
+                      gap: 1,
+                      alignItems: "center",
+                      width: "100%"
+                    }}>
+                      <Box sx={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: 0.5
+                      }}>
+                        <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                          Current Username:
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#1D1D20" }}>
+                          {userData.username || username}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: 0.5
+                      }}>
+                        <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                          Email:
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: "#1D1D20" }}>
+                          {userData.email || email}
+                        </Typography>
+                      </Box>
+                      <LogoutButton
+                        startIcon={<LogOut size={16} />}
+                        onClick={handleLogout}
+                        sx={{ height: "32px", fontSize: "0.9rem" }}
+                      >
+                        Logout
+                      </LogoutButton>
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
 
-      <div className="grid md:grid-cols-2 gap-4 p-4">
-        {/* Upload Study Set */}
-        <div className="bg-white rounded p-6 text-black shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Upload Study Set</h2>
-          <button onClick={handleUploadClick} className="px-6 py-3 bg-blue-500 text-white rounded-lg text-lg">
-            Upload Now!
-          </button>
-        </div>
+            {/* Profile Actions */}
+            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
+              <CardContent sx={{ p: 1 }}>
+                <Typography variant="h6" sx={{ 
+                  color: "#1D1D20", 
+                  fontWeight: 800, 
+                  fontSize: "1.1rem",
+                  mb: 1,
+                  textAlign: "center"
+                }}>
+                  Profile Actions
+                </Typography>
+                <Box sx={{ 
+                  display: "flex", 
+                  alignItems: "center",
+                  gap: 1,
+                  justifyContent: "center",
+                  flexWrap: "wrap"
+                }}>
+                  <Box sx={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 0.5
+                  }}>
+                    <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                      New Username:
+                    </Typography>
+                    <StyledTextField
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      size="small"
+                      sx={{ width: "150px" }}
+                    />
+                  </Box>
+                  <SaveButton
+                    startIcon={<Save size={16} />}
+                    onClick={handleSaveUsername}
+                    sx={{ height: "32px", fontSize: "0.9rem" }}
+                  >
+                    Save
+                  </SaveButton>
+                </Box>
+              </CardContent>
+            </Card>
 
-        {/* Study Groups */}
-        <div className="bg-white rounded p-6 text-black shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Study Groups</h2>
-          <p>Currently in no study groups</p>
-          <button onClick={handleCommunityClick} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md">
-            Join a Community
-          </button>
-        </div>
+            {/* Streak Box */}
+            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
+              <CardContent sx={{ p: 1 }}>
+                <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+                  Current Streak
+                </Typography>
+                <Box sx={{ textAlign: "center", py: 0.5 }}>
+                  <Typography sx={{ color: "#6B7280" }}>
+                    No streak tracked yet
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
 
-        {/* Study Statistics */}
-        <div className="bg-white rounded p-6 text-black shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Study Statistics</h2>
+          {/* Bottom Row */}
+          <Box sx={{ display: "flex", gap: 2 }}>
+            {/* Left Column */}
+            <Stack spacing={2} sx={{ flex: 1 }}>
+              {/* Quick Actions */}
+              <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", height: "calc(50% - 8px)" }}>
+                <CardContent sx={{ p: 1 }}>
+                  <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+                    Quick Actions
+                  </Typography>
+                  <Box sx={{ 
+                    display: "flex", 
+                    flexDirection: "column",
+                    gap: 2,
+                    height: "calc(100% - 40px)",
+                    justifyContent: "space-between",
+                    py: 2
+                  }}>
+                    <ActionButton
+                      startIcon={<Upload size={20} />}
+                      onClick={() => navigate("/upload")}
+                      fullWidth
+                      sx={{ height: "48px" }}
+                    >
+                      Upload Study Set
+                    </ActionButton>
+                    <ActionButton
+                      startIcon={<Users size={20} />}
+                      onClick={() => navigate("/community")}
+                      fullWidth
+                      sx={{ height: "48px" }}
+                    >
+                      Join Community
+                    </ActionButton>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Communities */}
+              <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", height: "calc(50% - 8px)" }}>
+                <CardContent sx={{ p: 1.5 }}>
+                  <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1.5, fontWeight: "bold" }}>
+                    Your Communities
+                  </Typography>
+                  <Box sx={{ 
+                    maxHeight: "180px", 
+                    overflowY: "auto",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: 1,
+                    p: 1
+                  }}>
+                    {myCommunities.length > 0 ? (
+                      <Stack spacing={1}>
+                        {myCommunities.map((community) => (
+                          <Box
+                            key={community.id}
+                            sx={{
+                              bgcolor: "#C5EDFD",
+                              p: 1.25,
+                              borderRadius: 1,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              '&:hover': {
+                                bgcolor: "#97C7F1",
+                              }
+                            }}
+                            onClick={() => navigate(`/community/view/${community.id}`)}
+                          >
+                            <Box
+                              sx={{
+                                bgcolor: "#1D6EF1",
+                                borderRadius: "50%",
+                                width: 28,
+                                height: 28,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white",
+                                mr: 1.25
+                              }}
+                            >
+                              {community.name.charAt(0).toUpperCase()}
+                            </Box>
+                            <Typography sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                              {community.name}
+                            </Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Box sx={{ bgcolor: "#F9FAFB", p: 1.5, borderRadius: 1, textAlign: "center" }}>
+                        <Typography sx={{ color: "#6B7280" }}>
+                          No communities yet
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Stack>
+
+            {/* Right Column - Study Statistics */}
+            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
+              <CardContent sx={{ p: 1.5 }}>
+                <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+                  Study Statistics
+                </Typography>
           {studyStats.loading ? (
-            <div className="flex justify-center items-center h-32">
+                  <div className="flex justify-center items-center h-16">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
             </div>
           ) : studyStats.error ? (
             <p className="text-red-500">{studyStats.error}</p>
           ) : (
             <div>
-              <div className="mb-6">
-                <p className="text-lg mb-2">Total Study Time</p>
-                <p className="text-3xl font-bold text-blue-500">{formatTime(studyStats.totalTime)}</p>
+                    <div className="mb-2">
+                      <p className="text-lg mb-0.5">Total Study Time</p>
+                      <p className="text-2xl font-bold text-blue-500">{formatTime(studyStats.totalTime)}</p>
               </div>
               
               {studyStats.recentSets.length > 0 && (
                 <div>
-                  <p className="text-lg mb-2">Recently Studied Sets</p>
-                  <div className="space-y-3">
+                        <p className="text-lg mb-1">Recently Studied Sets</p>
+                        <div className="space-y-1">
                     {studyStats.recentSets.map(set => (
                       <div
                         key={set.id}
-                        className="bg-[#C5EDFD] p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors"
+                              className="bg-[#C5EDFD] p-2 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors"
                       >
                         <p className="font-semibold text-[#1D1D20]">{set.title}</p>
-                        <div className="flex justify-between text-sm mt-1 text-[#1D1D20]">
+                              <div className="flex justify-between text-sm mt-0.5 text-[#1D1D20]">
                           <span>Time: {formatTime(set.totalTime)}</span>
                           <span>Last: {formatDate(set.lastStudied)}</span>
                         </div>
@@ -367,39 +788,27 @@ export default function Personal_Account() {
               )}
             </div>
           )}
-        </div>
+              </CardContent>
+            </Card>
+          </Box>
+        </Stack>
+      </Container>
 
-        {/* Communities Section */}
-        <div className="bg-white rounded p-6 text-black shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Your Communities</h2>
-          <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2">
-            {myCommunities.length > 0 ? (
-              <div className="grid grid-cols-1 gap-2">
-                {myCommunities.map((community) => (
-                  <div key={community.id} className="bg-[#C5EDFD] p-2 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center" onClick={() => navigate(`/community/view/${community.id}`)}>
-                    <div className="bg-[#1D6EF1] rounded-full w-6 h-6 flex items-center justify-center text-white mr-2">
-                      <span>{community.name.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <span className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                      {community.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-gray-100 p-3 rounded-lg text-center">
-                <p className="text-gray-600 text-sm">No communities yet</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Achievements Section */}
-        <div className="col-span-2 bg-white rounded-lg p-6 text-black shadow-xl">
-          <h2 className="text-xl font-bold text-center">Achievements</h2>
-          <p className="text-center text-gray-600 mt-2">No achievements yet</p>
-        </div>
-      </div>
-    </div>
+      {/* Notification */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          variant="filled"
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   )
 }

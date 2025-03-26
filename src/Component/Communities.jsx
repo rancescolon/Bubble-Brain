@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect, createContext, useContext } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { Plus, Search, Heart, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText, Menu, X } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Plus, Search, Heart, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText } from "lucide-react"
 
 // Create a context for navigation state
 const NavContext = createContext({
@@ -53,11 +53,6 @@ const GlobalStyle = () => (
 
 const TopBar = () => {
   const { navOpen, toggleNav } = useContext(NavContext)
-
-  return (
-      <header className="fixed top-0 left-0 right-0 bg-[#1D6EF1] opacity-0">
-      </header>
-  )
 }
 
 const Communities = () => {
@@ -80,6 +75,9 @@ const Communities = () => {
   const [navOpen, setNavOpen] = useState(false)
   const modalRef = useRef(null)
   const navigate = useNavigate()
+
+  // Add a new state variable for tracking which community's share button was clicked
+  const [copiedCommunityId, setCopiedCommunityId] = useState(null)
 
   // Communities state
   const [communities, setCommunities] = useState([])
@@ -349,7 +347,7 @@ const Communities = () => {
     // Simplified request body - the API might be expecting a simpler format
     const requestBody = {
       userID: userId,
-      groupID: communityId
+      groupID: communityId,
     }
 
     console.log("Request body:", requestBody) // Debug log
@@ -406,38 +404,44 @@ const Communities = () => {
   // Add this function at the beginning of the Communities component to get the base URL
   const getBaseUrl = () => {
     // Check if we're in production by looking for the specific domain
-    const isProduction = window.location.hostname.includes('webdev.cse.buffalo.edu');
-    
+    const isProduction = window.location.hostname.includes("webdev.cse.buffalo.edu")
+
     if (isProduction) {
       // In production, include the full path
-      return `${window.location.origin}/hci/teams/droptable`;
+      return `${window.location.origin}/hci/teams/droptable`
     } else {
       // In development, just use the origin
-      return window.location.origin;
+      return window.location.origin
     }
-  };
+  }
 
   const handleShareCommunity = (communityId) => {
-    // Use the getBaseUrl function to create the correct link
-    const communityLink = `${getBaseUrl()}/community/${communityId}`;
-    console.log("Link copied to clipboard:", communityLink);
+    // Use the getBaseUrl function to create the correct link with the view path
+    const communityLink = `${getBaseUrl()}/community/view/${communityId}`
+    console.log("Link copied to clipboard:", communityLink)
+
+    // Set the copied state for this specific community
+    setCopiedCommunityId(communityId)
 
     // In a real implementation, you would use the Clipboard API
     navigator.clipboard
         .writeText(communityLink)
         .then(() => {
-          alert("Community link copied to clipboard!");
+          // Reset after 2 seconds
+          setTimeout(() => {
+            setCopiedCommunityId(null)
+          }, 2000)
         })
         .catch((err) => {
-          console.error("Could not copy text: ", err);
-        });
-  };
+          console.error("Could not copy text: ", err)
+        })
+  }
 
   const handleViewCommunity = (communityId) => {
     // Use the getBaseUrl function for navigation
-    const communityUrl = `/community/view/${communityId}`;
-    navigate(communityUrl);
-  };
+    const communityUrl = `/community/view/${communityId}`
+    navigate(communityUrl)
+  }
 
   // Add a function to update a community when changes are made
   const handleUpdateCommunity = (updatedCommunity) => {
@@ -710,19 +714,19 @@ const Communities = () => {
     }
 
     const handleShareFlashcard = (id) => {
-      console.log("Sharing flashcard with id:", id);
+      console.log("Sharing flashcard with id:", id)
 
       // Use the getBaseUrl function to create the correct link
-      const flashcardLink = `${getBaseUrl()}/community/${community.id}/flashcard/${id}`;
+      const flashcardLink = `${getBaseUrl()}/community/${community.id}/flashcard/${id}`
 
       navigator.clipboard
           .writeText(flashcardLink)
           .then(() => {
-            alert("Flashcard link copied to clipboard!");
+            alert("Flashcard link copied to clipboard!")
           })
           .catch((err) => {
-            console.error("Could not copy text: ", err);
-          });
+            console.error("Could not copy text: ", err)
+          })
     }
 
     const handleDeleteFlashcard = (id) => {
@@ -861,7 +865,7 @@ const Communities = () => {
                                 </p>
                                 <div className="flex justify-between items-center">
                                   <button
-                                      className="flex items-center text-[#1D1D20] bg-[#C5EDFD] px-2 py-1 md:px-3 md:py-2 rounded-lg hover:bg-[#97C7F1] transition-colors"
+                                      className="flex items-center bg-[#C5EDFD] text-[#1D1D20] px-2 py-1 md:px-3 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors"
                                       onClick={() => handleLikeCommunity(flashcard.id)}
                                   >
                                     <Heart className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2 text-[#EF7B6C]" />
@@ -969,16 +973,16 @@ const Communities = () => {
                       </p>
 
                       <div className="relative mb-6 md:mb-8">
-                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                           <Search className="w-5 h-5 text-gray-500" />
                         </div>
+
                         <input
                             type="text"
                             placeholder="Search communities by name..."
-                            className="w-full p-3 md:p-4 pl-10 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
+                            className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            maxLength={30}
                             style={fontStyle}
                         />
                       </div>
@@ -1029,9 +1033,9 @@ const Communities = () => {
                                             <p className="text-sm md:text-base text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
                                               {community.description}
                                             </p>
-                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <div className="grid grid-cols-3 gap-2 mt-3">
                                               <button
-                                                  className="flex items-center bg-[#C5EDFD] text-[#1D1D20] px-2 py-1 md:px-3 md:py-2 rounded-lg hover:bg-[#97C7F1] transition-colors"
+                                                  className="flex items-center justify-center bg-[#C5EDFD] text-[#1D1D20] px-2 py-1 md:px-3 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors w-full"
                                                   onClick={() => handleLikeCommunity(community.id)}
                                               >
                                                 <Heart className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2 text-[#EF7B6C]" />
@@ -1039,23 +1043,27 @@ const Communities = () => {
                                         {community.likes || 0}
                                       </span>
                                               </button>
-                                              <div className="flex gap-2">
-                                                <button
-                                                    className="bg-[#1D6EF1] text-white px-3 py-1 md:px-4 md:py-2 rounded-lg hover:bg-[#97C7F1] transition-colors text-sm md:text-base"
-                                                    onClick={() => handleJoinCommunity(community.id)}
-                                                    data-community-id={community.id}
-                                                    style={fontStyle}
-                                                >
-                                                  Join
-                                                </button>
-                                                <button
-                                                    className="bg-[#5B8C5A] text-white p-1 md:p-2 rounded-lg hover:bg-[#9DDCB1] transition-colors"
-                                                    onClick={() => handleShareCommunity(community.id)}
-                                                    title="Share"
-                                                >
-                                                  <Share2 className="h-4 w-4 md:h-5 md:w-5" />
-                                                </button>
-                                              </div>
+                                              <button
+                                                  className="bg-[#1D6EF1] text-white px-3 py-1 md:px-4 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors text-sm md:text-base w-full"
+                                                  onClick={() => handleJoinCommunity(community.id)}
+                                                  data-community-id={community.id}
+                                                  style={fontStyle}
+                                              >
+                                                Join
+                                              </button>
+                                              <button
+                                                  className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-3 rounded-xl flex items-center justify-center w-full"
+                                                  onClick={() => handleShareCommunity(community.id)}
+                                              >
+                                                {copiedCommunityId === community.id ? (
+                                                    <span className="text-[14px]">Copied!</span>
+                                                ) : (
+                                                    <>
+                                                      <Share2 size={20} className="mr-1" />
+                                                      {/*<span className="text-[14px]">Share</span>*/}
+                                                    </>
+                                                )}
+                                              </button>
                                             </div>
                                           </div>
                                         </div>
@@ -1171,7 +1179,6 @@ const Communities = () => {
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
                         onChange={(e) => setCommunityName(e.target.value)}
-                        maxLength={30}
                         style={fontStyle}
                     />
                   </div>
@@ -1185,7 +1192,6 @@ const Communities = () => {
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent min-h-[80px] md:min-h-[100px] text-sm md:text-base"
                         value={communityDescription}
                         onChange={(e) => setCommunityDescription(e.target.value)}
-                        maxLength={250}
                         style={fontStyle}
                     />
                   </div>
