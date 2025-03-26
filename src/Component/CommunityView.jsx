@@ -303,7 +303,8 @@ export default function CommunityView() {
 
                     // Include all study sets with reasonable defaults
                     const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-
+                    const creator = post.author?.id
+                    
                     return {
                       id: post.id,
                       title: content.name || "Untitled Study Set",
@@ -314,6 +315,7 @@ export default function CommunityView() {
                       likes: post._count?.reactions || 0,
                       groupID: post.groupID,
                       communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                      creator: creator,
                     }
                   } catch (error) {
                     console.error("Error processing post:", error)
@@ -531,14 +533,18 @@ export default function CommunityView() {
     })
   }
 
-  const handleDeleteStudySet = (id) => {
+  const handleDeleteStudySet = (id,creator) => {
     const token = sessionStorage.getItem("token")
+    const userId = sessionStorage.getItem("user")
 
-    if (!token) {
+    if (!token || !userId) {
       alert("You must be logged in to delete a study set")
       return
     }
-
+    if (userId != creator){
+      alert("You are not the creator of this post")
+      return
+    }
     fetch(`${API_BASE_URL}/posts/${id}`, {
       method: "DELETE",
       headers: {
@@ -954,7 +960,7 @@ export default function CommunityView() {
                                       </button>
                                       <button
                                           className="text-[14px] text-[#F4FDFF] flex items-center bg-[#1D1D20] hover:bg-[#DC2626] p-1 px-3 rounded-xl transition-colors"
-                                          onClick={() => handleDeleteStudySet(studySet.id)}
+                                          onClick={() => handleDeleteStudySet(studySet.id, studySet.creator)}
                                       >
                                         <Trash2 size={16} className="mr-1 text-[#F4FDFF]" />
                                         <span>Delete</span>

@@ -509,7 +509,7 @@ const StudySetView = () => {
     }
   }
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (commentId,author) => {
     try {
       // First remove locally for immediate feedback
       const updatedComments = comments.filter((comment) => comment.id !== commentId)
@@ -523,8 +523,12 @@ const StudySetView = () => {
       handleCommentMenuClose()
 
       const token = sessionStorage.getItem("token")
+      const userId = sessionStorage.getItem("userId")
       if (!token) return
-
+      if (userId != author){
+        alert("You are not the creator of this post")
+        return
+      }
       // Only try to delete on server if it's not a temporary comment
       if (typeof commentId === "number" || !String(commentId).startsWith("temp-")) {
         // Try post-reactions endpoint
@@ -1472,7 +1476,7 @@ const StudySetView = () => {
                                         <Button
                                             size="small"
                                             startIcon={<Trash2 size={16} />}
-                                            onClick={() => handleDeleteComment(comment.id)}
+                                            onClick={() => handleDeleteComment(comment.id,comment.author.id)}
                                             sx={{
                                               color: "#DC2626",
                                               borderColor: "#DC2626",
