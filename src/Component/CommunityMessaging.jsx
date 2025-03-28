@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { socket } from "../App";
 import { Send, ArrowLeft, AlertCircle } from "lucide-react";
 import background from "../assets/image3.png";
+import socketService from '../services/socketService';
 
 // This CommunityMessaging component handles group chat for community members
 const CommunityMessaging = () => {
@@ -25,9 +26,6 @@ const CommunityMessaging = () => {
   const { communityId } = useParams();
   const communityRoomID = `community-${communityId}`;
   const messagesEndRef = useRef(null);
-
-  // API base URL
-  const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -125,7 +123,7 @@ const CommunityMessaging = () => {
     const loadUserData = async () => {
       try {
         console.log(`Fetching user data for ID: ${userId}`);
-        const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
@@ -151,7 +149,7 @@ const CommunityMessaging = () => {
     const loadCommunityData = async () => {
       try {
         console.log(`Fetching community data for ID: ${communityId}`);
-        const response = await fetch(`${API_BASE_URL}/groups/${communityId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_PATH}/groups/${communityId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
@@ -177,7 +175,7 @@ const CommunityMessaging = () => {
     const loadCommunityMembers = async () => {
       try {
         console.log(`Fetching members for community ID: ${communityId}`);
-        const response = await fetch(`${API_BASE_URL}/group-members?groupID=${communityId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_PATH}/group-members?groupID=${communityId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
@@ -198,7 +196,7 @@ const CommunityMessaging = () => {
           const membersData = await Promise.all(data[0].map(async (member) => {
             try {
               // Fetch detailed user data for each member
-              const userResponse = await fetch(`${API_BASE_URL}/users/${member.userID}`, {
+              const userResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users/${member.userID}`, {
                 headers: {
                   "Content-Type": "application/json",
                   Authorization: `Bearer ${userToken}`,
@@ -248,7 +246,7 @@ const CommunityMessaging = () => {
         console.log(`Fetching chat history for community ID: ${communityId}`);
         
         // Fetch posts with the type "community_message" for this community
-        const response = await fetch(`${API_BASE_URL}/posts?type=community_message&groupID=${communityId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_PATH}/posts?type=community_message&groupID=${communityId}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${userToken}`,
@@ -274,7 +272,7 @@ const CommunityMessaging = () => {
               return new Date(timeA) - new Date(timeB);
             })
             .map(post => ({
-              id: `msg-${post.id}-${Math.random().toString(36).substr(2, 9)}`,
+              id: post.attributes?.messageId || post.id,
               fromUserID: post.authorID,
               message: post.content,
               timestamp: post.attributes?.timestamp || post.createdAt,
@@ -284,7 +282,14 @@ const CommunityMessaging = () => {
           setMessages(sortedMessages);
         } else {
           // Initialize with a welcome message
-          const welcomeMsg = {
+        //   const welcomeMsg = {
+        //     id: `welcome-${Date.now()}`,
+        //     fromUserID: "system",
+        //     message: `Welcome to the ${communityData.name || 'community'} chat room!`,
+        //     timestamp: new Date().toISOString(),
+        //     senderName: "System"
+        //   };
+        const welcomeMsg = {
             id: `welcome-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             fromUserID: "system",
             message: `Welcome to the ${communityData.name || 'community'} chat room!`,
@@ -300,7 +305,7 @@ const CommunityMessaging = () => {
         
         // Initialize with a welcome message even on error
         const welcomeMsg = {
-          id: `welcome-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `welcome-${Date.now()}`,
           fromUserID: "system",
           message: `Welcome to the community chat room!`,
           timestamp: new Date().toISOString(),
@@ -326,33 +331,52 @@ const CommunityMessaging = () => {
     });
 
     // Message handling
-    const handleMessageReceived = (msg) => {
-      console.log("Received community message:", msg);
-      if (msg.roomID !== communityRoomID) {
-        console.log(`Ignoring message for room ${msg.roomID}, we're in ${communityRoomID}`);
-        return;
-      }
+    // const handleMessageReceived = (msg) => {
+    //   console.log("Received community message:", msg);
+    //   if (msg.roomID !== communityRoomID) {
+    //     console.log(`Ignoring message for room ${msg.roomID}, we're in ${communityRoomID}`);
+    //     return;
+    //   }
       
-      setMessages((prevMessages) => {
-        // Generate a truly unique ID if one isn't provided
-        const uniqueId = msg.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Check if message already exists to prevent duplicates
-        if (prevMessages.some(m => m.id === uniqueId)) {
-          console.log("Duplicate message detected, ignoring:", uniqueId);
-          return prevMessages;
+    //   setMessages((prevMessages) => {
+    //     // Check if message already exists to prevent duplicates
+    //     if (prevMessages.some(m => m.id === msg.id)) {
+    //       console.log("Duplicate message detected, ignoring:", msg.id);
+    //       return prevMessages;
+    //     }
+    //     return [...prevMessages, {
+    //       ...msg,
+    //       id: msg.id || Date.now(),
+    //       timestamp: msg.timestamp || new Date().toISOString(),
+    //     }];
+    //   });
+    // };
+
+    // socket.on("/community/message", handleMessageReceived);
+    const handleMessageReceived = (msg) => {
+        console.log("Received community message:", msg);
+        if (msg.roomID !== communityRoomID) {
+          console.log(`Ignoring message for room ${msg.roomID}, we're in ${communityRoomID}`);
+          return;
         }
         
-        return [...prevMessages, {
-          ...msg,
-          id: uniqueId,
-          timestamp: msg.timestamp || new Date().toISOString(),
-        }];
-      });
-    };
-
-    socket.on("/community/message", handleMessageReceived);
-
+        setMessages((prevMessages) => {
+          // Generate a truly unique ID if one isn't provided
+          const uniqueId = msg.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          
+          // Check if message already exists to prevent duplicates
+          if (prevMessages.some(m => m.id === uniqueId)) {
+            console.log("Duplicate message detected, ignoring:", uniqueId);
+            return prevMessages;
+          }
+          
+          return [...prevMessages, {
+            ...msg,
+            id: uniqueId,
+            timestamp: msg.timestamp || new Date().toISOString(),
+          }];
+        });
+      };
     // Member status updates
     const handleMemberOnline = (data) => {
       if (data.communityID === parseInt(communityId)) {
@@ -390,7 +414,7 @@ const CommunityMessaging = () => {
       socket.off("/community/member-online", handleMemberOnline);
       socket.off("/community/member-offline", handleMemberOffline);
     };
-  }, [navigate, userToken, communityId, userId, communityRoomID, communityData.name, API_BASE_URL]);
+  }, [navigate, userToken, communityId, userId, communityRoomID, communityData.name]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -400,6 +424,7 @@ const CommunityMessaging = () => {
     console.log("Preparing to send message to community chat");
     
     const timestamp = new Date().toISOString();
+    // const messageId = Date.now();
     const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     const messageData = {
@@ -432,7 +457,7 @@ const CommunityMessaging = () => {
 
       // Save message to posts for persistence
       console.log("Saving community message to database");
-      const response = await fetch(`${API_BASE_URL}/posts`, {
+      const response = await fetch(`${process.env.REACT_APP_API_PATH}/posts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -581,14 +606,14 @@ const CommunityMessaging = () => {
             {/* Messages */}
             <div className="bg-[#F4FDFF] flex-1 overflow-y-auto p-4">
               <div className="space-y-4">
-                {messages.map((msg) => {
-                  const isOwnMessage = msg.fromUserID === parseInt(userId);
-                  const isSystemMessage = msg.fromUserID === "system";
-                  
-                  return (
+              {messages.map((msg) => {
+                const isOwnMessage = msg.fromUserID === parseInt(userId);
+                const isSystemMessage = msg.fromUserID === "system";
+                
+                return (
                     <div
-                      key={msg.id || `msg-${msg.timestamp}-${Math.random().toString(36).substr(2, 5)}`}
-                      className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
+                    key={msg.id || `msg-${msg.timestamp}-${Math.random().toString(36).substr(2, 5)}`}
+                    className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                     >
                       {isSystemMessage ? (
                         <div className="max-w-[80%] bg-gray-200 text-[#1D1D20] rounded-lg p-3 mx-auto">
