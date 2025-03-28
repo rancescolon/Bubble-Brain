@@ -22,7 +22,7 @@ const Upload = () => {
   const [templateType, setTemplateType] = useState("")
   const [templateContent, setTemplateContent] = useState("")
   const [templateName, setTemplateName] = useState("")
-
+  ////The code for upload.jsx was created with the help of ChatGPT
   // Add this function to get the base URL
   const getBaseUrl = () => {
     // Check if we're in production by looking for the specific domain
