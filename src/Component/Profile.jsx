@@ -8,12 +8,13 @@ import {
   Typography,
   Card,
   CardContent,
-  Grid,
   Button,
   TextField,
   Alert,
   Snackbar,
   Stack,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { LogOut, Save, Upload, Users } from "lucide-react"
@@ -74,16 +75,19 @@ const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 export default function Profile() {
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
+  // eslint-disable-next-line no-unused-vars
   const [firstName, setFirstName] = useState("")
+  // eslint-disable-next-line no-unused-vars
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
+  // eslint-disable-next-line no-unused-vars
   const [uploadedStudySets, setUploadedStudySets] = useState([])
   const [myCommunities, setMyCommunities] = useState([])
   const [studyStats, setStudyStats] = useState({
     totalTime: 0,
     recentSets: [],
     loading: true,
-    error: null
+    error: null,
   })
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" })
   const fileInputRef = useRef(null)
@@ -94,7 +98,35 @@ export default function Profile() {
     name: "",
     picture: "",
   })
+  // eslint-disable-next-line no-unused-vars
   const [newUsername, setNewUsername] = useState("")
+
+  // Theme and responsive breakpoints
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
+
+  // Add viewport meta tag to document head
+  useEffect(() => {
+    // Check if viewport meta tag exists
+    let viewportMeta = document.querySelector('meta[name="viewport"]')
+
+    // If it doesn't exist, create it
+    if (!viewportMeta) {
+      viewportMeta = document.createElement("meta")
+      viewportMeta.name = "viewport"
+      document.head.appendChild(viewportMeta)
+    }
+
+    // Set the content attribute
+    viewportMeta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+
+    // Clean up function
+    return () => {
+      // Optional: remove or reset the viewport meta tag when component unmounts
+      // viewportMeta.content = 'width=device-width, initial-scale=1.0';
+    }
+  }, [])
 
   useEffect(() => {
     const storedPic = sessionStorage.getItem("profilePicture")
@@ -113,7 +145,7 @@ export default function Profile() {
     fetchStudyStats()
     fetchUserStudySets()
     fetchUserCommunities()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchUserData = async () => {
     try {
@@ -139,16 +171,9 @@ export default function Profile() {
       const data = await response.json()
       console.log("User data:", data)
 
-      const name =
-        data.attributes?.name ||
-        data.name ||
-        sessionStorage.getItem("name")
+      const name = data.attributes?.name || data.name || sessionStorage.getItem("name")
 
-      const username =
-        data.attributes?.username ||
-        data.username ||
-        data.email?.split("@")[0] ||
-        "Not provided"
+      const username = data.attributes?.username || data.username || data.email?.split("@")[0] || "Not provided"
 
       setUserData({
         username: username,
@@ -172,16 +197,16 @@ export default function Profile() {
 
       if (!token || !userStr) {
         console.error("Missing token or user data")
-        setStudyStats(prev => ({ ...prev, loading: false, error: "Please log in to view study statistics" }))
+        setStudyStats((prev) => ({ ...prev, loading: false, error: "Please log in to view study statistics" }))
         return
       }
 
       let userId
       try {
         const parsed = JSON.parse(userStr)
-        if (typeof parsed === 'object' && parsed !== null && parsed.id) {
+        if (typeof parsed === "object" && parsed !== null && parsed.id) {
           userId = parsed.id
-        } else if (typeof parsed === 'number' || !isNaN(Number(parsed))) {
+        } else if (typeof parsed === "number" || !isNaN(Number(parsed))) {
           userId = Number(parsed)
         } else {
           throw new Error("Invalid user data format")
@@ -193,7 +218,7 @@ export default function Profile() {
           console.log("Using raw user ID:", userId)
         } else {
           console.error("Error parsing user data:", e)
-          setStudyStats(prev => ({ ...prev, loading: false, error: "Invalid user data" }))
+          setStudyStats((prev) => ({ ...prev, loading: false, error: "Invalid user data" }))
           return
         }
       }
@@ -204,8 +229,8 @@ export default function Profile() {
       const postsResponse = await fetch(postsUrl, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+        },
       })
 
       if (!postsResponse.ok) {
@@ -215,41 +240,42 @@ export default function Profile() {
       const postsData = await postsResponse.json()
       console.log("All posts response:", postsData)
 
-      const studyTimeLogs = postsData[0]?.filter(post => {
-        console.log("Checking post for study time:", post)
-        
-        if (post.postType === 'study_time') {
-          console.log("Found study time post by postType:", post.id)
-          return true
-        }
+      const studyTimeLogs =
+        postsData[0]?.filter((post) => {
+          console.log("Checking post for study time:", post)
 
-        try {
-          const content = JSON.parse(post.content || '{}')
-          console.log("Parsed content for post", post.id, ":", content)
-          
-          if (content.type === 'study_time') {
-            console.log("Found study time post by content type:", post.id)
+          if (post.postType === "study_time") {
+            console.log("Found study time post by postType:", post.id)
             return true
           }
-          
-          if (post.attributes && post.attributes.type === 'study_time') {
-            console.log("Found study time post by attributes:", post.id)
-            return true
+
+          try {
+            const content = JSON.parse(post.content || "{}")
+            console.log("Parsed content for post", post.id, ":", content)
+
+            if (content.type === "study_time") {
+              console.log("Found study time post by content type:", post.id)
+              return true
+            }
+
+            if (post.attributes && post.attributes.type === "study_time") {
+              console.log("Found study time post by attributes:", post.id)
+              return true
+            }
+
+            return false
+          } catch (e) {
+            console.warn("Error parsing post content:", post.id, e)
+            return false
           }
-          
-          return false
-        } catch (e) {
-          console.warn("Error parsing post content:", post.id, e)
-          return false
-        }
-      }) || []
+        }) || []
 
       console.log("Filtered study time logs:", studyTimeLogs)
 
       let totalTime = 0
       const setStats = new Map()
 
-      studyTimeLogs.forEach(log => {
+      studyTimeLogs.forEach((log) => {
         try {
           if (!log.content) {
             console.warn("Log missing content:", log)
@@ -284,13 +310,16 @@ export default function Profile() {
                 id: studySetId,
                 title: studySetTitle,
                 totalTime: 0,
-                lastStudied: content.timestamp || new Date().toISOString()
+                lastStudied: content.timestamp || new Date().toISOString(),
               })
             }
 
             const stats = setStats.get(key)
             stats.totalTime += duration
-            if (content.timestamp && (!stats.lastStudied || new Date(content.timestamp) > new Date(stats.lastStudied))) {
+            if (
+              content.timestamp &&
+              (!stats.lastStudied || new Date(content.timestamp) > new Date(stats.lastStudied))
+            ) {
               stats.lastStudied = content.timestamp
             }
           }
@@ -309,14 +338,14 @@ export default function Profile() {
         totalTime,
         recentSets,
         loading: false,
-        error: null
+        error: null,
       })
     } catch (error) {
       console.error("Error in fetchStudyStats:", error)
-      setStudyStats(prev => ({
+      setStudyStats((prev) => ({
         ...prev,
         loading: false,
-        error: error.message || "Failed to load study statistics"
+        error: error.message || "Failed to load study statistics",
       }))
     }
   }
@@ -325,7 +354,7 @@ export default function Profile() {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const remainingSeconds = seconds % 60
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${remainingSeconds}s`
     }
@@ -439,7 +468,11 @@ export default function Profile() {
         try {
           studySetContent = JSON.parse(set.content)
         } catch {}
-        return { id: set.id, name: studySetContent?.name || "Unnamed Study Set", communityId: set.attributes?.communityId || null }
+        return {
+          id: set.id,
+          name: studySetContent?.name || "Unnamed Study Set",
+          communityId: set.attributes?.communityId || null,
+        }
       })
       setUploadedStudySets(parsedStudySets)
     } catch (error) {
@@ -470,46 +503,73 @@ export default function Profile() {
     <Box
       sx={{
         minHeight: "100vh",
+        width: "100%",
+        maxWidth: "100vw",
+        overflowX: "hidden",
         bgcolor: "#1b1b1b",
         backgroundImage: `url(${background})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         py: 3,
-        px: { xs: 2, sm: 3 },
+        px: { xs: 1, sm: 2, md: 3 },
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Container maxWidth="xl" sx={{ maxHeight: "90vh", overflowY: "auto" }}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          maxHeight: { xs: "100vh", sm: "90vh" },
+          overflowY: "auto",
+          px: { xs: 1, sm: 2 },
+        }}
+      >
         <Stack spacing={2}>
           {/* Top Row */}
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+            }}
+          >
             {/* Profile Information */}
-            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
-              <CardContent sx={{ p: 1 }}>
-                <Box sx={{ 
-                  display: "flex", 
-                  flexDirection: "row",
-                  gap: 2, 
-                  alignItems: "center",
-                  height: "100%",
-                  pl: 4
-                }}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: "column",
+            <Card
+              sx={{
+                bgcolor: "white",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                flex: 1,
+                width: "100%",
+              }}
+            >
+              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    gap: 2,
                     alignItems: "center",
-                    gap: 0.5,
-                    pl: 2
-                  }}>
+                    height: "100%",
+                    pl: { xs: 1, sm: 2, md: 4 },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 0.5,
+                      pl: { xs: 0, sm: 2 },
+                    }}
+                  >
                     <Box
                       component="img"
                       src={profilePic || "/placeholder.svg"}
-              alt="Profile"
+                      alt="Profile"
                       sx={{
-                        width: 100,
-                        height: 100,
+                        width: { xs: 80, sm: 100 },
+                        height: { xs: 80, sm: 100 },
                         borderRadius: "50%",
                         border: "3px solid #1D6EF1",
                         cursor: "pointer",
@@ -525,58 +585,108 @@ export default function Profile() {
                       style={{ display: "none" }}
                     />
                   </Box>
-                  <Box sx={{ 
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%"
-                  }}>
-                    <Typography variant="h6" sx={{ 
-                      color: "#1D1D20", 
-                      fontWeight: 800, 
-                      fontSize: "1.1rem",
-                      textAlign: "center"
-                    }}>
-                      Profile Information
-                    </Typography>
-                    <Box sx={{ 
-                      display: "flex", 
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "flex",
                       flexDirection: "column",
                       gap: 1,
                       alignItems: "center",
-                      width: "100%"
-                    }}>
-                      <Box sx={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: 0.5
-                      }}>
-                        <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                      justifyContent: "center",
+                      height: "100%",
+                      width: "100%",
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: "#1D1D20",
+                        fontWeight: 800,
+                        fontSize: { xs: "1rem", sm: "1.1rem" },
+                        textAlign: "center",
+                      }}
+                    >
+                      Profile Information
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        alignItems: "center",
+                        width: "100%",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          flexWrap: { xs: "wrap", sm: "nowrap" },
+                          justifyContent: { xs: "center", sm: "flex-start" },
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#1D1D20",
+                            fontWeight: 500,
+                            textAlign: { xs: "center", sm: "left" },
+                          }}
+                        >
                           Current Username:
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "#1D1D20" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#1D1D20",
+                            textAlign: { xs: "center", sm: "left" },
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {userData.username || username}
                         </Typography>
                       </Box>
-                      <Box sx={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        gap: 0.5
-                      }}>
-                        <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          flexWrap: { xs: "wrap", sm: "nowrap" },
+                          justifyContent: { xs: "center", sm: "flex-start" },
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#1D1D20",
+                            fontWeight: 500,
+                            textAlign: { xs: "center", sm: "left" },
+                          }}
+                        >
                           Email:
                         </Typography>
-                        <Typography variant="body2" sx={{ color: "#1D1D20" }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#1D1D20",
+                            textAlign: { xs: "center", sm: "left" },
+                            wordBreak: "break-word",
+                          }}
+                        >
                           {userData.email || email}
                         </Typography>
                       </Box>
                       <LogoutButton
                         startIcon={<LogOut size={16} />}
                         onClick={handleLogout}
-                        sx={{ height: "32px", fontSize: "0.9rem" }}
+                        sx={{
+                          height: "32px",
+                          fontSize: "0.9rem",
+                          mt: { xs: 1, sm: 0 },
+                        }}
                       >
                         Logout
                       </LogoutButton>
@@ -587,43 +697,74 @@ export default function Profile() {
             </Card>
 
             {/* Profile Actions */}
-            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
-              <CardContent sx={{ p: 1 }}>
-                <Typography variant="h6" sx={{ 
-                  color: "#1D1D20", 
-                  fontWeight: 800, 
-                  fontSize: "1.1rem",
-                  mb: 1,
-                  textAlign: "center"
-                }}>
+            <Card
+              sx={{
+                bgcolor: "white",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                flex: 1,
+                width: "100%",
+              }}
+            >
+              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#1D1D20",
+                    fontWeight: 800,
+                    fontSize: { xs: "1rem", sm: "1.1rem" },
+                    mb: 1,
+                    textAlign: "center",
+                  }}
+                >
                   Profile Actions
                 </Typography>
-                <Box sx={{ 
-                  display: "flex", 
-                  alignItems: "center",
-                  gap: 1,
-                  justifyContent: "center",
-                  flexWrap: "wrap"
-                }}>
-                  <Box sx={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 0.5
-                  }}>
-                    <Typography variant="body2" sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      flexDirection: { xs: "column", sm: "row" },
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#1D1D20",
+                        fontWeight: 500,
+                        textAlign: { xs: "center", sm: "left" },
+                      }}
+                    >
                       New Username:
                     </Typography>
                     <StyledTextField
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       size="small"
-                      sx={{ width: "150px" }}
+                      sx={{
+                        width: { xs: "100%", sm: "150px" },
+                        "& .MuiOutlinedInput-root": {
+                          fontSize: { xs: "1rem", sm: "1.2rem" },
+                        },
+                      }}
                     />
                   </Box>
                   <SaveButton
                     startIcon={<Save size={16} />}
                     onClick={handleSaveUsername}
-                    sx={{ height: "32px", fontSize: "0.9rem" }}
+                    sx={{
+                      height: "32px",
+                      fontSize: "0.9rem",
+                      mt: { xs: 1, sm: 0 },
+                    }}
                   >
                     Save
                   </SaveButton>
@@ -632,51 +773,101 @@ export default function Profile() {
             </Card>
 
             {/* Streak Box */}
-            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
-              <CardContent sx={{ p: 1 }}>
-                <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+            <Card
+              sx={{
+                bgcolor: "white",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                flex: 1,
+                width: "100%",
+                display: { xs: "none", md: "block" }, // Hide on mobile to save space
+              }}
+            >
+              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#1D1D20",
+                    mb: 1,
+                    fontWeight: "bold",
+                    fontSize: { xs: "1rem", sm: "1.1rem" },
+                    textAlign: "center",
+                  }}
+                >
                   Current Streak
                 </Typography>
                 <Box sx={{ textAlign: "center", py: 0.5 }}>
-                  <Typography sx={{ color: "#6B7280" }}>
-                    No streak tracked yet
-                  </Typography>
+                  <Typography sx={{ color: "#6B7280" }}>No streak tracked yet</Typography>
                 </Box>
               </CardContent>
             </Card>
           </Box>
 
           {/* Bottom Row */}
-          <Box sx={{ display: "flex", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              gap: 2,
+            }}
+          >
             {/* Left Column */}
-            <Stack spacing={2} sx={{ flex: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{
+                flex: 1,
+                width: "100%",
+              }}
+            >
               {/* Quick Actions */}
-              <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", height: "calc(50% - 8px)" }}>
-                <CardContent sx={{ p: 1 }}>
-                  <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                  height: { xs: "auto", md: "calc(50% - 8px)" },
+                }}
+              >
+                <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#1D1D20",
+                      mb: 1,
+                      fontWeight: "bold",
+                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                      textAlign: { xs: "center", sm: "left" },
+                    }}
+                  >
                     Quick Actions
                   </Typography>
-                  <Box sx={{ 
-                    display: "flex", 
-                    flexDirection: "column",
-                    gap: 2,
-                    height: "calc(100% - 40px)",
-                    justifyContent: "space-between",
-                    py: 2
-                  }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                      height: { xs: "auto", md: "calc(100% - 40px)" },
+                      justifyContent: "space-between",
+                      py: 2,
+                    }}
+                  >
                     <ActionButton
-                      startIcon={<Upload size={20} />}
+                      startIcon={<Upload size={isMobile ? 16 : 20} />}
                       onClick={() => navigate("/upload")}
                       fullWidth
-                      sx={{ height: "48px" }}
+                      sx={{
+                        height: { xs: "40px", sm: "48px" },
+                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
+                      }}
                     >
                       Upload Study Set
                     </ActionButton>
                     <ActionButton
-                      startIcon={<Users size={20} />}
+                      startIcon={<Users size={isMobile ? 16 : 20} />}
                       onClick={() => navigate("/community")}
                       fullWidth
-                      sx={{ height: "48px" }}
+                      sx={{
+                        height: { xs: "40px", sm: "48px" },
+                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
+                      }}
                     >
                       Join Community
                     </ActionButton>
@@ -685,18 +876,35 @@ export default function Profile() {
               </Card>
 
               {/* Communities */}
-              <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", height: "calc(50% - 8px)" }}>
-                <CardContent sx={{ p: 1.5 }}>
-                  <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1.5, fontWeight: "bold" }}>
+              <Card
+                sx={{
+                  bgcolor: "white",
+                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                  height: { xs: "auto", md: "calc(50% - 8px)" },
+                }}
+              >
+                <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "#1D1D20",
+                      mb: 1.5,
+                      fontWeight: "bold",
+                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                      textAlign: { xs: "center", sm: "left" },
+                    }}
+                  >
                     Your Communities
                   </Typography>
-                  <Box sx={{ 
-                    maxHeight: "180px", 
-                    overflowY: "auto",
-                    border: "1px solid #E5E7EB",
-                    borderRadius: 1,
-                    p: 1
-                  }}>
+                  <Box
+                    sx={{
+                      maxHeight: { xs: "150px", sm: "180px" },
+                      overflowY: "auto",
+                      border: "1px solid #E5E7EB",
+                      borderRadius: 1,
+                      p: 1,
+                    }}
+                  >
                     {myCommunities.length > 0 ? (
                       <Stack spacing={1}>
                         {myCommunities.map((community) => (
@@ -704,14 +912,14 @@ export default function Profile() {
                             key={community.id}
                             sx={{
                               bgcolor: "#C5EDFD",
-                              p: 1.25,
+                              p: { xs: 1, sm: 1.25 },
                               borderRadius: 1,
                               cursor: "pointer",
                               display: "flex",
                               alignItems: "center",
-                              '&:hover': {
+                              "&:hover": {
                                 bgcolor: "#97C7F1",
-                              }
+                              },
                             }}
                             onClick={() => navigate(`/community/view/${community.id}`)}
                           >
@@ -719,18 +927,27 @@ export default function Profile() {
                               sx={{
                                 bgcolor: "#1D6EF1",
                                 borderRadius: "50%",
-                                width: 28,
-                                height: 28,
+                                width: { xs: 24, sm: 28 },
+                                height: { xs: 24, sm: 28 },
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 color: "white",
-                                mr: 1.25
+                                mr: { xs: 0.75, sm: 1.25 },
                               }}
                             >
                               {community.name.charAt(0).toUpperCase()}
                             </Box>
-                            <Typography sx={{ color: "#1D1D20", fontWeight: 500 }}>
+                            <Typography
+                              sx={{
+                                color: "#1D1D20",
+                                fontWeight: 500,
+                                fontSize: { xs: "0.875rem", sm: "1rem" },
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
                               {community.name}
                             </Typography>
                           </Box>
@@ -738,9 +955,7 @@ export default function Profile() {
                       </Stack>
                     ) : (
                       <Box sx={{ bgcolor: "#F9FAFB", p: 1.5, borderRadius: 1, textAlign: "center" }}>
-                        <Typography sx={{ color: "#6B7280" }}>
-                          No communities yet
-                        </Typography>
+                        <Typography sx={{ color: "#6B7280" }}>No communities yet</Typography>
                       </Box>
                     )}
                   </Box>
@@ -749,45 +964,163 @@ export default function Profile() {
             </Stack>
 
             {/* Right Column - Study Statistics */}
-            <Card sx={{ bgcolor: "white", boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", flex: 1 }}>
-              <CardContent sx={{ p: 1.5 }}>
-                <Typography variant="h6" sx={{ color: "#1D1D20", mb: 1, fontWeight: "bold" }}>
+            <Card
+              sx={{
+                bgcolor: "white",
+                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                flex: 1,
+                width: "100%",
+              }}
+            >
+              <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "#1D1D20",
+                    mb: 1,
+                    fontWeight: "bold",
+                    fontSize: { xs: "1rem", sm: "1.1rem" },
+                    textAlign: { xs: "center", sm: "left" },
+                  }}
+                >
                   Study Statistics
                 </Typography>
-          {studyStats.loading ? (
-                  <div className="flex justify-center items-center h-16">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-            </div>
-          ) : studyStats.error ? (
-            <p className="text-red-500">{studyStats.error}</p>
-          ) : (
-            <div>
-                    <div className="mb-2">
-                      <p className="text-lg mb-0.5">Total Study Time</p>
-                      <p className="text-2xl font-bold text-blue-500">{formatTime(studyStats.totalTime)}</p>
-              </div>
-              
-              {studyStats.recentSets.length > 0 && (
-                <div>
-                        <p className="text-lg mb-1">Recently Studied Sets</p>
-                        <div className="space-y-1">
-                    {studyStats.recentSets.map(set => (
-                      <div
-                        key={set.id}
-                              className="bg-[#C5EDFD] p-2 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors"
+                {studyStats.loading ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      height: "16px",
+                      py: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        animation: "spin 1s linear infinite",
+                        height: "8px",
+                        width: "8px",
+                        borderRadius: "50%",
+                        borderWidth: "2px",
+                        borderStyle: "solid",
+                        borderColor: "transparent",
+                        borderBottomColor: "gray",
+                        "@keyframes spin": {
+                          "0%": {
+                            transform: "rotate(0deg)",
+                          },
+                          "100%": {
+                            transform: "rotate(360deg)",
+                          },
+                        },
+                      }}
+                    />
+                  </Box>
+                ) : studyStats.error ? (
+                  <Typography
+                    sx={{
+                      color: "red",
+                      textAlign: "center",
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                    }}
+                  >
+                    {studyStats.error}
+                  </Typography>
+                ) : (
+                  <Box>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: "1rem", sm: "1.125rem" },
+                          mb: 0.5,
+                          textAlign: { xs: "center", sm: "left" },
+                        }}
                       >
-                        <p className="font-semibold text-[#1D1D20]">{set.title}</p>
-                              <div className="flex justify-between text-sm mt-0.5 text-[#1D1D20]">
-                          <span>Time: {formatTime(set.totalTime)}</span>
-                          <span>Last: {formatDate(set.lastStudied)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                        Total Study Time
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: { xs: "1.5rem", sm: "1.75rem" },
+                          fontWeight: "bold",
+                          color: "#1D6EF1",
+                          textAlign: { xs: "center", sm: "left" },
+                        }}
+                      >
+                        {formatTime(studyStats.totalTime)}
+                      </Typography>
+                    </Box>
+
+                    {studyStats.recentSets.length > 0 && (
+                      <Box>
+                        <Typography
+                          sx={{
+                            fontSize: { xs: "1rem", sm: "1.125rem" },
+                            mb: 1,
+                            textAlign: { xs: "center", sm: "left" },
+                          }}
+                        >
+                          Recently Studied Sets
+                        </Typography>
+                        <Stack spacing={1}>
+                          {studyStats.recentSets.map((set) => (
+                            <Box
+                              key={set.id}
+                              sx={{
+                                bgcolor: "#C5EDFD",
+                                p: { xs: 1.5, sm: 2 },
+                                borderRadius: 1,
+                                cursor: "pointer",
+                                transition: "background-color 0.2s",
+                                "&:hover": {
+                                  bgcolor: "#97C7F1",
+                                },
+                              }}
+                            >
+                              <Typography
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#1D1D20",
+                                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {set.title}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  mt: 0.5,
+                                  flexDirection: { xs: "column", sm: "row" },
+                                  gap: { xs: 0.5, sm: 0 },
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                    color: "#1D1D20",
+                                  }}
+                                >
+                                  Time: {formatTime(set.totalTime)}
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                                    color: "#1D1D20",
+                                  }}
+                                >
+                                  Last: {formatDate(set.lastStudied)}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Box>
@@ -812,3 +1145,4 @@ export default function Profile() {
     </Box>
   )
 }
+

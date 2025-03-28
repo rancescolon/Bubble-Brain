@@ -14,6 +14,9 @@ import {
   Box,
   Avatar,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
+  IconButton,
 } from "@mui/material"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
@@ -58,6 +61,7 @@ const MOCK_USERS = [
 ]
 
 const HomePage = () => {
+  // eslint-disable-next-line no-unused-vars
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
   const [showGuide, setShowGuide] = useState(true)
@@ -67,11 +71,20 @@ const HomePage = () => {
   const [loadingCommunities, setLoadingCommunities] = useState(true)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  })
 
   // Refs for carousel scrolling
   const communitiesRef = useRef(null)
   const coursesRef = useRef(null)
   const usersRef = useRef(null)
+
+  // Theme and responsive breakpoints
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
 
   useEffect(() => {
     const token = sessionStorage.getItem("token")
@@ -87,7 +100,7 @@ const HomePage = () => {
       setActiveUsers(MOCK_USERS)
       setLoadingUsers(false)
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchLatestCommunities = () => {
     setLoadingCommunities(true)
@@ -511,6 +524,7 @@ const HomePage = () => {
     return images[Math.floor(Math.random() * images.length)]
   }
 
+  // eslint-disable-next-line no-unused-vars
   const handleLogout = () => {
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
@@ -519,7 +533,10 @@ const HomePage = () => {
 
   const scrollCarousel = (ref, direction) => {
     if (ref.current) {
-      const scrollAmount = direction === "left" ? -300 : 300
+      // Calculate scroll amount based on card width
+      const cardWidth = isMobile ? 220 : isTablet ? 260 : 300
+      const scrollAmount = direction === "left" ? -cardWidth : cardWidth
+
       ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" })
     }
   }
@@ -561,6 +578,48 @@ const HomePage = () => {
       clearTimeout(initialFetchTimer)
       clearInterval(intervalId)
     }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle window resize events
+  useEffect(() => {
+    const handleResize = () => {
+      // Update window size state when window is resized
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+
+    // Add event listener
+    window.addEventListener("resize", handleResize)
+
+    // Call handler right away so state gets updated with initial window size
+    handleResize()
+
+    // Remove event listener on cleanup
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
+  // Add meta viewport tag to document head
+  useEffect(() => {
+    // Check if viewport meta tag exists
+    let viewportMeta = document.querySelector('meta[name="viewport"]')
+
+    // If it doesn't exist, create it
+    if (!viewportMeta) {
+      viewportMeta = document.createElement("meta")
+      viewportMeta.name = "viewport"
+      document.head.appendChild(viewportMeta)
+    }
+
+    // Set the content attribute
+    viewportMeta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+
+    // Clean up function
+    return () => {
+      // Optional: remove or reset the viewport meta tag when component unmounts
+      // viewportMeta.content = 'width=device-width, initial-scale=1.0';
+    }
   }, [])
 
   return (
@@ -574,6 +633,9 @@ const HomePage = () => {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         opacity: 1.0,
+        width: "100%",
+        maxWidth: "100vw",
+        overflowX: "hidden",
       }}
     >
       <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
@@ -590,7 +652,7 @@ const HomePage = () => {
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 800,
-                fontSize: "52px",
+                fontSize: isMobile ? "32px" : "52px",
                 color: "#F4FDFF",
               }}
             >
@@ -624,49 +686,57 @@ const HomePage = () => {
 
       {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
 
-      <Container>
+      <Container
+        disableGutters={isMobile}
+        sx={{
+          width: "100%",
+          maxWidth: "100%",
+          px: isMobile ? 1 : 2,
+          boxSizing: "border-box",
+        }}
+      >
         <Box
           sx={{
             bgcolor: "#FFFFFF",
-            py: 8,
-            px: 2,
+            py: isMobile ? 4 : 8,
+            px: isMobile ? 2 : 4,
             mt: 2,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
           }}
         >
           <Typography
-            variant="h2"
+            variant={isMobile ? "h3" : isTablet ? "h2" : "h1"}
             align="center"
             color="#1D1D20"
             gutterBottom
             sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 800,
-              fontSize: "52px",
+              fontSize: isMobile ? "32px" : isTablet ? "42px" : "52px",
             }}
           >
             Dive into Learning
           </Typography>
           <Typography
-            variant="h5"
+            variant={isMobile ? "h6" : "h5"}
             align="center"
             color="#1D1D20"
             paragraph
             sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 600,
-              fontSize: "26px",
+              fontSize: isMobile ? "18px" : "26px",
             }}
           >
             Explore our gamified courses and quizzes designed to make learning fun and engaging.
           </Typography>
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
+          <Box sx={{ mt: 4, display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 2 }}>
             <Button
               variant="contained"
               component={Link}
               to="/courses"
-              size="large"
+              size={isMobile ? "medium" : "large"}
               sx={{
                 bgcolor: "#EF7B6C",
                 "&:hover": {
@@ -674,10 +744,10 @@ const HomePage = () => {
                 },
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 600,
-                fontSize: "32px",
+                fontSize: isMobile ? "24px" : "32px",
                 color: "#F4FDFF",
-                px: 4,
-                py: 1,
+                px: isMobile ? 3 : 4,
+                py: isMobile ? 0.5 : 1,
                 borderRadius: 2,
                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}
@@ -693,51 +763,60 @@ const HomePage = () => {
             mt: 6,
             mb: 6,
             bgcolor: "#FFFFFF",
-            py: 4,
-            px: 2,
+            py: isMobile ? 3 : isTablet ? 3.5 : 4,
+            px: isMobile ? 2 : isTablet ? 3 : 4,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? 2 : 0,
+            }}
+          >
             <Typography
-              variant="h3"
+              variant={isMobile ? "h4" : "h3"}
               color="#1D1D20"
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 700,
-                fontSize: "36px",
+                fontSize: isMobile ? "24px" : "36px",
               }}
             >
               Latest Communities
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
+              <IconButton
                 onClick={() => scrollCarousel(communitiesRef, "left")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronLeft />
-              </Button>
-              <Button
+                <ChevronLeft size={20} />
+              </IconButton>
+              <IconButton
                 onClick={() => scrollCarousel(communitiesRef, "right")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronRight />
-              </Button>
+                <ChevronRight size={20} />
+              </IconButton>
             </Box>
           </Box>
 
@@ -746,12 +825,16 @@ const HomePage = () => {
             sx={{
               display: "flex",
               overflowX: "auto",
-              gap: 2,
+              gap: isMobile ? 1 : 2,
               pb: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
               msOverflowStyle: "none",
-              minHeight: "280px",
+              minHeight: isMobile ? "250px" : "280px",
+              scrollSnapType: "x mandatory",
+              width: "100%",
+              maxWidth: "100vw",
+              boxSizing: "border-box",
             }}
           >
             {loadingCommunities ? (
@@ -763,8 +846,9 @@ const HomePage = () => {
                 <Card
                   key={community.id}
                   sx={{
-                    minWidth: 280,
-                    maxWidth: 280,
+                    width: "100%",
+                    minWidth: isMobile ? 180 : isTablet ? 220 : 260,
+                    maxWidth: isMobile ? 220 : isTablet ? 260 : 300,
                     bgcolor: "#FFFFFF",
                     borderRadius: 2,
                     transition: "transform 0.2s, box-shadow 0.2s",
@@ -774,6 +858,7 @@ const HomePage = () => {
                       cursor: "pointer",
                     },
                     flex: "0 0 auto",
+                    scrollSnapAlign: "start", // Snap point for mobile scrolling
                   }}
                   onClick={() => handleCommunityClick(community.id)}
                 >
@@ -792,7 +877,7 @@ const HomePage = () => {
                       sx={{
                         fontFamily: "SourGummy, sans-serif",
                         fontWeight: 600,
-                        fontSize: "22px",
+                        fontSize: isMobile ? "18px" : "22px",
                       }}
                     >
                       {community.name}
@@ -804,11 +889,11 @@ const HomePage = () => {
                         fontWeight: 500,
                         fontSize: "14px",
                         mb: 1,
-                        height: "60px",
+                        height: isMobile ? "50px" : "60px",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         display: "-webkit-box",
-                        WebkitLineClamp: 3,
+                        WebkitLineClamp: isMobile ? 2 : 3,
                         WebkitBoxOrient: "vertical",
                       }}
                     >
@@ -863,51 +948,60 @@ const HomePage = () => {
             mt: 6,
             mb: 6,
             bgcolor: "#FFFFFF",
-            py: 4,
-            px: 2,
+            py: isMobile ? 3 : isTablet ? 3.5 : 4,
+            px: isMobile ? 2 : isTablet ? 3 : 4,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? 2 : 0,
+            }}
+          >
             <Typography
-              variant="h3"
+              variant={isMobile ? "h4" : "h3"}
               color="#1D1D20"
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 700,
-                fontSize: "36px",
+                fontSize: isMobile ? "24px" : "36px",
               }}
             >
               Latest Courses
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
+              <IconButton
                 onClick={() => scrollCarousel(coursesRef, "left")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronLeft />
-              </Button>
-              <Button
+                <ChevronLeft size={20} />
+              </IconButton>
+              <IconButton
                 onClick={() => scrollCarousel(coursesRef, "right")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronRight />
-              </Button>
+                <ChevronRight size={20} />
+              </IconButton>
             </Box>
           </Box>
 
@@ -916,12 +1010,16 @@ const HomePage = () => {
             sx={{
               display: "flex",
               overflowX: "auto",
-              gap: 2,
+              gap: isMobile ? 1 : 2,
               pb: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
               msOverflowStyle: "none",
-              minHeight: "280px",
+              minHeight: isMobile ? "250px" : "280px",
+              scrollSnapType: "x mandatory",
+              width: "100%",
+              maxWidth: "100vw",
+              boxSizing: "border-box",
             }}
           >
             {loadingCourses ? (
@@ -933,8 +1031,9 @@ const HomePage = () => {
                 <Card
                   key={course.id}
                   sx={{
-                    minWidth: 280,
-                    maxWidth: 280,
+                    width: "100%",
+                    minWidth: isMobile ? 180 : isTablet ? 220 : 260,
+                    maxWidth: isMobile ? 220 : isTablet ? 260 : 300,
                     bgcolor: "#FFFFFF",
                     borderRadius: 2,
                     transition: "transform 0.2s, box-shadow 0.2s",
@@ -944,6 +1043,7 @@ const HomePage = () => {
                       cursor: "pointer",
                     },
                     flex: "0 0 auto",
+                    scrollSnapAlign: "start", // Snap point for mobile scrolling
                   }}
                   onClick={() => handleCourseClick(course.id)}
                 >
@@ -962,7 +1062,7 @@ const HomePage = () => {
                         sx={{
                           fontFamily: "SourGummy, sans-serif",
                           fontWeight: 600,
-                          fontSize: "22px",
+                          fontSize: isMobile ? "18px" : "22px",
                           borderBottom: "2px solid #EF7B6C",
                           pb: 1,
                         }}
@@ -997,11 +1097,11 @@ const HomePage = () => {
                           fontSize: "14px",
                           color: "#666",
                           mt: 1,
-                          height: "60px",
+                          height: isMobile ? "50px" : "60px",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           display: "-webkit-box",
-                          WebkitLineClamp: 3,
+                          WebkitLineClamp: isMobile ? 2 : 3,
                           WebkitBoxOrient: "vertical",
                           lineHeight: "1.5",
                           letterSpacing: "0.3px",
@@ -1036,51 +1136,60 @@ const HomePage = () => {
             mt: 6,
             mb: 6,
             bgcolor: "#FFFFFF",
-            py: 4,
-            px: 2,
+            py: isMobile ? 3 : isTablet ? 3.5 : 4,
+            px: isMobile ? 2 : isTablet ? 3 : 4,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              flexDirection: isMobile ? "column" : "row",
+              gap: isMobile ? 2 : 0,
+            }}
+          >
             <Typography
-              variant="h3"
+              variant={isMobile ? "h4" : "h3"}
               color="#1D1D20"
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 700,
-                fontSize: "36px",
+                fontSize: isMobile ? "24px" : "36px",
               }}
             >
               Active Users
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Button
+              <IconButton
                 onClick={() => scrollCarousel(usersRef, "left")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronLeft />
-              </Button>
-              <Button
+                <ChevronLeft size={20} />
+              </IconButton>
+              <IconButton
                 onClick={() => scrollCarousel(usersRef, "right")}
                 sx={{
-                  minWidth: "40px",
-                  height: "40px",
+                  width: isMobile ? "36px" : "40px",
+                  height: isMobile ? "36px" : "40px",
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
                 }}
               >
-                <ChevronRight />
-              </Button>
+                <ChevronRight size={20} />
+              </IconButton>
             </Box>
           </Box>
 
@@ -1089,12 +1198,16 @@ const HomePage = () => {
             sx={{
               display: "flex",
               overflowX: "auto",
-              gap: 2,
+              gap: isMobile ? 1 : 2,
               pb: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
               msOverflowStyle: "none",
-              minHeight: "150px",
+              minHeight: isMobile ? "250px" : "280px",
+              scrollSnapType: "x mandatory",
+              width: "100%",
+              maxWidth: "100vw",
+              boxSizing: "border-box",
             }}
           >
             {loadingUsers ? (
@@ -1106,8 +1219,9 @@ const HomePage = () => {
                 <Card
                   key={user.id}
                   sx={{
-                    minWidth: 280,
-                    maxWidth: 280,
+                    width: "100%",
+                    minWidth: isMobile ? 180 : isTablet ? 220 : 260,
+                    maxWidth: isMobile ? 220 : isTablet ? 260 : 300,
                     bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
                     borderRadius: 2,
                     transition: "transform 0.2s, box-shadow 0.2s",
@@ -1123,6 +1237,7 @@ const HomePage = () => {
                     p: 2,
                     position: "relative",
                     border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                    scrollSnapAlign: "start", // Snap point for mobile scrolling
                   }}
                   onClick={() => handleUserClick(user.id)}
                 >
@@ -1131,13 +1246,13 @@ const HomePage = () => {
                       src={user.avatar}
                       alt={user.name}
                       sx={{
-                        width: 60,
-                        height: 60,
+                        width: isMobile ? 50 : 60,
+                        height: isMobile ? 50 : 60,
                         bgcolor: "#1D6EF1",
                         mr: 2,
                         border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
                         color: "white",
-                        fontSize: "1.5rem",
+                        fontSize: isMobile ? "1.2rem" : "1.5rem",
                       }}
                     >
                       {user.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -1157,12 +1272,12 @@ const HomePage = () => {
                   </Box>
                   <Box sx={{ overflow: "hidden" }}>
                     <Typography
-                      variant="h6"
+                      variant={isMobile ? "subtitle1" : "h6"}
                       color="#1D1D20"
                       sx={{
                         fontFamily: "SourGummy, sans-serif",
                         fontWeight: 600,
-                        fontSize: "18px",
+                        fontSize: isMobile ? "16px" : "18px",
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
@@ -1193,7 +1308,7 @@ const HomePage = () => {
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
-                        maxWidth: "180px",
+                        maxWidth: isMobile ? "150px" : "180px",
                       }}
                     >
                       {user.email}
