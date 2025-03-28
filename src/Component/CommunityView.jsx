@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { MessageSquare, Plus, Heart, Share2, Trash2, ArrowLeft, Send, Users, X } from "lucide-react"
+import { socket } from "../App"
+import { useMediaQuery, useTheme } from "@mui/material"
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
@@ -27,6 +29,34 @@ export default function CommunityView() {
   const messagesEndRef = useRef(null)
   const [showMembers, setShowMembers] = useState(false)
   const [copiedSetId, setCopiedSetId] = useState(null)
+  const [notification, setNotification] = useState({ show: false, message: "", type: "success" })
+
+  // Theme and responsive breakpoints
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
+
+  // Add viewport meta tag to document head
+  useEffect(() => {
+    // Check if viewport meta tag exists
+    let viewportMeta = document.querySelector('meta[name="viewport"]')
+
+    // If it doesn't exist, create it
+    if (!viewportMeta) {
+      viewportMeta = document.createElement("meta")
+      viewportMeta.name = "viewport"
+      document.head.appendChild(viewportMeta)
+    }
+
+    // Set the content attribute
+    viewportMeta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+
+    // Clean up function
+    return () => {
+      // Optional: remove or reset the viewport meta tag when component unmounts
+      // viewportMeta.content = 'width=device-width, initial-scale=1.0';
+    }
+  }, [])
 
   // Get base URL for sharing
   const getBaseUrl = () => {
@@ -47,9 +77,9 @@ export default function CommunityView() {
 
     // Capitalize first letter of each word
     return typeWithSpaces
-        .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
   }
 
   useEffect(() => {
@@ -77,40 +107,40 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((data) => {
-          // Transform API data to match our component's expected format
-          const communityData = {
-            id: data.id,
-            name: data.name || "Community",
-            description: data.description || "No description available",
-            likes: 0,
-            authorId: data.ownerID,
-          }
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((data) => {
+        // Transform API data to match our component's expected format
+        const communityData = {
+          id: data.id,
+          name: data.name || "Community",
+          description: data.description || "No description available",
+          likes: 0,
+          authorId: data.ownerID,
+        }
 
-          setCommunity(communityData)
+        setCommunity(communityData)
 
-          // Fetch members
-          fetchMembers()
+        // Fetch members
+        fetchMembers()
 
-          // Fetch messages
-          fetchMessages()
+        // Fetch messages
+        fetchMessages()
 
-          // Fetch study sets
-          fetchStudySets()
+        // Fetch study sets
+        fetchStudySets()
 
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error("Error fetching community:", error)
-          setError("Failed to load community details")
-          setLoading(false)
-        })
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.error("Error fetching community:", error)
+        setError("Failed to load community details")
+        setLoading(false)
+      })
   }
 
   const fetchMembers = () => {
@@ -123,43 +153,73 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((data) => {
-          if (data && data[0] && data[0].length > 0) {
-            // Transform API data to match our component's expected format
-            const membersData = data[0].map((member) => ({
-              id: member.id,
-              name: member.userID.attributes?.username || member.userID.email?.split("@")[0] || "User",
-              isAdmin: member.userID === community?.authorId,
-            }))
-            setMembers(membersData)
-          } else {
-            // If no members returned, at least add the owner as admin
-            setMembers([
-              {
-                id: community?.authorId,
-                name: "Owner",
-                isAdmin: true,
-              },
-            ])
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching members:", error)
-          // Set default member if fetch fails
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then(async (data) => {
+        if (data && data[0] && data[0].length > 0) {
+          // Fetch user details for each member
+          const membersWithDetails = await Promise.all(
+            data[0].map(async (member) => {
+              try {
+                // Fetch user details
+                const userResponse = await fetch(`${API_BASE_URL}/users/${member.userID}`, {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                })
+
+                if (!userResponse.ok) {
+                  throw new Error(`Failed to fetch user data: ${userResponse.status}`)
+                }
+
+                const userData = await userResponse.json()
+
+                return {
+                  id: member.id,
+                  userID: member.userID,
+                  email: userData.email,
+                  isAdmin: member.userID === community?.authorId,
+                }
+              } catch (error) {
+                console.error("Error fetching user details:", error)
+                return {
+                  id: member.id,
+                  userID: member.userID,
+                  email: "Unknown User",
+                  isAdmin: member.userID === community?.authorId,
+                }
+              }
+            }),
+          )
+          setMembers(membersWithDetails)
+        } else {
+          // If no members returned, at least add the owner as admin
           setMembers([
             {
               id: community?.authorId,
-              name: "Owner",
+              userID: community?.authorId,
+              email: "Owner",
               isAdmin: true,
             },
           ])
-        })
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching members:", error)
+        setMembers([
+          {
+            id: community?.authorId,
+            userID: community?.authorId,
+            email: "Owner",
+            isAdmin: true,
+          },
+        ])
+      })
   }
 
   const fetchMessages = () => {
@@ -172,38 +232,48 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((result) => {
-          if (result && result[0] && result[0].length > 0) {
-            // Transform API data to match our component's expected format
-            const messagesData = result[0].map((message) => ({
-              id: message.id,
-              sender: message.authorName || "User",
-              text: message.content || "No message content",
-              timestamp: message.createdAt || new Date().toISOString(),
-            }))
-            setMessages(messagesData)
-          } else {
-            // Set default welcome messages if none exist
-            const initialMessages = [
-              { id: 1, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
-            ]
-            setMessages(initialMessages)
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching messages:", error)
-          // Set default welcome message if fetch fails
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((result) => {
+        if (result && result[0] && result[0].length > 0) {
+          // Transform API data to match our component's expected format
+          const messagesData = result[0].map((message, idx) => ({
+            id: `msg-${message.id}-${idx}-${Math.random().toString(36).substr(2, 9)}`,
+            sender: message.authorName || "User",
+            text: message.content || "No message content",
+            timestamp: message.createdAt || new Date().toISOString(),
+          }))
+          setMessages(messagesData)
+        } else {
+          // Set default welcome messages if none exist
           const initialMessages = [
-            { id: 1, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
+            {
+              id: `welcome-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              sender: "System",
+              text: "Welcome to the community chat!",
+              timestamp: new Date().toISOString(),
+            },
           ]
           setMessages(initialMessages)
-        })
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching messages:", error)
+        // Set default welcome message if fetch fails
+        const initialMessages = [
+          {
+            id: `welcome-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            sender: "System",
+            text: "Welcome to the community chat!",
+            timestamp: new Date().toISOString(),
+          },
+        ]
+        setMessages(initialMessages)
+      })
   }
 
   const fetchStudySets = () => {
@@ -218,119 +288,121 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((result) => {
-          if (result && result[0] && result[0].length > 0) {
-            // First, filter to only include study sets for this community
-            const communityStudySets = result[0].filter((post) => {
-              // Try to parse the content to check for communityId
-              let contentObj = null
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((result) => {
+        if (result && result[0] && result[0].length > 0) {
+          // First, filter to only include study sets for this community
+          const communityStudySets = result[0].filter((post) => {
+            // Try to parse the content to check for communityId
+            let contentObj = null
+            try {
+              if (post.content && typeof post.content === "string") {
+                contentObj = JSON.parse(post.content)
+              }
+            } catch (e) {
+              console.warn("Could not parse content for post", post.id)
+            }
+
+            // Check if communityId is in the content
+            if (contentObj && contentObj.communityId === currentCommunityId) {
+              return true
+            }
+
+            // Check if the post has our custom attribute that indicates the community
+            if (post.attributes && post.attributes.communityId === currentCommunityId) {
+              return true
+            }
+
+            // Check if parentID matches the community ID
+            if (post.parentID && String(post.parentID) === currentCommunityId) {
+              return true
+            }
+
+            // Also check the groupID as string comparison
+            const postGroupId = String(post.groupID || "")
+            const belongsViaGroupId = postGroupId === currentCommunityId
+
+            return (
+              belongsViaGroupId ||
+              (contentObj && contentObj.communityId === currentCommunityId) ||
+              (post.attributes && post.attributes.communityId === currentCommunityId) ||
+              (post.parentID && String(post.parentID) === currentCommunityId)
+            )
+          })
+
+          // Transform API data to match our component's expected format
+          const studySetsData = communityStudySets
+            .map((post) => {
               try {
-                if (post.content && typeof post.content === "string") {
-                  contentObj = JSON.parse(post.content)
-                }
-              } catch (e) {
-                console.warn("Could not parse content for post", post.id)
-              }
+                // Try to parse the content as JSON, but handle invalid JSON gracefully
+                let content = {}
 
-              // Check if communityId is in the content
-              if (contentObj && contentObj.communityId === currentCommunityId) {
-                return true
-              }
+                try {
+                  if (post.content && typeof post.content === "string") {
+                    content = JSON.parse(post.content)
 
-              // Check if the post has our custom attribute that indicates the community
-              if (post.attributes && post.attributes.communityId === currentCommunityId) {
-                return true
-              }
-
-              // Check if parentID matches the community ID
-              if (post.parentID && String(post.parentID) === currentCommunityId) {
-                return true
-              }
-
-              // Also check the groupID as string comparison
-              const postGroupId = String(post.groupID || "")
-              const belongsViaGroupId = postGroupId === currentCommunityId
-
-              return (
-                  belongsViaGroupId ||
-                  (contentObj && contentObj.communityId === currentCommunityId) ||
-                  (post.attributes && post.attributes.communityId === currentCommunityId) ||
-                  (post.parentID && String(post.parentID) === currentCommunityId)
-              )
-            })
-
-            // Transform API data to match our component's expected format
-            const studySetsData = communityStudySets
-                .map((post) => {
-                  try {
-                    // Try to parse the content as JSON, but handle invalid JSON gracefully
-                    let content = {}
-
-                    try {
-                      if (post.content && typeof post.content === "string") {
-                        content = JSON.parse(post.content)
-
-                        // If we don't have a name, use a default
-                        if (!content.name) {
-                          content.name = "Untitled Study Set"
-                        }
-
-                        // If we don't have a type, use a default
-                        if (!content.type) {
-                          content.type = "flashcards"
-                        }
-
-                        // If we don't have content array, use an empty array
-                        if (!Array.isArray(content.content)) {
-                          content.content = []
-                        }
-                      }
-                    } catch (parseError) {
-                      console.warn("Could not parse post content as JSON:", parseError.message)
-                      // Create a default content object for non-JSON content
-                      content = {
-                        name: "Untitled Study Set",
-                        type: "flashcards",
-                        content: [{ front: post.content || "Content unavailable", back: "" }],
-                      }
+                    // If we don't have a name, use a default
+                    if (!content.name) {
+                      content.name = "Untitled Study Set"
                     }
 
-                    // Include all study sets with reasonable defaults
-                    const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-
-                    return {
-                      id: post.id,
-                      title: content.name || "Untitled Study Set",
-                      description: `Created by ${creatorName}`,
-                      type: content.type || "flashcards",
-                      content: content.content || [],
-                      fileId: post.fileId,
-                      likes: post._count?.reactions || 0,
-                      groupID: post.groupID,
-                      communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                    // If we don't have a type, use a default
+                    if (!content.type) {
+                      content.type = "flashcards"
                     }
-                  } catch (error) {
-                    console.error("Error processing post:", error)
-                    return null
+
+                    // If we don't have content array, use an empty array
+                    if (!Array.isArray(content.content)) {
+                      content.content = []
+                    }
                   }
-                })
-                .filter(Boolean) // Remove null entries
+                } catch (parseError) {
+                  console.warn("Could not parse post content as JSON:", parseError.message)
+                  // Create a default content object for non-JSON content
+                  content = {
+                    name: "Untitled Study Set",
+                    type: "flashcards",
+                    content: [{ front: post.content || "Content unavailable", back: "" }],
+                  }
+                }
 
-            setStudySets(studySetsData)
-          } else {
-            setStudySets([])
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching study sets:", error)
+                // Include all study sets with reasonable defaults
+                const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
+                const creator = post.author?.id
+
+                return {
+                  id: post.id,
+                  title: content.name || "Untitled Study Set",
+                  description: `Created by ${creatorName}`,
+                  type: content.type || "flashcards",
+                  content: content.content || [],
+                  fileId: post.fileId,
+                  likes: post._count?.reactions || 0,
+                  groupID: post.groupID,
+                  communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                  creator: creator,
+                }
+              } catch (error) {
+                console.error("Error processing post:", error)
+                return null
+              }
+            })
+            .filter(Boolean) // Remove null entries
+
+          setStudySets(studySetsData)
+        } else {
           setStudySets([])
-        })
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching study sets:", error)
+        setStudySets([])
+      })
   }
 
   const handleBack = () => {
@@ -476,47 +548,47 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((result) => {
-          if (result && result[0] && result[0].length > 0) {
-            const userId = result[0][0].id
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((result) => {
+        if (result && result[0] && result[0].length > 0) {
+          const userId = result[0][0].id
 
-            // Now add the user to the group using the correct endpoint
-            return fetch(`${API_BASE_URL}/group-members`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                userID: userId,
-                groupID: id,
-              }),
-            })
-          } else {
-            throw new Error("User not found")
-          }
-        })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then(() => {
-          // Refresh the members list
-          fetchMembers()
-          alert("Member added successfully!")
-        })
-        .catch((error) => {
-          console.error("Error adding member:", error)
-          alert("Failed to add member. Please check the email and try again.")
-        })
+          // Now add the user to the group using the correct endpoint
+          return fetch(`${API_BASE_URL}/group-members`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              userID: userId,
+              groupID: id,
+            }),
+          })
+        } else {
+          throw new Error("User not found")
+        }
+      })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then(() => {
+        // Refresh the members list
+        fetchMembers()
+        alert("Member added successfully!")
+      })
+      .catch((error) => {
+        console.error("Error adding member:", error)
+        alert("Failed to add member. Please check the email and try again.")
+      })
   }
 
   const handleViewStudySet = (studySet) => {
@@ -531,14 +603,18 @@ export default function CommunityView() {
     })
   }
 
-  const handleDeleteStudySet = (id) => {
+  const handleDeleteStudySet = (id, creator) => {
     const token = sessionStorage.getItem("token")
+    const userId = sessionStorage.getItem("user")
 
-    if (!token) {
+    if (!token || !userId) {
       alert("You must be logged in to delete a study set")
       return
     }
-
+    if (userId != creator) {
+      alert("You are not the creator of this post")
+      return
+    }
     fetch(`${API_BASE_URL}/posts/${id}`, {
       method: "DELETE",
       headers: {
@@ -546,19 +622,19 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
 
-          // Remove the study set from state
-          const updatedStudySets = studySets.filter((set) => set.id !== id)
-          setStudySets(updatedStudySets)
-        })
-        .catch((error) => {
-          console.error("Error deleting study set:", error)
-          alert("Failed to delete study set. Please try again.")
-        })
+        // Remove the study set from state
+        const updatedStudySets = studySets.filter((set) => set.id !== id)
+        setStudySets(updatedStudySets)
+      })
+      .catch((error) => {
+        console.error("Error deleting study set:", error)
+        alert("Failed to delete study set. Please try again.")
+      })
   }
 
   const handleShareStudySet = (id) => {
@@ -566,25 +642,25 @@ export default function CommunityView() {
     const studySetLink = `${getBaseUrl()}/community/${community.id}/study-set/${id}`
 
     navigator.clipboard
-        .writeText(studySetLink)
-        .then(() => {
-          // Set the copied state for this specific study set
-          setCopiedSetId(id)
+      .writeText(studySetLink)
+      .then(() => {
+        // Set the copied state for this specific study set
+        setCopiedSetId(id)
 
-          // Reset after 2 seconds
-          setTimeout(() => {
-            setCopiedSetId(null)
-          }, 2000)
-        })
-        .catch((err) => {
-          console.error("Could not copy text: ", err)
-        })
+        // Reset after 2 seconds
+        setTimeout(() => {
+          setCopiedSetId(null)
+        }, 2000)
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err)
+      })
   }
 
   // Add this new function after the handleShareStudySet function
   const handleLikeStudySet = (studySetId) => {
     const token = sessionStorage.getItem("token")
-    const user = JSON.parse(sessionStorage.getItem("user"))
+    const user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null
 
     if (!token || !user) return
 
@@ -602,13 +678,13 @@ export default function CommunityView() {
       },
       body: JSON.stringify(reactionData),
     })
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-          return res.json()
-        })
-        .catch((error) => {
-          console.error("Error liking study set:", error)
-        })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+        return res.json()
+      })
+      .catch((error) => {
+        console.error("Error liking study set:", error)
+      })
 
     // Update the UI optimistically
     const updatedStudySets = studySets.map((set) => {
@@ -621,16 +697,73 @@ export default function CommunityView() {
     setStudySets(updatedStudySets)
   }
 
+  // Updated handleOpenChatRoom function
   const handleOpenChatRoom = () => {
-    setShowChatRoom(true)
-    // Initialize with some sample messages if empty
-    if (!messages.length) {
-      const initialMessages = [
-        { id: 1, sender: "You", text: "Hello everyone!", timestamp: new Date().toISOString() },
-        { id: 2, sender: "System", text: "Welcome to the community chat!", timestamp: new Date().toISOString() },
-      ]
-      setMessages(initialMessages)
+    console.log("Opening community chat room for community ID:", id)
+
+    if (!socket || !socket.connected) {
+      console.error("Socket not connected, attempting to connect")
+
+      // Create a notification to inform the user
+      showNotification("Connecting to chat server...", "info")
+
+      // Try to use the existing socket instance from import
+      if (socket) {
+        socket.connect()
+
+        // Give the socket a moment to connect
+        setTimeout(() => {
+          if (socket.connected) {
+            navigateToChatRoom()
+          } else {
+            console.error("Failed to connect to chat server")
+            showNotification("Chat server connection failed. Please try again.", "error")
+          }
+        }, 2000)
+      } else {
+        console.error("Socket instance not available")
+        showNotification("Chat service unavailable", "error")
+      }
+      return
     }
+
+    // Socket is already connected, navigate immediately
+    navigateToChatRoom()
+  }
+
+  // Helper function to navigate to the community chat room
+  const navigateToChatRoom = () => {
+    try {
+      // Store community ID for potential reconnections
+      sessionStorage.setItem("activeCommunityID", id)
+      sessionStorage.setItem("activeCommunityRoomID", `community-${id}`)
+
+      // Create payload for room creation/joining
+      const payload = {
+        userID: Number.parseInt(sessionStorage.getItem("user")),
+        communityID: Number.parseInt(id),
+        roomID: `community-${id}`,
+      }
+
+      console.log("Emitting community join-room event with payload:", payload)
+
+      // Emit socket event for joining community room (the server will create it if it doesn't exist)
+      socket.emit("/community/join-room", payload)
+
+      // Navigate to the community chat page
+      navigate(`/community/${id}/chat`)
+    } catch (error) {
+      console.error("Error navigating to community chat:", error)
+      showNotification("Failed to open chat room", "error")
+    }
+  }
+
+  // Show notification function
+  const showNotification = (message, type = "success") => {
+    setNotification({ show: true, message, type })
+    setTimeout(() => {
+      setNotification({ show: false, message: "", type: "success" })
+    }, 3000)
   }
 
   const handleBackToCommunity = () => {
@@ -641,7 +774,7 @@ export default function CommunityView() {
     if (!newMessage.trim()) return
 
     const token = sessionStorage.getItem("token")
-    const user = JSON.parse(sessionStorage.getItem("user"))
+    const user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null
 
     if (!token || !user) {
       alert("You must be logged in to send a message")
@@ -657,7 +790,7 @@ export default function CommunityView() {
 
     // Optimistically add the message to the UI
     const optimisticMessage = {
-      id: Date.now(),
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sender: "You",
       text: newMessage,
       timestamp: new Date().toISOString(),
@@ -674,23 +807,23 @@ export default function CommunityView() {
       },
       body: JSON.stringify(messageData),
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((result) => {
-          // Message sent successfully
-          console.log("Message sent successfully:", result)
-        })
-        .catch((error) => {
-          console.error("Error sending message:", error)
-          alert("Failed to send message. Please try again.")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((result) => {
+        // Message sent successfully
+        console.log("Message sent successfully:", result)
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error)
+        alert("Failed to send message. Please try again.")
 
-          // Remove the optimistic message on error
-          setMessages(messages.filter((msg) => msg.id !== optimisticMessage.id))
-        })
+        // Remove the optimistic message on error
+        setMessages(messages.filter((msg) => msg.id !== optimisticMessage.id))
+      })
   }
 
   const handleAddItem = () => {
@@ -745,616 +878,697 @@ export default function CommunityView() {
 
   if (loading) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F4FDFF]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1D6EF1]"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F4FDFF]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1D6EF1]"></div>
+      </div>
     )
   }
 
   if (error) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F4FDFF]">
-          <div className="bg-white p-8 rounded-xl shadow-md">
-            <p className="text-[#DC2626] text-[16px]">{error}</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#F4FDFF]">
+        <div className="bg-white p-8 rounded-xl shadow-md">
+          <p className="text-[#DC2626] text-[16px]">{error}</p>
         </div>
+      </div>
     )
   }
 
   // Chat Room View
   if (showChatRoom) {
     return (
-        <div className="min-h-screen flex bg-[#F4FDFF]">
-          {/* Sidebar - Navigation */}
-          <div className="w-[65px] bg-white fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-[#E9D0CE]">
-            {/* Navigation content */}
+      <div className="min-h-screen flex bg-[#F4FDFF]">
+        {/* Sidebar - Navigation */}
+        <div
+          className={`${isMobile ? "w-[45px]" : "w-[65px]"} bg-white fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-[#E9D0CE]`}
+        >
+          {/* Navigation content */}
+        </div>
+
+        {/* Chat Area */}
+        <div className={`flex-1 flex flex-col ${isMobile ? "ml-[45px]" : "ml-[65px]"} mr-0`}>
+          {/* Back button without header bar */}
+          <div className="h-16 flex items-center px-4">
+            <button className="text-[#1D6EF1] mr-3 rounded-full p-1 hover:bg-[#F4FDFF]" onClick={handleBackToCommunity}>
+              <ArrowLeft size={isMobile ? 16 : 20} />
+            </button>
+            <h1 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>Chat Room</h1>
           </div>
 
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col ml-[65px] mr-0">
-            {/* Back button without header bar */}
-            <div className="h-16 flex items-center px-4">
-              <button className="text-[#1D6EF1] mr-3 rounded-full p-1 hover:bg-[#F4FDFF]" onClick={handleBackToCommunity}>
-                <ArrowLeft size={20} />
-              </button>
-              <h1 className="text-[26px] font-semibold text-[#1D1D20]">Chat Room</h1>
-            </div>
-
-            {/* Messages Container */}
-            <div className="flex-1 bg-white p-6 mx-6 mt-6 mb-0 rounded-t-xl overflow-y-auto max-h-[calc(100vh-180px)]">
-              {messages.length > 0 ? (
-                  messages.map((message, index) => (
-                      <div
-                          key={message.id || `message-${index}`}
-                          className={`mb-4 ${message.sender === "You" ? "text-right" : "text-center"}`}
-                      >
-                        <div
-                            className={`inline-block p-3 rounded-lg ${
-                                message.sender === "You"
-                                    ? "bg-[#1D6EF1] text-white"
-                                    : message.sender === "System"
-                                        ? "bg-[#97C7F1] text-white"
-                                        : "bg-[#C5EDFD] text-[#1D1D20]"
-                            }`}
-                        >
-                          <div className="font-semibold mb-1 text-[14px]">{message.sender}</div>
-                          <div className="text-[14px]">{message.text}</div>
-                          <div className="text-[12px] mt-1 opacity-70">
-                            {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </div>
-                        </div>
-                      </div>
-                  ))
-              ) : (
-                  <div className="text-center text-[#1D1D20]/70 text-[14px]">No messages yet. Start the conversation!</div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Message Input */}
-            <div className="px-6 py-4 mx-6 mb-6 bg-white rounded-b-xl border-t border-[#E9D0CE]">
-              <div className="flex">
-                <input
-                    type="text"
-                    placeholder="Type a message..."
-                    className="flex-1 p-3 border border-[#E9D0CE] rounded-l-xl text-[#1D1D20] text-[14px]"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                />
-                <button
-                    className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white p-3 rounded-r-xl flex items-center justify-center min-w-[100px]"
-                    onClick={handleSendMessage}
+          {/* Messages Container */}
+          <div
+            className={`flex-1 bg-white p-${isMobile ? "3" : "6"} mx-${isMobile ? "2" : "6"} mt-${isMobile ? "2" : "6"} mb-0 rounded-t-xl overflow-y-auto max-h-[calc(100vh-180px)]`}
+          >
+            {messages.length > 0 ? (
+              messages.map((message, index) => (
+                <div
+                  key={message.id || `message-${index}`}
+                  className={`mb-4 ${message.sender === "You" ? "text-right" : "text-center"}`}
                 >
-                  <Send size={18} className="mr-2" />
-                  <span className="text-[14px]">Send</span>
-                </button>
+                  <div
+                    className={`inline-block p-${isMobile ? "2" : "3"} rounded-lg ${
+                      message.sender === "You"
+                        ? "bg-[#1D6EF1] text-white"
+                        : message.sender === "System"
+                          ? "bg-[#97C7F1] text-white"
+                          : "bg-[#C5EDFD] text-[#1D1D20]"
+                    }`}
+                  >
+                    <div className={`font-semibold mb-1 text-[${isMobile ? "12px" : "14px"}]`}>{message.sender}</div>
+                    <div className={`text-[${isMobile ? "12px" : "14px"}]`}>{message.text}</div>
+                    <div className={`text-[${isMobile ? "10px" : "12px"}] mt-1 opacity-70`}>
+                      {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={`text-center text-[#1D1D20]/70 text-[${isMobile ? "12px" : "14px"}]`}>
+                No messages yet. Start the conversation!
               </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Message Input */}
+          <div
+            className={`px-${isMobile ? "2" : "6"} py-${isMobile ? "2" : "4"} mx-${isMobile ? "2" : "6"} mb-${isMobile ? "2" : "6"} bg-white rounded-b-xl border-t border-[#E9D0CE]`}
+          >
+            <div className="flex">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                className={`flex-1 p-${isMobile ? "2" : "3"} border border-[#E9D0CE] rounded-l-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+              />
+              <button
+                className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white p-${isMobile ? "2" : "3"} rounded-r-xl flex items-center justify-center min-w-[${isMobile ? "80px" : "100px"}]`}
+                onClick={handleSendMessage}
+              >
+                <Send size={isMobile ? 14 : 18} className="mr-2" />
+                <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Send</span>
+              </button>
             </div>
           </div>
         </div>
+      </div>
     )
   }
 
   // Main Community View
   return (
-      <div className="min-h-screen flex bg-[#F4FDFF]">
-        {/* Left Sidebar - Navigation */}
-        <div className="w-[65px] bg-white fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-[#E9D0CE]">
-          {/* Navigation content */}
+    <div className="min-h-screen flex bg-[#F4FDFF]">
+      {/* Left Sidebar - Navigation */}
+      <div
+        className={`${isMobile ? "w-[45px]" : "w-[65px]"} bg-white fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-[#E9D0CE]`}
+      >
+        {/* Navigation content */}
+      </div>
+
+      {/* Main Content */}
+      <div
+        className={`flex-1 ${isMobile ? "ml-[45px]" : "ml-[65px]"} transition-all duration-300 ${showMembers ? (isMobile ? "mr-[200px]" : "mr-[260px]") : "mr-0"}`}
+      >
+        {/* Header */}
+        {/* Study Sets Section with Action Buttons */}
+        <div className={`mb-${isMobile ? "4" : "8"} px-${isMobile ? "2" : "6"} pt-${isMobile ? "2" : "6"}`}>
+          <div
+            className={`flex ${isMobile ? "flex-col" : "items-center"} justify-between mb-${isMobile ? "3" : "6"} ${isMobile ? "gap-2" : ""}`}
+          >
+            <div className={`flex ${isMobile ? "flex-wrap" : ""} items-center gap-${isMobile ? "2" : "4"}`}>
+              <button
+                className="text-[#1D1D20] mr-3 flex items-center rounded-full p-2 hover:bg-[#F4FDFF]"
+                onClick={handleBack}
+              >
+                <ArrowLeft size={isMobile ? 16 : 20} />
+              </button>
+              <h2 className={`${isMobile ? "text-[24px]" : "text-[32px]"} font-semibold text-[#1D1D20]`}>Study Sets</h2>
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className={`bg-white rounded-xl p-${isMobile ? "1" : "2"} text-[#1D1D20] border border-[#E9D0CE] text-[${isMobile ? "12px" : "14px"}]`}
+              >
+                <option value="all">View All</option>
+                <option value="flashcards">Flashcards</option>
+                <option value="fill_in_blank">Fill in the Blank</option>
+                <option value="matching">Matching</option>
+                <option value="multiple_choice">Multiple Choice</option>
+              </select>
+            </div>
+
+            <div className={`flex ${isMobile ? "flex-wrap" : ""} gap-2 ${isMobile ? "mt-2" : ""}`}>
+              <button
+                className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                onClick={handleAddStudyMaterial}
+              >
+                <Plus size={isMobile ? 14 : 18} className="mr-2" />
+                <span>{isMobile ? "Add" : "Add Study Material"}</span>
+              </button>
+
+              <button
+                className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                onClick={handleOpenChatRoom}
+              >
+                <MessageSquare size={isMobile ? 14 : 18} className="mr-2" />
+                <span>Message</span>
+              </button>
+
+              <button
+                className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                onClick={toggleMembers}
+              >
+                <Users size={isMobile ? 14 : 18} className="mr-2" />
+                <span>Members</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Study Sets Section */}
+          {studySets.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 w-full">
+              {studySets
+                .filter((set) => selectedType === "all" || set.type === selectedType)
+                .map((studySet) => (
+                  <div
+                    key={studySet.id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                  >
+                    <div className={`p-${isMobile ? "3" : "5"}`}>
+                      <div className="flex items-start">
+                        <div
+                          className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "10" : "12"} h-${isMobile ? "10" : "12"} flex items-center justify-center text-white mr-${isMobile ? "2" : "4"} flex-shrink-0`}
+                        >
+                          <span className="font-semibold">{studySet.title.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="min-w-0">
+                              <h2
+                                className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20] cursor-pointer truncate`}
+                                onClick={() => handleViewStudySet(studySet)}
+                              >
+                                {studySet.title}
+                              </h2>
+                              <p
+                                className={`${isMobile ? "text-[12px]" : "text-[14px]"} text-[#1D1D20]/70 truncate text-left w-full`}
+                              >
+                                {studySet.description}
+                              </p>
+                            </div>
+                            <span
+                              className={`${isMobile ? "text-[12px]" : "text-[14px]"} bg-[#1D6EF1] px-${isMobile ? "2" : "3"} py-1 rounded-xl ml-2 flex-shrink-0`}
+                            >
+                              {formatStudySetType(studySet.type)}
+                            </span>
+                          </div>
+                          <div
+                            className={`flex ${isMobile ? "flex-col" : "justify-between"} items-${isMobile ? "start" : "center"} mt-3 ${isMobile ? "gap-2" : ""}`}
+                          >
+                            <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
+                              <button
+                                className={`flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2`}
+                                onClick={() => handleLikeStudySet(studySet.id)}
+                              >
+                                <Heart size={isMobile ? 14 : 16} className="mr-1" fill="#EF7B6C" />
+                                <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{studySet.likes}</span>
+                              </button>
+                              <button
+                                className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
+                                onClick={() => handleShareStudySet(studySet.id)}
+                              >
+                                {copiedSetId === studySet.id ? (
+                                  <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Copied!</span>
+                                ) : (
+                                  <>
+                                    <Share2 size={isMobile ? 14 : 16} className="mr-1" />
+                                    <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Share</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                className={`text-[${isMobile ? "12px" : "14px"}] text-[#F4FDFF] flex items-center bg-[#1D1D20] hover:bg-[#DC2626] p-1 px-${isMobile ? "2" : "3"} rounded-xl transition-colors`}
+                                onClick={() => handleDeleteStudySet(studySet.id, studySet.creator)}
+                              >
+                                <Trash2 size={isMobile ? 14 : 16} className="mr-1 text-[#F4FDFF]" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                            <div className={`flex-shrink-0 ${isMobile ? "" : "ml-4"}`}>
+                              <p className={`text-[${isMobile ? "12px" : "14px"}] font-semibold text-left`}>You</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className={`text-center py-${isMobile ? "4" : "8"} bg-white/80 rounded-xl`}>
+              <p className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]/70`}>No study sets available.</p>
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className={`flex-1 ml-[65px] transition-all duration-300 ${showMembers ? "mr-[260px]" : "mr-0"}`}>
-          {/* Header */}
-          {/* Study Sets Section with Action Buttons */}
-          <div className="mb-8 px-6 pt-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-4">
+      {/* Members Sidebar - Only shown when toggled */}
+      {showMembers && (
+        <div
+          className={`${isMobile ? "w-[200px]" : "w-[260px]"} bg-white fixed right-0 top-0 bottom-0 overflow-y-auto shadow-lg border-l border-[#E9D0CE] transition-all duration-300 rounded-l-xl`}
+        >
+          <div className={`p-${isMobile ? "3" : "6"}`}>
+            <div className={`flex items-center justify-between mb-${isMobile ? "3" : "6"}`}>
+              <h2 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>Members</h2>
+              <div className="flex items-center gap-2">
                 <button
-                    className="text-[#1D1D20] mr-3 flex items-center rounded-full p-2 hover:bg-[#F4FDFF]"
-                    onClick={handleBack}
+                  className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-1 rounded-full"
+                  onClick={toggleMembers}
+                  aria-label="Close members panel"
                 >
-                  <ArrowLeft size={20} />
-                </button>
-                <h2 className="text-[32px] font-semibold text-[#1D1D20]">Study Sets</h2>
-                <select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    className="bg-white rounded-xl p-2 text-[#1D1D20] border border-[#E9D0CE] text-[14px]"
-                >
-                  <option value="all">View All</option>
-                  <option value="flashcards">Flashcards</option>
-                  <option value="fill_in_blank">Fill in the Blank</option>
-                  <option value="matching">Matching</option>
-                  <option value="multiple_choice">Multiple Choice</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                    className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-2 px-4 rounded-xl text-[16px] flex items-center"
-                    onClick={handleAddStudyMaterial}
-                >
-                  <Plus size={18} className="mr-2" />
-                  <span>Add Study Material</span>
-                </button>
-
-                <button
-                    className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-2 px-4 rounded-xl text-[16px] flex items-center"
-                    onClick={handleOpenChatRoom}
-                >
-                  <MessageSquare size={18} className="mr-2" />
-                  <span>Message</span>
-                </button>
-
-                <button
-                    className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-2 px-4 rounded-xl text-[16px] flex items-center"
-                    onClick={toggleMembers}
-                >
-                  <Users size={18} className="mr-2" />
-                  <span>Members</span>
+                  <X size={isMobile ? 16 : 20} />
                 </button>
               </div>
             </div>
 
-            {/* Study Sets Section */}
-            {studySets.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 w-full">
-                  {studySets
-                      .filter((set) => selectedType === "all" || set.type === selectedType)
-                      .map((studySet) => (
-                          <div
-                              key={studySet.id}
-                              className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
-                          >
-                            <div className="p-5">
-                              <div className="flex items-start">
-                                <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4 flex-shrink-0">
-                                  <span className="font-semibold">{studySet.title.charAt(0)}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <div className="min-w-0">
-                                      <h2
-                                          className="text-[26px] font-semibold text-[#1D1D20] cursor-pointer truncate"
-                                          onClick={() => handleViewStudySet(studySet)}
-                                      >
-                                        {studySet.title}
-                                      </h2>
-                                      <p className="text-[14px] text-[#1D1D20]/70 truncate text-left w-full">
-                                        {studySet.description}
-                                      </p>
-                                    </div>
-                                    <span className="text-[14px] bg-[#1D6EF1] px-3 py-1 rounded-xl ml-2 flex-shrink-0">
-                              {formatStudySetType(studySet.type)}
-                            </span>
-                                  </div>
-                                  <div className="flex justify-between items-center mt-3">
-                                    <div className="flex items-center">
-                                      <button
-                                          className="flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-3 rounded-xl mr-2"
-                                          onClick={() => handleLikeStudySet(studySet.id)}
-                                      >
-                                        <Heart size={16} className="mr-1" fill="#EF7B6C" />
-                                        <span className="text-[14px]">{studySet.likes}</span>
-                                      </button>
-                                      <button
-                                          className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-3 rounded-xl mr-2 flex items-center"
-                                          onClick={() => handleShareStudySet(studySet.id)}
-                                      >
-                                        {copiedSetId === studySet.id ? (
-                                            <span className="text-[14px]">Copied!</span>
-                                        ) : (
-                                            <>
-                                              <Share2 size={16} className="mr-1" />
-                                              <span className="text-[14px]">Share</span>
-                                            </>
-                                        )}
-                                      </button>
-                                      <button
-                                          className="text-[14px] text-[#F4FDFF] flex items-center bg-[#1D1D20] hover:bg-[#DC2626] p-1 px-3 rounded-xl transition-colors"
-                                          onClick={() => handleDeleteStudySet(studySet.id)}
-                                      >
-                                        <Trash2 size={16} className="mr-1 text-[#F4FDFF]" />
-                                        <span>Delete</span>
-                                      </button>
-                                    </div>
-                                    <div className="flex-shrink-0 ml-4">
-                                      <p className="text-[14px] font-semibold text-left">You</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                      ))}
-                </div>
-            ) : (
-                <div className="text-center py-8 bg-white/80 rounded-xl">
-                  <p className="text-[16px] text-[#1D1D20]/70">No study sets available.</p>
-                </div>
-            )}
+            <div className="space-y-4">
+              {members.length > 0 ? (
+                members.map((member, index) => (
+                  <div
+                    key={member.id || `member-${index}`}
+                    className={`flex items-center justify-between p-${isMobile ? "1" : "2"} rounded-xl hover:bg-[#F4FDFF]`}
+                  >
+                    <div className="flex items-center">
+                      <div
+                        className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "6" : "8"} h-${isMobile ? "6" : "8"} flex items-center justify-center text-white mr-2`}
+                      >
+                        <span>{member.email ? member.email[0].toUpperCase() : "?"}</span>
+                      </div>
+                      <span className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20] truncate max-w-[160px]`}>
+                        {member.email}
+                      </span>
+                    </div>
+                    {member.isAdmin && (
+                      <span
+                        className={`text-[${isMobile ? "12px" : "14px"}] bg-[#97C7F1] px-2 py-1 rounded-xl text-white`}
+                      >
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className={`text-[${isMobile ? "12px" : "14px"}] text-[#1D1D20]/70`}>No members yet.</p>
+              )}
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Members Sidebar - Only shown when toggled */}
-        {showMembers && (
-            <div className="w-[260px] bg-white fixed right-0 top-0 bottom-0 overflow-y-auto shadow-lg border-l border-[#E9D0CE] transition-all duration-300 rounded-l-xl">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-[26px] font-semibold text-[#1D1D20]">Members</h2>
-                  <div className="flex items-center gap-2">
+      {/* Add Study Set Dialog */}
+      {showAddStudySetDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-4 md:p-6 max-w-2xl w-[95%] max-h-[90vh] overflow-y-auto mx-auto my-auto">
+            <div className="flex flex-col">
+              <div className="flex justify-between items-center mb-4 md:mb-6">
+                <h2 className="text-xl md:text-2xl font-semibold text-[#1D1D20]">
+                  {currentStep === 1
+                    ? "Name Your Study Set"
+                    : currentStep === 2
+                      ? "Select a Template"
+                      : "Customize Your Content"}
+                </h2>
+                <button
+                  className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-2 rounded-full"
+                  onClick={() => {
+                    setShowAddStudySetDialog(false)
+                    setCurrentStep(1)
+                    setStudySetName("")
+                    setSelectedTemplate(null)
+                    setTemplateContent([])
+                  }}
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {/* Rest of the dialog content remains the same */}
+
+              {/* Step indicators */}
+              <div className="flex mb-4 md:mb-6 rounded-xl overflow-hidden">
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  1. Name
+                </div>
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  2. Template
+                </div>
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  3. Content
+                </div>
+              </div>
+
+              {/* Step 1: Name */}
+              {currentStep === 1 && (
+                <div>
+                  <div className="mb-6">
+                    <label className={`block text-[#1D1D20] mb-2 text-[${isMobile ? "14px" : "16px"}]`}>
+                      Study Set Name
+                    </label>
+                    <input
+                      type="text"
+                      className={`w-full p-${isMobile ? "2" : "3"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                      value={studySetName}
+                      onChange={(e) => setStudySetName(e.target.value)}
+                      placeholder="Enter a name for your study set"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
                     <button
-                        className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-1 rounded-full"
-                        onClick={toggleMembers}
-                        aria-label="Close members panel"
+                      className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                      onClick={handleNextStep}
+                      disabled={!studySetName.trim()}
                     >
-                      <X size={20} />
+                      Next
                     </button>
                   </div>
                 </div>
+              )}
 
-                <div className="space-y-4">
-                  {members.length > 0 ? (
-                      members.map((member, index) => (
-                          <div
-                              key={member.id || `member-${index}`}
-                              className="flex items-center justify-between p-2 rounded-xl hover:bg-[#F4FDFF]"
-                          >
-                            <div className="flex items-center">
-                              <div className="bg-[#1D6EF1] rounded-full w-8 h-8 flex items-center justify-center text-white mr-2">
-                                <span>{member.name.charAt(0)}</span>
-                              </div>
-                              <span className="text-[16px] text-[#1D1D20]">{member.name}</span>
-                            </div>
-                            {member.isAdmin && (
-                                <span className="text-[14px] bg-[#97C7F1] px-2 py-1 rounded-xl text-white">Admin</span>
-                            )}
-                          </div>
-                      ))
-                  ) : (
-                      <p className="text-[14px] text-[#1D1D20]/70">No members yet.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-        )}
-
-        {/* Add Study Set Dialog */}
-        {showAddStudySetDialog && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-[32px] font-semibold text-[#1D1D20]">
-                    {currentStep === 1
-                        ? "Name Your Study Set"
-                        : currentStep === 2
-                            ? "Select a Template"
-                            : "Customize Your Content"}
-                  </h2>
-                  <button
-                      className="text-[#1D1D20] hover:text-[#1D1D20]/70"
-                      onClick={() => {
-                        setShowAddStudySetDialog(false)
-                        setCurrentStep(1)
-                        setStudySetName("")
-                        setSelectedTemplate(null)
-                        setTemplateContent([])
-                      }}
-                  >
-                    <span className="text-2xl">×</span>
-                  </button>
-                </div>
-
-                {/* Step indicators */}
-                <div className="flex mb-6">
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} rounded-l-xl`}
-                  >
-                    1. Name
-                  </div>
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
-                  >
-                    2. Template
-                  </div>
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} rounded-r-xl`}
-                  >
-                    3. Content
-                  </div>
-                </div>
-
-                {/* Step 1: Name */}
-                {currentStep === 1 && (
-                    <div>
-                      <div className="mb-6">
-                        <label className="block text-[#1D1D20] mb-2 text-[16px]">Study Set Name</label>
-                        <input
-                            type="text"
-                            className="w-full p-3 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                            value={studySetName}
-                            onChange={(e) => setStudySetName(e.target.value)}
-                            placeholder="Enter a name for your study set"
-                        />
+              {/* Step 2: Template Selection */}
+              {currentStep === 2 && (
+                <div>
+                  <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-4 mb-6`}>
+                    {[
+                      {
+                        id: 1,
+                        name: "Basic Flashcards",
+                        type: "flashcards",
+                        content: [{ front: "", back: "" }],
+                      },
+                      {
+                        id: 2,
+                        name: "Multiple Choice Quiz",
+                        type: "multiple_choice",
+                        content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
+                      },
+                      {
+                        id: 3,
+                        name: "Fill in the Blank",
+                        type: "fill_in_blank",
+                        content: [{ text: "", answer: "" }],
+                      },
+                      {
+                        id: 4,
+                        name: "Matching Exercise",
+                        type: "matching",
+                        content: [{ left: "", right: "" }],
+                      },
+                    ].map((template) => (
+                      <div
+                        key={template.id}
+                        className={`border rounded-xl p-${isMobile ? "3" : "4"} cursor-pointer hover:bg-[#F4FDFF] ${
+                          selectedTemplate?.type === template.type ? "border-[#1D6EF1] bg-[#F4FDFF]" : ""
+                        }`}
+                        onClick={() => handleTemplateSelect(template)}
+                      >
+                        <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>
+                          {template.name}
+                        </h3>
+                        <p className={`text-[${isMobile ? "12px" : "14px"}] text-[#1D1D20]/70`}>
+                          Type: {formatStudySetType(template.type)}
+                        </p>
                       </div>
+                    ))}
+                  </div>
 
-                      <div className="flex justify-end">
-                        <button
-                            className="bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-2 px-4 rounded-xl text-[16px]"
-                            onClick={handleNextStep}
-                            disabled={!studySetName.trim()}
-                        >
-                          Next
-                        </button>
-                      </div>
+                  <div className="flex justify-between">
+                    <button
+                      className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                      onClick={handleBackStep}
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Content Customization */}
+              {currentStep === 3 && (
+                <div>
+                  <div className="mb-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>
+                        {selectedTemplate.name} Content
+                      </h3>
+                      <button
+                        className={`bg-[#1D1D20] hover:bg-[#1D6EF1]/90 text-white py-1 px-${isMobile ? "2" : "3"} rounded-xl text-[${isMobile ? "12px" : "14px"}] flex items-center`}
+                        onClick={handleAddItem}
+                      >
+                        <Plus size={isMobile ? 14 : 16} className="mr-1" />
+                        Add Item
+                      </button>
                     </div>
-                )}
 
-                {/* Step 2: Template Selection */}
-                {currentStep === 2 && (
-                    <div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        {[
-                          {
-                            id: 1,
-                            name: "Basic Flashcards",
-                            type: "flashcards",
-                            content: [{ front: "", back: "" }],
-                          },
-                          {
-                            id: 2,
-                            name: "Multiple Choice Quiz",
-                            type: "multiple_choice",
-                            content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
-                          },
-                          {
-                            id: 3,
-                            name: "Fill in the Blank",
-                            type: "fill_in_blank",
-                            content: [{ text: "", answer: "" }],
-                          },
-                          {
-                            id: 4,
-                            name: "Matching Exercise",
-                            type: "matching",
-                            content: [{ left: "", right: "" }],
-                          },
-                        ].map((template) => (
-                            <div
-                                key={template.id}
-                                className={`border rounded-xl p-4 cursor-pointer hover:bg-[#F4FDFF] ${
-                                    selectedTemplate?.type === template.type ? "border-[#1D6EF1] bg-[#F4FDFF]" : ""
-                                }`}
-                                onClick={() => handleTemplateSelect(template)}
-                            >
-                              <h3 className="text-[16px] font-semibold mb-2 text-[#1D1D20]">{template.name}</h3>
-                              <p className="text-[14px] text-[#1D1D20]/70">Type: {formatStudySetType(template.type)}</p>
+                    {/* Flashcards Editor */}
+                    {selectedTemplate.type === "flashcards" && (
+                      <div className="space-y-4">
+                        {templateContent.map((item, index) => (
+                          <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
+                                Card {index + 1}
+                              </h4>
+                              <button
+                                className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
+                                onClick={() => handleRemoveItem(index)}
+                                disabled={templateContent.length <= 1}
+                              >
+                                <Trash2 size={isMobile ? 14 : 16} />
+                              </button>
                             </div>
+                            <div className="mb-3">
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Front (Question)
+                              </label>
+                              <input
+                                type="text"
+                                className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                value={item.front}
+                                onChange={(e) => handleUpdateItem(index, "front", e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Back (Answer)
+                              </label>
+                              <input
+                                type="text"
+                                className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                value={item.back}
+                                onChange={(e) => handleUpdateItem(index, "back", e.target.value)}
+                              />
+                            </div>
+                          </div>
                         ))}
                       </div>
+                    )}
 
-                      <div className="flex justify-between">
-                        <button
-                            className="bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-2 px-4 rounded-xl text-[16px]"
-                            onClick={handleBackStep}
-                        >
-                          Back
-                        </button>
+                    {/* Multiple Choice Editor */}
+                    {selectedTemplate.type === "multiple_choice" && (
+                      <div className="space-y-4">
+                        {templateContent.map((item, index) => (
+                          <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
+                                Question {index + 1}
+                              </h4>
+                              <button
+                                className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
+                                onClick={() => handleRemoveItem(index)}
+                                disabled={templateContent.length <= 1}
+                              >
+                                <Trash2 size={isMobile ? 14 : 16} />
+                              </button>
+                            </div>
+                            <div className="mb-3">
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Question
+                              </label>
+                              <input
+                                type="text"
+                                className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                value={item.question}
+                                onChange={(e) => handleUpdateItem(index, "question", e.target.value)}
+                              />
+                            </div>
+                            <div className="mb-3">
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Options
+                              </label>
+                              {item.options.map((option, optIndex) => (
+                                <div key={optIndex} className="flex items-center mb-2">
+                                  <input
+                                    type="radio"
+                                    name={`correct-${index}`}
+                                    checked={item.correctAnswer === optIndex}
+                                    onChange={() => handleUpdateItem(index, "correctAnswer", optIndex)}
+                                    className="mr-2"
+                                  />
+                                  <input
+                                    type="text"
+                                    className={`flex-1 p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                    value={option}
+                                    onChange={(e) => handleUpdateItem(index, `options.${optIndex}`, e.target.value)}
+                                    placeholder={`Option ${optIndex + 1}`}
+                                  />
+                                </div>
+                              ))}
+                              <p className={`text-[${isMobile ? "10px" : "12px"}] text-[#1D1D20]/70`}>
+                                Select the radio button next to the correct answer
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Step 3: Content Customization */}
-                {currentStep === 3 && (
-                    <div>
-                      <div className="mb-6">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-[16px] font-semibold text-[#1D1D20]">{selectedTemplate.name} Content</h3>
-                          <button
-                              className="bg-[#1D1D20] hover:bg-[#1D6EF1]/90 text-white py-1 px-3 rounded-xl text-[14px] flex items-center"
-                              onClick={handleAddItem}
-                          >
-                            <Plus size={16} className="mr-1" />
-                            Add Item
-                          </button>
-                        </div>
-
-                        {/* Flashcards Editor */}
-                        {selectedTemplate.type === "flashcards" && (
-                            <div className="space-y-4">
-                              {templateContent.map((item, index) => (
-                                  <div key={index} className="border border-[#E9D0CE] rounded-xl p-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <h4 className="font-medium text-[16px] text-[#1D1D20]">Card {index + 1}</h4>
-                                      <button
-                                          className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
-                                          onClick={() => handleRemoveItem(index)}
-                                          disabled={templateContent.length <= 1}
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">Front (Question)</label>
-                                      <input
-                                          type="text"
-                                          className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                          value={item.front}
-                                          onChange={(e) => handleUpdateItem(index, "front", e.target.value)}
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">Back (Answer)</label>
-                                      <input
-                                          type="text"
-                                          className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                          value={item.back}
-                                          onChange={(e) => handleUpdateItem(index, "back", e.target.value)}
-                                      />
-                                    </div>
-                                  </div>
-                              ))}
+                    {/* Fill in the Blank Editor */}
+                    {selectedTemplate.type === "fill_in_blank" && (
+                      <div className="space-y-4">
+                        {templateContent.map((item, index) => (
+                          <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
+                                Sentence {index + 1}
+                              </h4>
+                              <button
+                                className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
+                                onClick={() => handleRemoveItem(index)}
+                                disabled={templateContent.length <= 1}
+                              >
+                                <Trash2 size={isMobile ? 14 : 16} />
+                              </button>
                             </div>
-                        )}
-
-                        {/* Multiple Choice Editor */}
-                        {selectedTemplate.type === "multiple_choice" && (
-                            <div className="space-y-4">
-                              {templateContent.map((item, index) => (
-                                  <div key={index} className="border border-[#E9D0CE] rounded-xl p-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <h4 className="font-medium text-[16px] text-[#1D1D20]">Question {index + 1}</h4>
-                                      <button
-                                          className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
-                                          onClick={() => handleRemoveItem(index)}
-                                          disabled={templateContent.length <= 1}
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">Question</label>
-                                      <input
-                                          type="text"
-                                          className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                          value={item.question}
-                                          onChange={(e) => handleUpdateItem(index, "question", e.target.value)}
-                                      />
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">Options</label>
-                                      {item.options.map((option, optIndex) => (
-                                          <div key={optIndex} className="flex items-center mb-2">
-                                            <input
-                                                type="radio"
-                                                name={`correct-${index}`}
-                                                checked={item.correctAnswer === optIndex}
-                                                onChange={() => handleUpdateItem(index, "correctAnswer", optIndex)}
-                                                className="mr-2"
-                                            />
-                                            <input
-                                                type="text"
-                                                className="flex-1 p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                                value={option}
-                                                onChange={(e) => handleUpdateItem(index, `options.${optIndex}`, e.target.value)}
-                                                placeholder={`Option ${optIndex + 1}`}
-                                            />
-                                          </div>
-                                      ))}
-                                      <p className="text-[12px] text-[#1D1D20]/70">
-                                        Select the radio button next to the correct answer
-                                      </p>
-                                    </div>
-                                  </div>
-                              ))}
+                            <div className="mb-3">
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Text (use ___ for the blank)
+                              </label>
+                              <input
+                                type="text"
+                                className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                value={item.text}
+                                onChange={(e) => handleUpdateItem(index, "text", e.target.value)}
+                                placeholder="Example: The sky is ___."
+                              />
                             </div>
-                        )}
-
-                        {/* Fill in the Blank Editor */}
-                        {selectedTemplate.type === "fill_in_blank" && (
-                            <div className="space-y-4">
-                              {templateContent.map((item, index) => (
-                                  <div key={index} className="border border-[#E9D0CE] rounded-xl p-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <h4 className="font-medium text-[16px] text-[#1D1D20]">Sentence {index + 1}</h4>
-                                      <button
-                                          className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
-                                          onClick={() => handleRemoveItem(index)}
-                                          disabled={templateContent.length <= 1}
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                    <div className="mb-3">
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">
-                                        Text (use ___ for the blank)
-                                      </label>
-                                      <input
-                                          type="text"
-                                          className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                          value={item.text}
-                                          onChange={(e) => handleUpdateItem(index, "text", e.target.value)}
-                                          placeholder="Example: The sky is ___."
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-[#1D1D20] mb-1 text-[14px]">Answer</label>
-                                      <input
-                                          type="text"
-                                          className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                          value={item.answer}
-                                          onChange={(e) => handleUpdateItem(index, "answer", e.target.value)}
-                                      />
-                                    </div>
-                                  </div>
-                              ))}
+                            <div>
+                              <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                Answer
+                              </label>
+                              <input
+                                type="text"
+                                className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                value={item.answer}
+                                onChange={(e) => handleUpdateItem(index, "answer", e.target.value)}
+                              />
                             </div>
-                        )}
-
-                        {/* Matching Editor */}
-                        {selectedTemplate.type === "matching" && (
-                            <div className="space-y-4">
-                              {templateContent.map((item, index) => (
-                                  <div key={index} className="border border-[#E9D0CE] rounded-xl p-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <h4 className="font-medium text-[16px] text-[#1D1D20]">Pair {index + 1}</h4>
-                                      <button
-                                          className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
-                                          onClick={() => handleRemoveItem(index)}
-                                          disabled={templateContent.length <= 1}
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                      <div>
-                                        <label className="block text-[#1D1D20] mb-1 text-[14px]">Left Item</label>
-                                        <input
-                                            type="text"
-                                            className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                            value={item.left}
-                                            onChange={(e) => handleUpdateItem(index, "left", e.target.value)}
-                                        />
-                                      </div>
-                                      <div>
-                                        <label className="block text-[#1D1D20] mb-1 text-[14px]">Right Item</label>
-                                        <input
-                                            type="text"
-                                            className="w-full p-2 border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[14px]"
-                                            value={item.right}
-                                            onChange={(e) => handleUpdateItem(index, "right", e.target.value)}
-                                        />
-                                      </div>
-                                    </div>
-                                  </div>
-                              ))}
-                            </div>
-                        )}
+                          </div>
+                        ))}
                       </div>
+                    )}
 
-                      <div className="flex justify-between">
-                        <button
-                            className="bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-2 px-4 rounded-xl text-[16px]"
-                            onClick={handleBackStep}
-                        >
-                          Back
-                        </button>
-                        <button
-                            className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-2 px-4 rounded-xl text-[16px]"
-                            onClick={createStudySet}
-                            disabled={templateContent.length === 0}
-                        >
-                          Create Study Set
-                        </button>
+                    {/* Matching Editor */}
+                    {selectedTemplate.type === "matching" && (
+                      <div className="space-y-4">
+                        {templateContent.map((item, index) => (
+                          <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
+                                Pair {index + 1}
+                              </h4>
+                              <button
+                                className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
+                                onClick={() => handleRemoveItem(index)}
+                                disabled={templateContent.length <= 1}
+                              >
+                                <Trash2 size={isMobile ? 14 : 16} />
+                              </button>
+                            </div>
+                            <div className={`grid grid-cols-${isMobile ? "1" : "2"} gap-4`}>
+                              <div>
+                                <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                  Left Item
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                  value={item.left}
+                                  onChange={(e) => handleUpdateItem(index, "left", e.target.value)}
+                                />
+                              </div>
+                              <div>
+                                <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
+                                  Right Item
+                                </label>
+                                <input
+                                  type="text"
+                                  className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                                  value={item.right}
+                                  onChange={(e) => handleUpdateItem(index, "right", e.target.value)}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                )}
-              </div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                      onClick={handleBackStep}
+                    >
+                      Back
+                    </button>
+                    <button
+                      className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                      onClick={createStudySet}
+                      disabled={templateContent.length === 0}
+                    >
+                      Create Study Set
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Component */}
+      {notification.show && (
+        <div
+          className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
+            notification.type === "success"
+              ? "bg-green-500"
+              : notification.type === "info"
+                ? "bg-blue-500"
+                : "bg-red-500"
+          } text-white z-50`}
+        >
+          {notification.message}
+        </div>
+      )}
+    </div>
   )
 }
 
