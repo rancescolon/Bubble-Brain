@@ -89,7 +89,7 @@ export default function CommunityView() {
             id: data.id,
             name: data.name || "Community",
             description: data.description || "No description available",
-            likes: 0,
+            //likes: 0,
             authorId: data.ownerID,
           }
 
@@ -205,7 +205,7 @@ export default function CommunityView() {
           setMessages(initialMessages)
         })
   }
-
+  //The code for study sets was created with the help of ChatGPT
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
     const currentCommunityId = id // Keep as string for comparison
@@ -311,7 +311,7 @@ export default function CommunityView() {
                       type: content.type || "flashcards",
                       content: content.content || [],
                       fileId: post.fileId,
-                      likes: post._count?.reactions || 0,
+                      //likes: post._count?.reactions || 0,
                       groupID: post.groupID,
                       communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
                     }
@@ -427,7 +427,7 @@ export default function CommunityView() {
         description: "Created by you",
         type: selectedTemplate.type,
         content: templateContent,
-        likes: 0,
+        //likes: 0,
         groupID: Number.parseInt(currentCommunityId) || 0,
         communityId: currentCommunityId,
       }
@@ -580,7 +580,7 @@ export default function CommunityView() {
           console.error("Could not copy text: ", err)
         })
   }
-
+/*
   // Add this new function after the handleShareStudySet function
   const handleLikeStudySet = (studySetId) => {
     const token = sessionStorage.getItem("token")
@@ -620,7 +620,7 @@ export default function CommunityView() {
 
     setStudySets(updatedStudySets)
   }
-
+*/
   const handleOpenChatRoom = () => {
     setShowChatRoom(true)
     // Initialize with some sample messages if empty
@@ -932,6 +932,7 @@ export default function CommunityView() {
                                   </div>
                                   <div className="flex justify-between items-center mt-3">
                                     <div className="flex items-center">
+                                      {/*
                                       <button
                                           className="flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-3 rounded-xl mr-2"
                                           onClick={() => handleLikeStudySet(studySet.id)}
@@ -939,6 +940,7 @@ export default function CommunityView() {
                                         <Heart size={16} className="mr-1" fill="#EF7B6C" />
                                         <span className="text-[14px]">{studySet.likes}</span>
                                       </button>
+                                      */}
                                       <button
                                           className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-3 rounded-xl mr-2 flex items-center"
                                           onClick={() => handleShareStudySet(studySet.id)}
