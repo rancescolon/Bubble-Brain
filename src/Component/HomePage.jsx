@@ -687,11 +687,12 @@ const HomePage = () => {
       {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
 
       <Container
-        disableGutters={isMobile}
+        disableGutters={false}
         sx={{
           width: "100%",
           maxWidth: "100%",
-          px: isMobile ? 1 : 2,
+          px: isMobile ? 3 : 4,
+          pb: isMobile ? 6 : 4,
           boxSizing: "border-box",
         }}
       >
@@ -700,9 +701,12 @@ const HomePage = () => {
             bgcolor: "#FFFFFF",
             py: isMobile ? 4 : 8,
             px: isMobile ? 2 : 4,
-            mt: 2,
+            mt: isMobile ? 4 : 2,
+            mb: isMobile ? 6 : 0,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            width: isMobile ? "85%" : "100%",
+            mx: "auto",
           }}
         >
           <Typography
@@ -760,13 +764,15 @@ const HomePage = () => {
         {/* Latest Communities Carousel */}
         <Box
           sx={{
-            mt: 6,
-            mb: 6,
+            mt: isMobile ? 8 : 6,
+            mb: isMobile ? 8 : 6,
             bgcolor: "#FFFFFF",
             py: isMobile ? 3 : isTablet ? 3.5 : 4,
-            px: isMobile ? 2 : isTablet ? 3 : 4,
+            px: isMobile ? 4 : isTablet ? 5 : 6,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            width: isMobile ? "85%" : "100%",
+            mx: "auto",
           }}
         >
           <Box
@@ -945,13 +951,15 @@ const HomePage = () => {
         {/* Latest Courses Carousel */}
         <Box
           sx={{
-            mt: 6,
-            mb: 6,
+            mt: isMobile ? 8 : 6,
+            mb: isMobile ? 8 : 6,
             bgcolor: "#FFFFFF",
             py: isMobile ? 3 : isTablet ? 3.5 : 4,
-            px: isMobile ? 2 : isTablet ? 3 : 4,
+            px: isMobile ? 4 : isTablet ? 5 : 6,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            width: isMobile ? "85%" : "100%",
+            mx: "auto",
           }}
         >
           <Box
@@ -1133,13 +1141,15 @@ const HomePage = () => {
         {/* Active Users Section */}
         <Box
           sx={{
-            mt: 6,
-            mb: 6,
+            mt: isMobile ? 8 : 6,
+            mb: isMobile ? 8 : 6,
             bgcolor: "#FFFFFF",
             py: isMobile ? 3 : isTablet ? 3.5 : 4,
-            px: isMobile ? 2 : isTablet ? 3 : 4,
+            px: isMobile ? 4 : isTablet ? 5 : 6,
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            width: isMobile ? "85%" : "100%",
+            mx: "auto",
           }}
         >
           <Box
