@@ -75,6 +75,7 @@ const Communities = () => {
   const [navOpen, setNavOpen] = useState(false)
   const modalRef = useRef(null)
   const navigate = useNavigate()
+  const [joinedCommunities, setJoinedCommunities] = useState([])
 
   // Add a new state variable for tracking which community's share button was clicked
   const [copiedCommunityId, setCopiedCommunityId] = useState(null)
@@ -138,13 +139,15 @@ const Communities = () => {
     setLoading(true)
     setError(null)
     const token = sessionStorage.getItem("token")
-
-    if (!token) {
+    const userId = sessionStorage.getItem("user") ? parseInt(sessionStorage.getItem("user")) : null
+  
+    if (!token || !userId) {
       setError("You must be logged in to view communities")
       setLoading(false)
       return
     }
-
+  
+    // First fetch all communities
     fetch(`${process.env.REACT_APP_API_PATH}/groups`, {
       method: "GET",
       headers: {
@@ -152,35 +155,74 @@ const Communities = () => {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-          return res.json()
-        })
-        .then((result) => {
-          if (result && result[0]) {
-            const communitiesData = result[0].map((group) => ({
-              id: group.id,
-              name: group.name,
-              description: group.description || "No description available",
-              authorId: group.ownerID,
-              members: [], // We'll fetch members separately if needed
-              likes: Math.floor(Math.random() * 50), // Mock likes for visual design
-            }))
-            setCommunities(communitiesData)
-
-            const user = JSON.parse(sessionStorage.getItem("user"))
-            if (user) {
-              const userCommunities = communitiesData.filter((community) => community.authorId === user.id)
-              setMyCommunities(userCommunities)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
+        return res.json()
+      })
+      .then(async (result) => {
+        if (result && result[0]) {
+          const communitiesData = result[0].map((group) => ({
+            id: group.id,
+            name: group.name,
+            description: group.description || "No description available",
+            authorId: group.ownerID,
+            members: [], // We'll fetch members separately if needed
+            likes: Math.floor(Math.random() * 50), // Mock likes for visual design
+          }))
+          setCommunities(communitiesData)
+  
+          // Now fetch group memberships for the current user
+          try {
+            // Fetch all groups the user is a member of
+            const membershipResponse = await fetch(
+              `${process.env.REACT_APP_API_PATH}/group-members?userID=${userId}`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            )
+  
+            if (!membershipResponse.ok) {
+              throw new Error(`Failed to fetch memberships: ${membershipResponse.status}`)
             }
+  
+            const membershipData = await membershipResponse.json()
+            
+            if (membershipData && membershipData[0] && membershipData[0].length > 0) {
+              // Extract group IDs the user is a member of
+              const joinedGroupIds = membershipData[0].map(membership => membership.groupID)
+              
+              // Filter communities to only include those the user has joined
+              const userJoinedCommunities = communitiesData.filter(community => 
+                joinedGroupIds.includes(community.id) || community.authorId === userId
+              )
+              
+              setJoinedCommunities(userJoinedCommunities)
+            } else {
+              // If no memberships found, only include communities where user is author
+              const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
+              setJoinedCommunities(ownedCommunities)
+            }
+          } catch (error) {
+            console.error("Error fetching user memberships:", error)
+            // Fallback to just showing owned communities
+            const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
+            setJoinedCommunities(ownedCommunities)
           }
-          setLoading(false)
-        })
-        .catch((error) => {
-          console.error("Error fetching communities:", error)
-          setError("Failed to load communities. Please try again later.")
-          setLoading(false)
-        })
+  
+          // Still set myCommunities for communities owned by the user
+          const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
+          setMyCommunities(ownedCommunities)
+        }
+        setLoading(false)
+      })
+      .catch((error) => {
+        console.error("Error fetching communities:", error)
+        setError("Failed to load communities. Please try again later.")
+        setLoading(false)
+      })
   }
 
   // Handle click outside of modal
@@ -329,18 +371,18 @@ const Communities = () => {
     const token = sessionStorage.getItem("token")
     // Get the user ID as a number
     const userId = parseInt(sessionStorage.getItem("user"))
-
+  
     if (!userId) {
       console.error("No user ID found in session storage")
       alert("Session error: No user ID found. Please try logging in again.")
       return
     }
-
+  
     if (!token || !userId) {
       alert("You must be logged in to join a community")
       return
     }
-
+  
     try {
       // First check if the user is already a member
       const checkResponse = await fetch(
@@ -351,13 +393,13 @@ const Communities = () => {
           },
         }
       )
-
+  
       const checkData = await checkResponse.json()
       if (checkData && checkData[0] && checkData[0].length > 0) {
         alert("You are already a member of this community")
         return
       }
-
+  
       // If not a member, proceed with joining
       const response = await fetch(`${process.env.REACT_APP_API_PATH}/group-members`, {
         method: "POST",
@@ -370,13 +412,13 @@ const Communities = () => {
           groupID: communityId
         }),
       })
-
+  
       if (!response.ok) {
         const errorText = await response.text()
         console.error("Error response:", errorText)
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
       }
-
+  
       // If successful, update the UI
       const updatedCommunities = communities.map((community) => {
         if (community.id === communityId) {
@@ -385,10 +427,16 @@ const Communities = () => {
         return community
       })
       setCommunities(updatedCommunities)
-
+  
+      // Add the joined community to joinedCommunities
+      const joinedCommunity = communities.find((community) => community.id === communityId)
+      if (joinedCommunity) {
+        setJoinedCommunities([...joinedCommunities, joinedCommunity])
+      }
+  
       // Show success message
       alert("Successfully joined the community!")
-
+  
     } catch (error) {
       console.error("Error joining community:", error)
       alert("Failed to join community. Please try again.")
@@ -1121,31 +1169,31 @@ const Communities = () => {
                       </h2>
 
                       <div className="space-y-2 md:space-y-3">
-                        {myCommunities.length > 0 ? (
-                            myCommunities.map((community) => (
-                                <div
-                                    key={community.id}
-                                    className="bg-[#C5EDFD] p-2 md:p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
-                                    onClick={() => navigate(`/community/view/${community.id}`)}
-                                >
-                                  <div className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
-                                    <span style={fontStyle}>{community.name.charAt(0).toUpperCase()}</span>
-                                  </div>
-                                  <span
-                                      className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base"
-                                      style={fontStyle}
-                                  >
-                            {community.name}
-                          </span>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="bg-white p-3 md:p-4 rounded-lg text-center">
-                              <p className="text-[#1D1D20] text-sm md:text-base" style={fontStyle}>
-                                No communities yet
-                              </p>
-                            </div>
-                        )}
+                      {joinedCommunities.length > 0 ? (
+  joinedCommunities.map((community) => (
+    <div
+      key={community.id}
+      className="bg-[#C5EDFD] p-2 md:p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
+      onClick={() => navigate(`/community/view/${community.id}`)}
+    >
+      <div className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
+        <span style={fontStyle}>{community.name.charAt(0).toUpperCase()}</span>
+      </div>
+      <span
+        className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base"
+        style={fontStyle}
+      >
+        {community.name}
+      </span>
+    </div>
+  ))
+  ) : (
+  <div className="bg-white p-3 md:p-4 rounded-lg text-center">
+    <p className="text-[#1D1D20] text-sm md:text-base" style={fontStyle}>
+      No joined communities yet
+    </p>
+  </div>
+  )}
                       </div>
                     </div>
                   </div>
