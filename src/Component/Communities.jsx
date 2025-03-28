@@ -325,80 +325,74 @@ const Communities = () => {
     setCommunities(updatedCommunities)
   }
 
-  const handleJoinCommunity = (communityId) => {
+  const handleJoinCommunity = async (communityId) => {
     const token = sessionStorage.getItem("token")
-    const user = JSON.parse(sessionStorage.getItem("user"))
+    // Get the user ID as a number
+    const userId = parseInt(sessionStorage.getItem("user"))
 
-    if (!token || !user) {
+    if (!userId) {
+      console.error("No user ID found in session storage")
+      alert("Session error: No user ID found. Please try logging in again.")
+      return
+    }
+
+    if (!token || !userId) {
       alert("You must be logged in to join a community")
       return
     }
 
-    const userId = user.id
-    console.log("User ID:", userId) // Debug log
-    console.log("Community ID:", communityId) // Debug log
+    try {
+      // First check if the user is already a member
+      const checkResponse = await fetch(
+        `${process.env.REACT_APP_API_PATH}/group-members?groupID=${communityId}&userID=${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
 
-    const joinButtonElement = document.querySelector(`button[data-community-id="${communityId}"]`)
-    if (joinButtonElement) {
-      joinButtonElement.textContent = "Joining..."
-      joinButtonElement.disabled = true
+      const checkData = await checkResponse.json()
+      if (checkData && checkData[0] && checkData[0].length > 0) {
+        alert("You are already a member of this community")
+        return
+      }
+
+      // If not a member, proceed with joining
+      const response = await fetch(`${process.env.REACT_APP_API_PATH}/group-members`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userID: userId,
+          groupID: communityId
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("Error response:", errorText)
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
+      }
+
+      // If successful, update the UI
+      const updatedCommunities = communities.map((community) => {
+        if (community.id === communityId) {
+          return { ...community, isMember: true }
+        }
+        return community
+      })
+      setCommunities(updatedCommunities)
+
+      // Show success message
+      alert("Successfully joined the community!")
+
+    } catch (error) {
+      console.error("Error joining community:", error)
+      alert("Failed to join community. Please try again.")
     }
-
-    // Simplified request body - the API might be expecting a simpler format
-    const requestBody = {
-      userID: userId,
-      groupID: communityId,
-    }
-
-    console.log("Request body:", requestBody) // Debug log
-
-    fetch(`${process.env.REACT_APP_API_PATH}/group-members`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(requestBody),
-    })
-        .then((res) => {
-          if (!res.ok) {
-            return res.text().then((text) => {
-              console.error("Error response:", text)
-              throw new Error(`HTTP error! status: ${res.status}, message: ${text}`)
-            })
-          }
-          return res.json()
-        })
-        .then((result) => {
-          console.log("Join result:", result)
-
-          // Update the UI optimistically
-          const community = communities.find((c) => c.id === communityId)
-          if (community) {
-            const updatedCommunity = {
-              ...community,
-              members: [...(community.members || []), { id: userId, name: user.username || "You" }],
-            }
-
-            setCommunities(communities.map((c) => (c.id === communityId ? updatedCommunity : c)))
-
-            if (!myCommunities.some((c) => c.id === communityId)) {
-              setMyCommunities([...myCommunities, updatedCommunity])
-            }
-          }
-
-          alert("Successfully joined the community!")
-        })
-        .catch((error) => {
-          console.error("Error joining community:", error)
-          alert(`Failed to join community. Please try again later.`)
-        })
-        .finally(() => {
-          if (joinButtonElement) {
-            joinButtonElement.textContent = "Join"
-            joinButtonElement.disabled = false
-          }
-        })
   }
 
   // Add this function at the beginning of the Communities component to get the base URL
