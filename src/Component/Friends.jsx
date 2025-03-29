@@ -583,10 +583,9 @@ const Friends = () => {
       }}
     >
       <div className="container mx-auto px-4 py-8">
-        {/* Make the content area narrower to match HomePage style */}
-        <div className="max-w-4xl mx-auto" style={{ width: "100%" }}>
+        <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="bg-white rounded-t-xl p-6 shadow-lg w-[85%] mx-auto">
+          <div className="bg-white rounded-t-xl p-6 shadow-lg">
             <h1 className="text-3xl font-bold text-[#1D1D20]" style={fontStyle}>
               Friends
             </h1>
@@ -596,7 +595,7 @@ const Friends = () => {
           </div>
 
           {/* Search and Add Friend */}
-          <div className="bg-[#F4FDFF] p-6 w-[85%] mx-auto">
+          <div className="bg-[#F4FDFF] p-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <input
@@ -618,13 +617,11 @@ const Friends = () => {
                 {showAllUsers ? "Hide Users" : "Find Users"}
               </button>
             </div>
-          </div>
 
-          {/* All Users Section - Separate from parent container to control width */}
-          {showAllUsers && (
-            <div className="w-[85%] mx-auto">
-              <div className="bg-white rounded-lg shadow-lg">
-                <div className="p-4">
+            {/* All Users Section */}
+            {showAllUsers && (
+              <div className="mt-6 bg-white rounded-lg p-4 shadow-lg">
+                <div className="mb-4">
                   <div className="relative">
                     <input
                       type="text"
@@ -637,7 +634,7 @@ const Friends = () => {
                     <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
                   </div>
                 </div>
-                <div className="p-4 space-y-2 max-h-[300px] overflow-y-auto">
+                <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-hidden">
                   {allUsers
                     .filter((user) => {
                       try {
@@ -658,44 +655,39 @@ const Friends = () => {
                       return (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-2 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors gap-2"
                         >
-                          <div className="flex items-center flex-1 min-w-0">
-                            <div className="bg-[#1D6EF1] rounded-full w-8 h-8 flex items-center justify-center text-white mr-2 flex-shrink-0">
+                          <div className="flex items-center">
+                            <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3 flex-shrink-0">
                               <span style={fontStyle}>{displayInitial}</span>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h3 className="text-[#1D1D20] font-semibold truncate text-sm" style={fontStyle}>
+                              <h3 className="text-[#1D1D20] font-semibold truncate" style={fontStyle}>
                                 {displayName}
                               </h3>
-                              <p className="text-gray-600 text-xs truncate" style={fontStyle}>
+                              <p className="text-gray-600 text-sm truncate" style={fontStyle}>
                                 {user.email || "No email"}
                               </p>
                             </div>
                           </div>
                           <button
                             onClick={() => handleAddFriendFromList(user)}
-                            className="ml-2 px-2 py-1 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors flex-shrink-0 text-xs"
+                            className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors self-end sm:self-center flex-shrink-0"
                             style={fontStyle}
                           >
-                            Add
+                            Add Friend
                           </button>
                         </div>
                       )
                     })}
                 </div>
-                {allUsers.length === 0 && (
-                  <div className="text-center py-4 text-gray-500" style={fontStyle}>
-                    No users found
-                  </div>
-                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Friend Requests Section */}
           {pendingRequests.length > 0 && (
-            <div className="bg-white p-6 border-b border-gray-200 w-[85%] mx-auto">
+            <div className="bg-white p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
                 Pending Friend Requests ({pendingRequests.length})
               </h2>
@@ -703,34 +695,34 @@ const Friends = () => {
                 {pendingRequests.map((request) => (
                   <div
                     key={request.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[#F4FDFF] rounded-lg border-2 border-[#1D6EF1] animate-pulse"
+                    className="flex items-center justify-between p-4 bg-[#F4FDFF] rounded-lg border-2 border-[#1D6EF1] animate-pulse"
                   >
-                    <div className="flex items-center mb-3 sm:mb-0">
-                      <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3 flex-shrink-0">
+                    <div className="flex items-center">
+                      <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
                         <span style={fontStyle}>
                           {request.fromUser?.attributes?.name?.charAt(0).toUpperCase() || "?"}
                         </span>
                       </div>
                       <div>
-                        <h3 className="text-[#1D1D20] font-semibold text-sm" style={fontStyle}>
+                        <h3 className="text-[#1D1D20] font-semibold" style={fontStyle}>
                           {request.fromUser?.attributes?.name || "Unknown User"}
                         </h3>
-                        <p className="text-gray-600 text-xs" style={fontStyle}>
+                        <p className="text-gray-600 text-sm" style={fontStyle}>
                           {request.fromUser?.email}
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => handleAcceptRequest(request.id)}
-                        className="px-3 py-1.5 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors text-xs"
+                        className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors"
                         style={fontStyle}
                       >
                         Accept
                       </button>
                       <button
                         onClick={() => handleDeclineRequest(request.id)}
-                        className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-xs"
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                         style={fontStyle}
                       >
                         Decline
@@ -743,13 +735,13 @@ const Friends = () => {
           )}
 
           {/* Friends List */}
-          <div className="bg-white rounded-b-xl p-6 shadow-lg w-[85%] mx-auto">
+          <div className="bg-white rounded-b-xl p-6 shadow-lg">
             <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
               Your Friends
             </h2>
             {isLoaded ? (
               connections.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {connections
                     .filter((friend) => {
                       try {
@@ -775,42 +767,42 @@ const Friends = () => {
                       return (
                         <div
                           key={friend.id}
-                          className="flex items-center justify-between p-2 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors"
+                          className="flex items-center justify-between p-4 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors"
                         >
-                          <div className="flex items-center flex-1 min-w-0">
-                            <div className="bg-[#1D6EF1] rounded-full w-8 h-8 flex items-center justify-center text-white mr-2 flex-shrink-0">
+                          <div className="flex items-center">
+                            <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
                               <span style={fontStyle}>{displayInitial}</span>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <h3 className="text-[#1D1D20] font-semibold truncate text-sm" style={fontStyle}>
+                            <div>
+                              <h3 className="text-[#1D1D20] font-semibold" style={fontStyle}>
                                 {displayName}
                               </h3>
-                              <p className="text-gray-600 text-xs truncate" style={fontStyle}>
+                              <p className="text-gray-600 text-sm" style={fontStyle}>
                                 {friendUser?.email || "No email"}
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-1 ml-2">
+                          <div className="flex gap-2">
                             <button
                               onClick={() => handleStartChat(chatUserId)}
-                              className="p-1.5 text-[#1D6EF1] hover:bg-[#97C7F1] hover:text-white rounded-lg transition-colors"
+                              className="p-2 text-[#1D6EF1] hover:bg-[#97C7F1] hover:text-white rounded-lg transition-colors"
                               title="Message"
                             >
-                              <MessageCircle size={16} />
+                              <MessageCircle size={20} />
                             </button>
                             <button
                               onClick={() => handleBlockUser(chatUserId, friend.id)}
-                              className="p-1.5 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                              className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
                               title="Block"
                             >
-                              <Ban size={16} />
+                              <Ban size={20} />
                             </button>
                             <button
                               onClick={() => handleRemoveFriend(friend.id)}
-                              className="p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                              className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
                               title="Remove"
                             >
-                              <UserMinus size={16} />
+                              <UserMinus size={20} />
                             </button>
                           </div>
                         </div>
@@ -818,45 +810,45 @@ const Friends = () => {
                     })}
                 </div>
               ) : (
-                <div className="text-center py-6 bg-[#F4FDFF] rounded-lg">
-                  <p className="text-gray-600 text-sm" style={fontStyle}>
+                <div className="text-center py-8 bg-[#F4FDFF] rounded-lg">
+                  <p className="text-gray-600" style={fontStyle}>
                     No friends yet. Add some friends to get started!
                   </p>
                 </div>
               )
             ) : (
-              <div className="text-center py-6">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1D6EF1] mx-auto"></div>
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D6EF1] mx-auto"></div>
               </div>
             )}
 
             {/* Blocked Users Section */}
             {blockedUsers.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
                   Blocked Users
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {blockedUsers.map((blocked) => (
-                    <div key={blocked.id} className="flex items-center justify-between p-2 bg-gray-100 rounded-lg">
-                      <div className="flex items-center flex-1 min-w-0">
-                        <div className="bg-gray-400 rounded-full w-8 h-8 flex items-center justify-center text-white mr-2 flex-shrink-0">
+                    <div key={blocked.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+                      <div className="flex items-center">
+                        <div className="bg-gray-400 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
                           <span style={fontStyle}>
                             {blocked.toUser?.attributes?.name?.charAt(0).toUpperCase() || "?"}
                           </span>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-gray-800 font-semibold truncate text-sm" style={fontStyle}>
+                        <div>
+                          <h3 className="text-gray-800 font-semibold" style={fontStyle}>
                             {blocked.toUser?.attributes?.name || "Unknown User"}
                           </h3>
-                          <p className="text-gray-600 text-xs" style={fontStyle}>
+                          <p className="text-gray-600 text-sm" style={fontStyle}>
                             Blocked
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => handleUnblockUser(blocked.id)}
-                        className="ml-2 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors text-xs"
+                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
                         style={fontStyle}
                       >
                         Unblock

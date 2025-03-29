@@ -65,7 +65,7 @@ const NavBar = () => {
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
     { icon: MessageSquare, label: "Friends", path: "/friends" },
-    //{ icon: Upload, label: "Upload", path: "/upload" },
+    { icon: Upload, label: "Upload", path: "/upload" },
     { icon: Users, label: "Community", path: "/community" },
     { icon: User, label: "Profile", path: "/profile" },
     { icon: Palette, label: "Style Guide", path: "/style-guide" },
