@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, UserMinus, Ban, MessageCircle } from "lucide-react"
 import background from "../assets/image3.png"
-import { socket } from "../App"  // Import the shared socket instance
+import { socket } from "../App" // Import the shared socket instance
 
 const Friends = () => {
   const [connections, setConnections] = useState([])
@@ -52,8 +52,8 @@ const Friends = () => {
       .then((res) => res.json())
       .then(async (result) => {
         // Filter outgoing connections to only show accepted friends
-        const outgoingConnections = result[0].filter(conn => 
-          conn.attributes?.status === 'accepted' && !conn.attributes?.blocked
+        const outgoingConnections = result[0].filter(
+          (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
         )
 
         // Then fetch incoming connections
@@ -65,28 +65,27 @@ const Friends = () => {
           },
         })
         const incomingResult = await incomingResponse.json()
-        
+
         // Filter incoming connections to only show accepted friends
-        const incomingConnections = incomingResult[0].filter(conn => 
-          conn.attributes?.status === 'accepted' && !conn.attributes?.blocked
+        const incomingConnections = incomingResult[0].filter(
+          (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
         )
 
         // Combine connections and remove duplicates based on the friend's user ID
-        const uniqueConnections = [];
-        const seenUsers = new Set();
+        const uniqueConnections = []
+        const seenUsers = new Set()
+        ;[...outgoingConnections, ...incomingConnections].forEach((conn) => {
+          const userId = sessionStorage.getItem("user")
+          const friendId = conn.fromUserID === Number.parseInt(userId) ? conn.toUserID : conn.fromUserID
 
-        [...outgoingConnections, ...incomingConnections].forEach(conn => {
-          const userId = sessionStorage.getItem("user");
-          const friendId = conn.fromUserID === parseInt(userId) ? conn.toUserID : conn.fromUserID;
-          
           if (!seenUsers.has(friendId)) {
-            seenUsers.add(friendId);
-            uniqueConnections.push(conn);
+            seenUsers.add(friendId)
+            uniqueConnections.push(conn)
           }
-        });
+        })
 
-        setConnections(uniqueConnections);
-        setIsLoaded(true);
+        setConnections(uniqueConnections)
+        setIsLoaded(true)
       })
       .catch((error) => {
         setError(error)
@@ -100,8 +99,8 @@ const Friends = () => {
 
     fetch(`${process.env.REACT_APP_API_PATH}/connections?fromUserID=${userId}`, {
       method: "GET",
-        headers: {
-          "Content-Type": "application/json",
+      headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     })
@@ -109,14 +108,12 @@ const Friends = () => {
       .then(
         (result) => {
           // Filter to show only blocked connections
-          const blockedConnections = result[0].filter(conn => 
-            conn.attributes?.blocked === true
-          )
+          const blockedConnections = result[0].filter((conn) => conn.attributes?.blocked === true)
           setBlockedUsers(blockedConnections)
         },
         (error) => {
           console.error("Error loading blocked users:", error)
-        }
+        },
       )
   }
 
@@ -135,14 +132,14 @@ const Friends = () => {
       .then(
         (result) => {
           // Filter to show only pending friend requests
-          const pendingConnections = result[0].filter(conn => 
-            conn.attributes?.status === 'pending' && !conn.attributes?.blocked
+          const pendingConnections = result[0].filter(
+            (conn) => conn.attributes?.status === "pending" && !conn.attributes?.blocked,
           )
           setPendingRequests(pendingConnections)
         },
         (error) => {
           console.error("Error loading pending requests:", error)
-        }
+        },
       )
   }
 
@@ -156,14 +153,14 @@ const Friends = () => {
           Authorization: `Bearer ${token}`,
         },
       })
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch users")
       }
 
       const data = await response.json()
       // Filter out the current user and format the user data
-      const filteredUsers = data[0].filter(user => user.id !== parseInt(userId))
+      const filteredUsers = data[0].filter((user) => user.id !== Number.parseInt(userId))
       setAllUsers(filteredUsers)
     } catch (error) {
       console.error("Error loading users:", error)
@@ -193,7 +190,7 @@ const Friends = () => {
       const targetUser = searchResult[0][0]
 
       // Check if trying to add self
-      if (parseInt(userId) === targetUser.id) {
+      if (Number.parseInt(userId) === targetUser.id) {
         showNotification("You cannot add yourself as a friend", "error")
         return
       }
@@ -205,7 +202,7 @@ const Friends = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
       const existingConnections = await existingConnectionsResponse.json()
 
@@ -216,19 +213,19 @@ const Friends = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
       const reverseConnections = await reverseConnectionsResponse.json()
 
       const allConnections = [...(existingConnections[0] || []), ...(reverseConnections[0] || [])]
-      
+
       // Check existing connections
-      const existingFriendship = allConnections.find(conn => 
-        conn.attributes?.status === 'accepted' && !conn.attributes?.blocked
+      const existingFriendship = allConnections.find(
+        (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
       )
-      
-      const pendingRequest = allConnections.find(conn => 
-        conn.attributes?.status === 'pending' && !conn.attributes?.blocked
+
+      const pendingRequest = allConnections.find(
+        (conn) => conn.attributes?.status === "pending" && !conn.attributes?.blocked,
       )
 
       if (existingFriendship) {
@@ -373,7 +370,7 @@ const Friends = () => {
         },
         body: JSON.stringify({
           attributes: {
-            status: "accepted"
+            status: "accepted",
           },
         }),
       })
@@ -402,7 +399,7 @@ const Friends = () => {
           toUserID: requestData.fromUserID,
           attributes: {
             status: "accepted",
-            type: "friend"
+            type: "friend",
           },
         }),
       })
@@ -451,54 +448,54 @@ const Friends = () => {
   }
 
   const handleStartChat = (friendId) => {
-    console.log("Starting chat with friend:", friendId);
-    
+    console.log("Starting chat with friend:", friendId)
+
     if (!socket.connected) {
-      console.error("Socket not connected");
-      showNotification("Chat server connection failed", "error");
-      return;
+      console.error("Socket not connected")
+      showNotification("Chat server connection failed", "error")
+      return
     }
-    
+
     // First store the target user ID
-    sessionStorage.setItem("toUserID", friendId);
-    
+    sessionStorage.setItem("toUserID", friendId)
+
     // Create payload for room creation
     const payload = {
-      fromUserID: parseInt(sessionStorage.getItem("user")),
-      toUserID: friendId
-    };
-    
-    console.log("Emitting join-room event with payload:", payload);
-    
+      fromUserID: Number.parseInt(sessionStorage.getItem("user")),
+      toUserID: friendId,
+    }
+
+    console.log("Emitting join-room event with payload:", payload)
+
     // Remove any existing listeners to prevent duplicates
-    socket.off("/room-created");
-    
+    socket.off("/room-created")
+
     // Set up listener for room creation response
     socket.on("/room-created", (data) => {
-      console.log("Room created response:", data);
+      console.log("Room created response:", data)
       if (data && data.roomID) {
-        console.log("Navigating to room:", data.roomID);
-        sessionStorage.setItem("roomID", data.roomID);
-        navigate(`/messages/${data.roomID}`);
+        console.log("Navigating to room:", data.roomID)
+        sessionStorage.setItem("roomID", data.roomID)
+        navigate(`/messages/${data.roomID}`)
       } else {
-        console.error("No room ID received");
-        showNotification("Failed to create chat room", "error");
+        console.error("No room ID received")
+        showNotification("Failed to create chat room", "error")
       }
-    });
-    
+    })
+
     // Emit socket event for room creation/joining
-    socket.emit("/chat/join-room", payload);
+    socket.emit("/chat/join-room", payload)
 
     // Add a timeout to handle no response
     setTimeout(() => {
       if (!sessionStorage.getItem("roomID")) {
-        console.error("Room creation timed out");
-        showNotification("Failed to connect to chat server", "error");
+        console.error("Room creation timed out")
+        showNotification("Failed to connect to chat server", "error")
         // Clean up the listener after timeout
-        socket.off("/room-created");
+        socket.off("/room-created")
       }
-    }, 5000);
-  };
+    }, 5000)
+  }
 
   const handleAddFriendFromList = async (targetUser) => {
     const userId = sessionStorage.getItem("user")
@@ -512,7 +509,7 @@ const Friends = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
       const existingConnections = await existingConnectionsResponse.json()
 
@@ -523,18 +520,18 @@ const Friends = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
       const reverseConnections = await reverseConnectionsResponse.json()
 
       const allConnections = [...(existingConnections[0] || []), ...(reverseConnections[0] || [])]
-      
-      const existingFriendship = allConnections.find(conn => 
-        conn.attributes?.status === 'accepted' && !conn.attributes?.blocked
+
+      const existingFriendship = allConnections.find(
+        (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
       )
-      
-      const pendingRequest = allConnections.find(conn => 
-        conn.attributes?.status === 'pending' && !conn.attributes?.blocked
+
+      const pendingRequest = allConnections.find(
+        (conn) => conn.attributes?.status === "pending" && !conn.attributes?.blocked,
       )
 
       if (existingFriendship) {
@@ -617,7 +614,7 @@ const Friends = () => {
                 style={fontStyle}
               >
                 <UserPlus className="mr-2" size={20} />
-                {showAllUsers ? 'Hide Users' : 'Find Users'}
+                {showAllUsers ? "Hide Users" : "Find Users"}
               </button>
             </div>
 
@@ -637,51 +634,51 @@ const Friends = () => {
                     <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
                   </div>
                 </div>
-                <div className="space-y-3 max-h-60 overflow-y-auto">
+                <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-hidden">
                   {allUsers
-                    .filter(user => {
+                    .filter((user) => {
                       try {
-                        const userName = (user.attributes?.name || "").toLowerCase();
-                        const userEmail = (user.email || "").toLowerCase();
-                        const searchTerm = (userSearchQuery || "").toLowerCase();
-                        
-                        return userName.includes(searchTerm) || userEmail.includes(searchTerm);
+                        const userName = (user.attributes?.name || "").toLowerCase()
+                        const userEmail = (user.email || "").toLowerCase()
+                        const searchTerm = (userSearchQuery || "").toLowerCase()
+
+                        return userName.includes(searchTerm) || userEmail.includes(searchTerm)
                       } catch (error) {
-                        console.error("Error filtering user:", error);
-                        return false;
+                        console.error("Error filtering user:", error)
+                        return false
                       }
                     })
-                    .map(user => {
-                      const displayName = user.attributes?.name || user.email || "Unknown User";
-                      const displayInitial = (displayName[0] || "?").toUpperCase();
+                    .map((user) => {
+                      const displayName = user.attributes?.name || user.email || "Unknown User"
+                      const displayInitial = (displayName[0] || "?").toUpperCase()
 
                       return (
                         <div
                           key={user.id}
-                          className="flex items-center justify-between p-3 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors gap-2"
                         >
                           <div className="flex items-center">
-                            <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3">
+                            <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3 flex-shrink-0">
                               <span style={fontStyle}>{displayInitial}</span>
                             </div>
-                            <div>
-                              <h3 className="text-[#1D1D20] font-semibold" style={fontStyle}>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="text-[#1D1D20] font-semibold truncate" style={fontStyle}>
                                 {displayName}
                               </h3>
-                              <p className="text-gray-600 text-sm" style={fontStyle}>
+                              <p className="text-gray-600 text-sm truncate" style={fontStyle}>
                                 {user.email || "No email"}
                               </p>
                             </div>
                           </div>
                           <button
                             onClick={() => handleAddFriendFromList(user)}
-                            className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors"
+                            className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors self-end sm:self-center flex-shrink-0"
                             style={fontStyle}
                           >
                             Add Friend
                           </button>
                         </div>
-                      );
+                      )
                     })}
                 </div>
               </div>
@@ -748,24 +745,24 @@ const Friends = () => {
                   {connections
                     .filter((friend) => {
                       try {
-                        const userId = sessionStorage.getItem("user");
-                        const isOutgoing = friend.fromUserID === parseInt(userId);
-                        const friendUser = isOutgoing ? friend.toUser : friend.fromUser;
-                        const userName = (friendUser?.attributes?.name || friendUser?.email || "").toLowerCase();
-                        const searchTermLower = (searchQuery || "").toLowerCase();
-                        return userName.includes(searchTermLower);
+                        const userId = sessionStorage.getItem("user")
+                        const isOutgoing = friend.fromUserID === Number.parseInt(userId)
+                        const friendUser = isOutgoing ? friend.toUser : friend.fromUser
+                        const userName = (friendUser?.attributes?.name || friendUser?.email || "").toLowerCase()
+                        const searchTermLower = (searchQuery || "").toLowerCase()
+                        return userName.includes(searchTermLower)
                       } catch (error) {
-                        console.error("Error filtering friend:", error);
-                        return false;
+                        console.error("Error filtering friend:", error)
+                        return false
                       }
                     })
                     .map((friend) => {
-                      const userId = sessionStorage.getItem("user");
-                      const isOutgoing = friend.fromUserID === parseInt(userId);
-                      const friendUser = isOutgoing ? friend.toUser : friend.fromUser;
-                      const chatUserId = isOutgoing ? friend.toUserID : friend.fromUserID;
-                      const displayName = friendUser?.attributes?.name || friendUser?.email || "Unknown User";
-                      const displayInitial = (displayName[0] || "?").toUpperCase();
+                      const userId = sessionStorage.getItem("user")
+                      const isOutgoing = friend.fromUserID === Number.parseInt(userId)
+                      const friendUser = isOutgoing ? friend.toUser : friend.fromUser
+                      const chatUserId = isOutgoing ? friend.toUserID : friend.fromUserID
+                      const displayName = friendUser?.attributes?.name || friendUser?.email || "Unknown User"
+                      const displayInitial = (displayName[0] || "?").toUpperCase()
 
                       return (
                         <div
@@ -809,7 +806,7 @@ const Friends = () => {
                             </button>
                           </div>
                         </div>
-                      );
+                      )
                     })}
                 </div>
               ) : (
@@ -833,10 +830,7 @@ const Friends = () => {
                 </h2>
                 <div className="space-y-4">
                   {blockedUsers.map((blocked) => (
-                    <div
-                      key={blocked.id}
-                      className="flex items-center justify-between p-4 bg-gray-100 rounded-lg"
-                    >
+                    <div key={blocked.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
                       <div className="flex items-center">
                         <div className="bg-gray-400 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
                           <span style={fontStyle}>

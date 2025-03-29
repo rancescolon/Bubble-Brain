@@ -14,20 +14,23 @@ import {
   Box,
   Avatar,
   CircularProgress,
+  Grid,
+  Stack,
+  Tooltip,
   useMediaQuery,
   useTheme,
-  IconButton,
-
 } from "@mui/material"
+import { motion } from "framer-motion"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
 import fish3 from "../assets/fish3.png"
 import logo from "../assets/Frame.png"
 import background from "../assets/image3.png"
 import DrBubbles from "./DrBubbles"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
 
 // Fallback mock users in case API fails
+//The code for Homepage.jsx was created with the help of ChatGPT
 const MOCK_USERS = [
   {
     id: "mock1",
@@ -67,14 +70,10 @@ const HomePage = () => {
   const [showGuide, setShowGuide] = useState(true)
   const [latestCommunities, setLatestCommunities] = useState([])
   const [latestCourses, setLatestCourses] = useState([])
-  const [activeUsers, setActiveUsers] = useState([]) // Start with empty array
+  const [activeUsers, setActiveUsers] = useState([])
   const [loadingCommunities, setLoadingCommunities] = useState(true)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
   const [recentStudySets, setRecentStudySets] = useState([])
@@ -149,11 +148,6 @@ const HomePage = () => {
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
-  // Theme and responsive breakpoints
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
-  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
-
   useEffect(() => {
     const token = sessionStorage.getItem("token")
     console.log("Token in useEffect:", token ? "Token exists" : "No token")
@@ -163,10 +157,12 @@ const HomePage = () => {
       fetchLatestCommunities()
       fetchLatestCourses()
       fetchActiveUsers() // Fetch real users
+      fetchUserStats() // Fetch user statistics
     } else {
       // If no token, use mock data
       setActiveUsers(MOCK_USERS)
       setLoadingUsers(false)
+      setLoadingUserStats(false)
     }
   }, [])
 
@@ -598,18 +594,6 @@ const HomePage = () => {
     setIsLoggedIn(false)
   }
 
-
-  const scrollCarousel = (ref, direction) => {
-    if (ref.current) {
-      // Calculate scroll amount based on card width
-      const cardWidth = isMobile ? 220 : isTablet ? 260 : 300
-      const scrollAmount = direction === "left" ? -cardWidth : cardWidth
-
-      ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" })
-    }
-  }
-
-
   const handleCommunityClick = (communityId) => {
     navigate(`/community/view/${communityId}`)
   }
@@ -620,6 +604,10 @@ const HomePage = () => {
 
   const handleUserClick = (userId) => {
     navigate(`/profile/${userId}`)
+  }
+
+  const handleStudySetClick = (studySetId) => {
+    navigate(`/study-sets/${studySetId}`)
   }
 
   // Track render attempts for debugging
@@ -649,6 +637,580 @@ const HomePage = () => {
     }
   }, [])
 
+  // Add this helper function to format the study time
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    return `${hours}h ${minutes}m`
+  }
+
+  // Add this to your useEffect
+  useEffect(() => {
+    const token = sessionStorage.getItem("token")
+    if (token) {
+      // Fetch both leaderboard and user stats together
+      const fetchData = async () => {
+        try {
+          await Promise.all([
+            fetchLeaderboardData(),
+            fetchUserStats()
+          ])
+        } catch (error) {
+          console.error("Error fetching data:", error)
+        }
+      }
+      
+      fetchData()
+      
+      // Set up polling every 30 seconds
+      const intervalId = setInterval(fetchData, 30000)
+      
+      // Cleanup on unmount
+      return () => clearInterval(intervalId)
+    }
+  }, []) // Empty dependency array since we want this to run only once on mount
+
+  // Remove the separate useEffect for fetchLeaderboardData
+
+  const fetchLeaderboardData = async () => {
+    setLoadingLeaderboard(true)
+    const token = sessionStorage.getItem("token")
+
+    if (!token) {
+      setLoadingLeaderboard(false)
+      return
+    }
+
+    try {
+      // Fetch all users
+      const usersResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!usersResponse.ok) {
+        throw new Error("Failed to fetch users")
+      }
+
+      const usersData = await usersResponse.json()
+      const users = usersData[0] || []
+
+      if (!users || users.length === 0) {
+        console.error("No users found in API response")
+        setLeaderboardData([])
+        return
+      }
+
+      // Fetch study time for each user
+      const leaderboardPromises = users.map(async (user) => {
+        try {
+          const studyTimeResponse = await fetch(
+            `${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${user.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+
+          if (!studyTimeResponse.ok) {
+            throw new Error(`Failed to fetch study time for user ${user.id}`)
+          }
+
+          const studyTimeData = await studyTimeResponse.json()
+          let totalStudyTime = 0
+          let studySessions = 0
+
+          if (studyTimeData && studyTimeData[0]) {
+            // Count total sessions
+            studySessions = studyTimeData[0].length
+
+            // Calculate total study time
+            totalStudyTime = studyTimeData[0].reduce((total, post) => {
+              try {
+                const content = typeof post.content === 'string' ? JSON.parse(post.content) : post.content
+                return total + (content.duration || 0)
+              } catch (e) {
+                console.warn(`Error parsing study time content for user ${user.id}:`, e)
+                return total
+              }
+            }, 0)
+          }
+
+          // Get user display name from attributes
+          let displayName = "Anonymous User"
+          if (user.attributes?.username) {
+            displayName = user.attributes.username
+          } else if (user.username) {
+            displayName = user.username
+          } else if (user.attributes?.firstName && user.attributes?.lastName) {
+            displayName = `${user.attributes.firstName} ${user.attributes.lastName}`
+          } else if (user.firstName && user.lastName) {
+            displayName = `${user.firstName} ${user.lastName}`
+          } else if (user.attributes?.email) {
+            displayName = user.attributes.email.split('@')[0]
+          } else if (user.email) {
+            displayName = user.email.split('@')[0]
+          }
+
+          return {
+            id: user.id,
+            name: displayName,
+            avatar: user.attributes?.profilePicture || user.avatar,
+            totalStudyTime,
+            studySessions,
+          }
+        } catch (error) {
+          console.error(`Error processing user ${user.id}:`, error)
+          return null
+        }
+      })
+
+      const leaderboardResults = (await Promise.all(leaderboardPromises)).filter(Boolean)
+      
+      if (!leaderboardResults || leaderboardResults.length === 0) {
+        console.error("No valid leaderboard results found")
+        setLeaderboardData([])
+        return
+      }
+
+      // Sort by total study time and get top 5
+      const sortedLeaderboard = leaderboardResults
+        .sort((a, b) => b.totalStudyTime - a.totalStudyTime)
+        .slice(0, 5)
+
+      console.log("Sorted leaderboard data:", sortedLeaderboard)
+      setLeaderboardData(sortedLeaderboard)
+    } catch (error) {
+      console.error("Error fetching leaderboard data:", error)
+      setLeaderboardData([])
+    } finally {
+      setLoadingLeaderboard(false)
+    }
+  }
+
+  const fetchUserStats = async () => {
+    setLoadingUserStats(true)
+    const token = sessionStorage.getItem("token")
+    
+    if (!token) {
+      setLoadingUserStats(false)
+      return
+    }
+
+    try {
+      // Fetch all users
+      const usersResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!usersResponse.ok) {
+        throw new Error(`Failed to fetch users: ${usersResponse.status}`)
+      }
+
+      const usersData = await usersResponse.json()
+      const users = usersData[0] || []
+
+      if (!users || users.length === 0) {
+        console.error("No users found in API response")
+        setUserStats([])
+        return
+      }
+
+      console.log(`Processing statistics for ${users.length} users`)
+
+      // We'll create custom statistics for each metric we want to display
+      const statsPromises = users.map(async (user) => {
+        try {
+          // Get user ID safely
+          const userId = user.id || user._id
+          if (!userId) {
+            console.error("User without ID found:", user)
+            return null
+          }
+
+          // Get study sessions for timing statistics
+          const studySessionsResponse = await fetch(
+            `${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${userId}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          
+          if (!studySessionsResponse.ok) {
+            console.error(`Failed to fetch study sessions for user ${userId}: ${studySessionsResponse.status}`)
+            return null
+          }
+
+          const studySessionsData = await studySessionsResponse.json()
+          const studySessions = studySessionsData && studySessionsData[0] ? studySessionsData[0] : []
+
+          console.log(`User ${userId}: Found ${studySessions.length} study sessions`)
+
+          // Study session metrics
+          let longestSession = 0;
+          let sessionCount = studySessions.length;
+          let todaySessionCount = 0;
+          
+          // Get today's date (midnight) for comparing sessions
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const todayTimestamp = today.getTime();
+          
+          // Process study sessions
+          studySessions.forEach(session => {
+            try {
+              const content = typeof session.content === 'string' ? JSON.parse(session.content) : session.content
+              
+              // Check session duration and add to total
+              if (content && content.duration && !isNaN(content.duration)) {
+                const duration = Number(content.duration);
+                longestSession = Math.max(longestSession, duration);
+              }
+              
+              // Check if session was today
+              if (content && content.startTime) {
+                try {
+                  const sessionDate = new Date(content.startTime);
+                  // If session timestamp is today or later (today's date)
+                  if (sessionDate.getTime() >= todayTimestamp) {
+                    todaySessionCount++;
+                  }
+                } catch (e) {
+                  console.warn(`Error parsing start time for user ${userId}:`, e)
+                }
+              } else if (session.timestamp || session.created) {
+                // Fallback to post timestamp if content has no startTime
+                const sessionTime = new Date(session.timestamp || session.created);
+                if (sessionTime.getTime() >= todayTimestamp) {
+                  todaySessionCount++;
+                }
+              }
+            } catch (e) {
+              console.warn(`Error parsing study session content for user ${userId}:`, e)
+            }
+          })
+
+          // Get user display name 
+          let displayName = extractUserDisplayName(user)
+
+          // Return user stats
+          return {
+            id: userId,
+            name: displayName,
+            avatar: user.attributes?.profilePicture || user.avatar,
+            longestSession,
+            sessionCount,
+            todaySessionCount
+          }
+        } catch (error) {
+          console.error(`Error processing statistics for user:`, error)
+          return null
+        }
+      })
+
+      // Wait for all user stats to be processed
+      let statsResults = (await Promise.all(statsPromises)).filter(Boolean)
+      
+      if (!statsResults || statsResults.length === 0) {
+        console.error("No valid user statistics found")
+        setUserStats([])
+        return
+      }
+
+      console.log(`Found ${statsResults.length} users with valid statistics`)
+      
+      // Find the top user for each stat category
+      const topMarathon = findTopUserForStat(statsResults, 'longestSession', 'marathon')
+      const topSessions = findTopUserForStat(statsResults, 'sessionCount', 'studySessions')
+      const topTodaySessions = findTopUserForStat(statsResults, 'todaySessionCount', 'todaySessions')
+      
+      // Combine all top users, ensuring we have all 3 badges
+      let finalStats = [
+        topMarathon, 
+        topSessions, 
+        topTodaySessions
+      ].filter(Boolean) // Remove any null values
+      
+      console.log("Final user achievements:", finalStats)
+      
+      // Set the state with our final statistics
+      setUserStats(finalStats)
+    } catch (error) {
+      console.error("Error fetching user statistics:", error)
+      setUserStats([])
+    } finally {
+      setLoadingUserStats(false)
+    }
+  }
+
+  // Helper function to create default stats when API fails
+  const createDefaultStats = () => {
+    return [
+      { id: 'default-1', name: 'Study Expert', avatar: null, statType: 'marathon', statValue: 0 },
+      { id: 'default-2', name: 'Session King', avatar: null, statType: 'studySessions', statValue: 0 },
+      { id: 'default-3', name: 'Today Champ', avatar: null, statType: 'todaySessions', statValue: 0 }
+    ];
+  }
+
+  // Helper function to create default badges for a single user
+  const createDefaultBadges = (user) => {
+    // Include only the stats we want to display
+    const statTypes = ['marathon', 'studySessions', 'todaySessions'];
+    console.log("Creating default badges for types:", statTypes);
+    return statTypes.map(type => createPlaceholderStat(user, type));
+  }
+
+  // Helper function to create a placeholder stat for a user
+  const createPlaceholderStat = (user, statType) => {
+    let statValue = 0;
+    switch (statType) {
+      case 'marathon':
+        statValue = user.longestSession || 0;
+        break;
+      case 'studySessions':
+        statValue = user.sessionCount || 0;
+        break;
+      case 'todaySessions':
+        statValue = user.todaySessionCount || 0;
+        break;
+    }
+    
+    return {
+      id: `${user.id}-${statType}`,
+      name: user.name,
+      avatar: user.avatar,
+      statType: statType,
+      statValue: statValue
+    };
+  }
+
+  // Helper function to find the top user for a specific stat
+  const findTopUserForStat = (users, statKey, statType) => {
+    console.log(`Finding top user for ${statType} using stat key ${statKey}`);
+
+    // Sort users by the stat value in descending order
+    const sortedUsers = [...users].sort((a, b) => b[statKey] - a[statKey]);
+    
+    console.log(`Sorted ${sortedUsers.length} users for ${statType}`);
+    
+    // Take the top user for this stat
+    const topUser = sortedUsers[0];
+    
+    // If no user found, return null
+    if (!topUser) {
+      console.warn(`No top user found for ${statType}`);
+      return null;
+    }
+    
+    console.log(`Top user for ${statType}: ${topUser.name} with value ${topUser[statKey]}`);
+    
+    // Return formatted stat object
+    return {
+      id: topUser.id,
+      name: topUser.name,
+      avatar: topUser.avatar,
+      statType: statType,
+      statValue: topUser[statKey]
+    }
+  }
+
+  // Helper function to extract user display name from user object
+  const extractUserDisplayName = (user) => {
+    if (!user) return "Anonymous User"
+    
+    // Try to get username from different possible locations
+    if (user.attributes?.username) return user.attributes.username
+    if (user.username) return user.username
+    
+    // Try to construct name from first and last name
+    if (user.attributes?.firstName && user.attributes?.lastName) {
+      return `${user.attributes.firstName} ${user.attributes.lastName}`
+    }
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`
+    }
+    
+    // Try to extract name from email
+    if (user.attributes?.email) return user.attributes.email.split('@')[0]
+    if (user.email) return user.email.split('@')[0]
+    
+    // Final fallback
+    return "Anonymous User"
+  }
+
+  // Helper function to get stat icon
+  const getStatIcon = (statType) => {
+    switch (statType) {
+      case 'marathon':
+        return '⏱️';
+      case 'studySessions':
+        return '📚';
+      case 'todaySessions':
+        return '🔥';
+      default:
+        return '🏆';
+    }
+  };
+
+  // Helper function to get the title for each stat type
+  const getStatTitle = (statType) => {
+    switch (statType) {
+      case 'marathon':
+        return 'Sailor of Study';
+      case 'studySessions':
+        return 'Sea of Sessions';
+      case 'todaySessions':
+        return 'Session Shark';
+      default:
+        return 'Achievement';
+    }
+  };
+
+  // Helper function to format the stat value based on its type
+  const formatStatValue = (statType, value) => {
+    if (value === undefined || value === null) return "N/A";
+    
+    switch (statType) {
+      case 'marathon':
+        // Convert seconds to minutes for readability
+        const minutes = Math.floor(value / 60);
+        const hours = Math.floor(minutes / 60);
+        if (hours > 0) {
+          const remainingMinutes = minutes % 60;
+          return `${hours}h ${remainingMinutes}m `;
+        }
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} `;
+      case 'studySessions':
+        return `${value} session${value !== 1 ? 's' : ''}`;
+      case 'todaySessions':
+        return `${value} today`;
+      default:
+        return value;
+    }
+  };
+
+  // Helper function to get a gradient based on stat type
+  const getStatGradient = (statType) => {
+    switch (statType) {
+      case 'marathon':
+        return 'linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%)';
+      case 'studySessions':
+        return 'linear-gradient(135deg, #EF7B6C 0%, #E9D0CE 100%)';
+      case 'todaySessions':
+        return 'linear-gradient(135deg, #FFA500 0%, #FFC107 100%)';
+      default:
+        return 'linear-gradient(135deg, #4776E6 0%, #8E54E9 100%)';
+    }
+  };
+
+  // Helper function to get avatar background color based on stat type
+  const getAvatarColor = (statType) => {
+    switch (statType) {
+      case 'marathon':
+        return '#e64c4c';
+      case 'studySessions':
+        return '#EF7B6C';
+      case 'todaySessions':
+        return '#FFA500';
+      default:
+        return '#3e6bd4';
+    }
+  };
+
+  // Helper function to get the caption for each stat type
+  const getStatCaption = (statType) => {
+    switch (statType) {
+      case 'marathon':
+        return 'Longest continuous study session';
+      case 'studySessions':
+        return 'Highest number of study sessions';
+      case 'todaySessions':
+        return 'Most study sessions completed today';
+      default:
+        return 'Outstanding achievement';
+    }
+  };
+
+  // Remove the separate useEffect for fetchLeaderboardData and fetchUserStats
+  // Remove the useEffect that has fetchUserStats in it
+
+  // Add this new consolidated useEffect after the other useEffects
+  useEffect(() => {
+    const token = sessionStorage.getItem("token")
+    console.log("Token in useEffect:", token ? "Token exists" : "No token")
+    setIsLoggedIn(!!token)
+
+    const fetchAllData = async () => {
+      try {
+        if (token) {
+          // Set all loading states to true
+          setLoadingCommunities(true)
+          setLoadingCourses(true)
+          setLoadingUsers(true)
+          setLoadingLeaderboard(true)
+          setLoadingUserStats(true)
+
+          // Fetch all data in parallel
+          await Promise.all([
+            fetchLatestCommunities(),
+            fetchLatestCourses(),
+            fetchActiveUsers(),
+            fetchLeaderboardData(),
+            fetchUserStats()
+          ])
+        } else {
+          // If no token, use mock data
+          setActiveUsers(MOCK_USERS)
+          setLoadingUsers(false)
+          setLoadingUserStats(false)
+          setLoadingLeaderboard(false)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error)
+        // Set loading states to false in case of error
+        setLoadingCommunities(false)
+        setLoadingCourses(false)
+        setLoadingUsers(false)
+        setLoadingLeaderboard(false)
+        setLoadingUserStats(false)
+      }
+    }
+
+    // Initial fetch
+    fetchAllData()
+
+    // Set up polling for active users and leaderboard data
+    const intervalId = setInterval(() => {
+      if (token) {
+        fetchActiveUsers()
+        fetchLeaderboardData()
+        fetchUserStats()
+      }
+    }, 90000)
+
+    // Cleanup on unmount
+    return () => clearInterval(intervalId)
+  }, []) // Empty dependency array since we want this to run only once on mount
+
+  // Add this useEffect to handle scroll behavior for both Dr. Bubbles and question mark bubble
+  useEffect(() => {
+    if (isMobile) {
+      const handleScroll = () => {
+        const scrollPosition = window.scrollY
+        setIsQuestionBubbleVisible(scrollPosition < 100) // Hide after scrolling 100px
+      }
+
+      window.addEventListener('scroll', handleScroll)
+      return () => window.removeEventListener('scroll', handleScroll)
+    }
+  }, [isMobile])
+
   return (
     <Box
       sx={{
@@ -663,6 +1225,14 @@ const HomePage = () => {
         width: "100%",
         maxWidth: "100vw",
         overflowX: "hidden",
+        position: "relative",
+        [theme.breakpoints.down('sm')]: {
+          maxWidth: '100%',
+          margin: 0,
+          padding: 0,
+          width: '100vw',
+          overflowX: 'hidden',
+        }
       }}
     >
       <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
@@ -712,7 +1282,6 @@ const HomePage = () => {
       </AppBar>
 
       {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
-
       
       {/* Help bubble that appears when guide is closed */}
       {!showGuide && isQuestionBubbleVisible && (
@@ -840,13 +1409,11 @@ const HomePage = () => {
             width: '100%',
             overflowX: 'hidden',
           }
-
         }}
       >
         <Box
           sx={{
             bgcolor: "#FFFFFF",
-
             py: { xs: 3, md: 8 },
             px: { xs: 2, md: 3 },
             mt: 2,
@@ -862,7 +1429,6 @@ const HomePage = () => {
               padding: '16px 8px',
               overflowX: 'hidden',
             }
-
           }}
         >
           <Typography
@@ -873,9 +1439,7 @@ const HomePage = () => {
             sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 800,
-
               fontSize: { xs: "28px", sm: "42px", md: "52px" },
-
             }}
           >
             Dive into Learning
@@ -888,9 +1452,7 @@ const HomePage = () => {
             sx={{
               fontFamily: "SourGummy, sans-serif",
               fontWeight: 600,
-
               fontSize: { xs: "14px", sm: "22px", md: "26px" },
-
             }}
           >
             Explore our gamified courses and quizzes designed to make learning fun and engaging.
@@ -899,7 +1461,6 @@ const HomePage = () => {
             <Button
               variant="contained"
               component={Link}
-
               to="/community"
               size="large"
               sx={{
@@ -909,12 +1470,10 @@ const HomePage = () => {
                 },
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 600,
-
                 fontSize: { xs: "24px", sm: "28px", md: "32px" },
                 color: "#F4FDFF",
                 px: { xs: 3, md: 4 },
                 py: { xs: 0.5, md: 1 },
-
                 borderRadius: 2,
                 boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
               }}
@@ -930,7 +1489,6 @@ const HomePage = () => {
             mt: 6,
             mb: 6,
             bgcolor: "#FFFFFF",
-
             py: { xs: 3, md: 4 },
             px: { xs: 2, md: 2 },
             borderRadius: 2,
@@ -962,21 +1520,17 @@ const HomePage = () => {
               padding: '0 8px',
             }
           }}>
-
             <Typography
               variant="h3"
               color="#1D1D20"
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 700,
-
                 fontSize: { xs: "24px", sm: "30px", md: "36px" },
-
               }}
             >
               Latest Communities
             </Typography>
-
             <Box sx={{ 
               display: "flex", 
               gap: 1,
@@ -991,14 +1545,13 @@ const HomePage = () => {
                 sx={{
                   minWidth: { xs: "32px", md: "40px" },
                   height: { xs: "32px", md: "40px" },
-
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
+                  p: { xs: 0.5, md: 1 },
                 }}
               >
-
                 <ChevronLeft size={isMobile ? 16 : 24} />
               </Button>
               <Button
@@ -1006,17 +1559,15 @@ const HomePage = () => {
                 sx={{
                   minWidth: { xs: "32px", md: "40px" },
                   height: { xs: "32px", md: "40px" },
-
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
+                  p: { xs: 0.5, md: 1 },
                 }}
               >
-
                 <ChevronRight size={isMobile ? 16 : 24} />
               </Button>
-
             </Box>
           </Box>
 
@@ -1025,14 +1576,11 @@ const HomePage = () => {
             sx={{
               display: "flex",
               overflowX: "auto",
-
               gap: { xs: 1, md: 2 },
-
               pb: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
               msOverflowStyle: "none",
-
               minHeight: { xs: "250px", md: "280px" },
               px: { xs: 1, md: 0 },
               width: '100%',
@@ -1040,7 +1588,6 @@ const HomePage = () => {
               [theme.breakpoints.down('sm')]: {
                 padding: '0 8px',
               }
-
             }}
           >
             {loadingCommunities ? (
@@ -1052,7 +1599,6 @@ const HomePage = () => {
                 <Card
                   key={community.id}
                   sx={{
-
                     minWidth: { xs: 220, sm: 250, md: 280 },
                     maxWidth: { xs: 220, sm: 250, md: 280 },
                     bgcolor: "#FFFFFF",
@@ -1069,7 +1615,7 @@ const HomePage = () => {
                 >
                   <CardMedia
                     component="img"
-                    sx={{ height: 140, objectFit: "contain", pt: 2 }}
+                    sx={{ height: { xs: 120, md: 140 }, objectFit: "contain", pt: 2 }}
                     image={community.image}
                     alt={community.name}
                   />
@@ -1082,7 +1628,6 @@ const HomePage = () => {
                       sx={{
                         fontFamily: "SourGummy, sans-serif",
                         fontWeight: 600,
-
                         fontSize: { xs: "18px", md: "22px" },
                       }}
                     >
@@ -1093,10 +1638,9 @@ const HomePage = () => {
                       sx={{
                         fontFamily: "SourGummy, sans-serif",
                         fontWeight: 500,
-                        fontSize: "14px",
+                        fontSize: { xs: "12px", md: "14px" },
                         mb: 1,
                         height: { xs: "48px", md: "60px" },
-
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         display: "-webkit-box",
@@ -1111,7 +1655,7 @@ const HomePage = () => {
                       sx={{
                         fontFamily: "SourGummy, sans-serif",
                         fontWeight: 600,
-                        fontSize: "14px",
+                        fontSize: { xs: "12px", md: "14px" },
                       }}
                     >
                       {community.members} members
@@ -1126,7 +1670,7 @@ const HomePage = () => {
                   sx={{
                     fontFamily: "SourGummy, sans-serif",
                     fontWeight: 500,
-                    fontSize: "16px",
+                    fontSize: { xs: "14px", md: "16px" },
                   }}
                 >
                   No communities found. Create one to get started!
@@ -1142,13 +1686,13 @@ const HomePage = () => {
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 600,
                 color: "#1D6EF1",
+                fontSize: { xs: "14px", md: "16px" },
               }}
             >
               View All Communities
             </Button>
           </Box>
         </Box>
-
 
         {/* Two-column layout for Champions and User Achievements */}
         <Grid 
@@ -1262,7 +1806,6 @@ const HomePage = () => {
                     >
                       {/* Rank Number */}
                       <Box
-
                         sx={{
                           position: "absolute",
                           top: "50%",
@@ -1279,7 +1822,6 @@ const HomePage = () => {
                           fontSize: { xs: "16px", md: "18px" },
                           fontWeight: "bold",
                           fontFamily: "SourGummy, sans-serif",
-
                           zIndex: 2,
                           "&::before": {
                             content: '""',
@@ -1442,7 +1984,6 @@ const HomePage = () => {
             </Box>
           </Grid>
 
-
           {/* User Achievements */}
           <Grid item xs={12} md={6} sx={{ pl: { md: 1.5 }, pr: 0, position: "relative" }}>
             <Box
@@ -1564,75 +2105,184 @@ const HomePage = () => {
                       {/* Badge Icon */}
                       <Box
                         sx={{
+                          position: "absolute",
+                          top: "50%",
+                          left: { xs: "12px", md: "16px" },
+                          transform: "translateY(-50%)",
+                          width: { xs: "32px", md: "40px" },
+                          height: { xs: "32px", md: "40px" },
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: "transparent",
+                          borderRadius: "50%",
+                          color: "#FFFFFF",
+                          fontSize: { xs: "16px", md: "18px" },
+                          fontWeight: "bold",
                           fontFamily: "SourGummy, sans-serif",
-                          fontWeight: 600,
-                          fontSize: isMobile ? "18px" : "22px",
-                          borderBottom: "2px solid #EF7B6C",
-                          pb: 1,
+                          zIndex: 2,
+                          "&::before": {
+                            content: '""',
+                            position: "absolute",
+                            inset: 0,
+                            borderRadius: "50%",
+                            padding: "2px",
+                            background: `linear-gradient(135deg, ${
+                              index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                              index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                              index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                              "#1D6EF1, #97C7F1"
+                            })`,
+                            WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                            WebkitMaskComposite: "xor",
+                            maskComposite: "exclude",
+                          },
+                          "&::after": {
+                            content: '""',
+                            position: "absolute",
+                            inset: "2px",
+                            borderRadius: "50%",
+                            background: `linear-gradient(135deg, ${
+                              index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                              index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                              index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                              "#1D6EF1, #97C7F1"
+                            })`,
+                            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                          },
                         }}
                       >
-                        Course Title:
-                        <Typography
-                          component="span"
-                          sx={{
-                            display: "block",
-                            color: "#1D6EF1",
-                            mt: 1,
-                          }}
-                        >
-                          {course.title || "Untitled Course"}
-                        </Typography>
-                      </Typography>
+                        <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          {getStatIcon(stat.statType)}
+                        </Box>
+                      </Box>
 
-                      <Typography
-                        color="#1D1D20"
-                        sx={{
-                          fontFamily: "SourGummy, sans-serif",
-                          fontWeight: 600,
-                          fontSize: "16px",
-                        }}
-                      >
-                        Description
-                      </Typography>
-                      <Typography
-                        component="div"
-                        sx={{
-                          fontWeight: 500,
-                          fontSize: "14px",
-                          color: "#666",
-                          mt: 1,
-                          height: isMobile ? "50px" : "60px",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: isMobile ? 2 : 3,
-                          WebkitBoxOrient: "vertical",
-                          lineHeight: "1.5",
-                          letterSpacing: "0.3px",
-                        }}
-                      >
-                        {typeof course.description === "string" ? course.description : "No description available"}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                <Typography
-                  color="#1D1D20"
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                  }}
-                >
-                  No courses found. Check back soon for new content!
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Box>
+                      <CardContent sx={{ 
+                        pt: 1, 
+                        pb: 1, 
+                        pl: { xs: 5, md: 6 }, 
+                        pr: { xs: 1, md: 2 },
+                        width: "100%",
+                        height: "100%",
+                        display: "flex", 
+                        flexDirection: "column", 
+                        justifyContent: "center",
+                        [theme.breakpoints.down('sm')]: {
+                          padding: '0 8px',
+                        }
+                      }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+                          <Avatar
+                            src={stat.avatar}
+                            alt={stat.name}
+                            sx={{
+                              width: { xs: 40, md: 50 },
+                              height: { xs: 40, md: 50 },
+                              background: `linear-gradient(135deg, ${
+                                index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                                index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                                index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                                "#1D6EF1, #97C7F1"
+                              })`,
+                              border: "3px solid rgba(255, 255, 255, 0.8)",
+                              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                              ml: { xs: 0, md: 1 },
+                            }}
+                          >
+                            {stat.name?.charAt(0).toUpperCase() || "?"}
+                          </Avatar>
+
+                          <Box sx={{ flexGrow: 1, position: "relative" }}>
+                            {/* Title and caption container */}
+                            <Box sx={{ position: "relative" }}>
+                              <Typography
+                                variant="h5"
+                                sx={{
+                                  fontFamily: "SourGummy, sans-serif",
+                                  fontWeight: 600,
+                                  fontSize: { xs: "14px", md: "18px" },
+                                  color: "#1D1D20",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  mb: 0.5,
+                                  lineHeight: 1.2,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {getStatTitle(stat.statType)}
+                              </Typography>
+                            </Box>
+                            
+                            {/* User name and stat value */}
+                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: { xs: 0.5, md: 1.5 } }}>
+                              <Tooltip title={stat.name} placement="top" arrow>
+                                <Typography
+                                  sx={{
+                                    fontFamily: "SourGummy, sans-serif",
+                                    color: "#1D1D20",
+                                    fontWeight: 600,
+                                    fontSize: { xs: "12px", md: "14px" },
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.1,
+                                    maxWidth: { xs: "80px", md: "140px" }, // Smaller max width on mobile
+                                  }}
+                                >
+                                  {truncateText(stat.name, isMobile ? 8 : 10)}
+                                </Typography>
+                              </Tooltip>
+                              <Typography
+                                sx={{
+                                  fontFamily: "SourGummy, sans-serif",
+                                  color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
+                                         index === 1 ? "#5B8C5A" : // Sea 2 from style guide
+                                         index === 2 ? "#1D6EF1" : // Sea 1 from style guide
+                                         "#48BB78",
+                                  fontSize: { xs: "10px", md: "12px" },
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  lineHeight: 1.1,
+                                }}
+                              >
+                                {formatStatValue(stat.statType, stat.statValue)}
+                              </Typography>
+                            </Box>
+                            
+                            {/* Caption text positioned at the bottom and centered - hide on mobile */}
+                            <Typography
+                              sx={{
+                                position: "absolute",
+                                bottom: "2px",
+                                left: 0,
+                                right: 0,
+                                width: "100%",
+                                textAlign: "center",
+                                fontFamily: "SourGummy, sans-serif",
+                                color: "#555",
+                                fontSize: { xs: "8px", md: "10px" },
+                                lineHeight: 1,
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                opacity: 0.9,
+                                display: { xs: "none", sm: "block" },
+                              }}
+                            >
+                              {getStatCaption(stat.statType)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
 
         {/* Active Users Section */}
         <Box
@@ -1640,36 +2290,54 @@ const HomePage = () => {
             mt: 6,
             mb: 6,
             bgcolor: "#FFFFFF",
-            py: isMobile ? 3 : isTablet ? 3.5 : 4,
-            px: isMobile ? 4 : isTablet ? 5 : 6,
+            py: { xs: 3, md: 4 },
+            px: { xs: 2, md: 2 },
             borderRadius: 2,
             boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            width: isMobile ? "85%" : "100%",
-            mx: "auto",
+            mx: { xs: 0, sm: 0, md: 0 },
+            width: { xs: '100%', sm: '100%' },
+            overflow: 'hidden',
+            position: 'relative',
+            [theme.breakpoints.down('sm')]: {
+              margin: 0,
+              width: '100%',
+              borderRadius: 0,
+              padding: '16px 8px 16px 8px',
+              overflowX: 'hidden',
+              mt: 4,
+              ml: 0,
+              mr: 0,
+            }
           }}
         >
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-              flexDirection: isMobile ? "column" : "row",
-              gap: isMobile ? 2 : 0,
-            }}
-          >
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            mb: 2,
+            position: 'relative',
+            zIndex: 2,
+            mt: { xs: 0, sm: 0 },
+            [theme.breakpoints.down('sm')]: {
+              padding: '0 8px',
+              mb: 3,
+            }
+          }}>
             <Typography
               variant="h3"
               color="#1D1D20"
               sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 700,
-                fontSize: isMobile ? "24px" : "36px",
+                fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                [theme.breakpoints.down('sm')]: {
+                  mt: 1,
+                  ml: 1,
+                }
               }}
             >
               Active Users
             </Typography>
-
             <Box sx={{ 
               display: "flex", 
               gap: 1,
@@ -1684,31 +2352,29 @@ const HomePage = () => {
                 sx={{
                   minWidth: { xs: "32px", md: "40px" },
                   height: { xs: "32px", md: "40px" },
-
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
+                  p: { xs: 0.5, md: 1 },
                 }}
               >
-
                 <ChevronLeft size={isMobile ? 16 : 24} />
               </Button>
               <Button
                 onClick={() => scrollCarousel(usersRef, "right")}
                 sx={{
-                  width: isMobile ? "36px" : "40px",
-                  height: isMobile ? "36px" : "40px",
+                  minWidth: { xs: "32px", md: "40px" },
+                  height: { xs: "32px", md: "40px" },
                   borderRadius: "50%",
                   bgcolor: "#EF7B6C",
                   color: "white",
                   "&:hover": { bgcolor: "#e66a59" },
+                  p: { xs: 0.5, md: 1 },
                 }}
               >
-
                 <ChevronRight size={isMobile ? 16 : 24} />
               </Button>
-
             </Box>
           </Box>
 
@@ -1717,14 +2383,11 @@ const HomePage = () => {
             sx={{
               display: "flex",
               overflowX: "auto",
-
               gap: { xs: 1, md: 2 },
-
               pb: 2,
               scrollbarWidth: "none",
               "&::-webkit-scrollbar": { display: "none" },
               msOverflowStyle: "none",
-
               minHeight: { xs: "130px", md: "150px" },
               px: { xs: 1, md: 0 },
               width: '100%',
@@ -1733,7 +2396,6 @@ const HomePage = () => {
                 padding: '0 8px',
                 mt: 1, // Add small top margin on mobile
               }
-
             }}
           >
             {loadingUsers ? (
@@ -1745,10 +2407,8 @@ const HomePage = () => {
                 <Card
                   key={user.id}
                   sx={{
-
                     minWidth: { xs: 200, sm: 240, md: 280 },
                     maxWidth: { xs: 200, sm: 240, md: 280 },
-
                     bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
                     borderRadius: 2,
                     transition: "transform 0.2s, box-shadow 0.2s",
@@ -1761,7 +2421,7 @@ const HomePage = () => {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
-                    p: 2,
+                    p: { xs: 1, md: 2 },
                     position: "relative",
                     border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
                   }}
@@ -1772,16 +2432,13 @@ const HomePage = () => {
                       src={user.avatar}
                       alt={user.name}
                       sx={{
-
                         width: { xs: 40, sm: 50, md: 60 },
                         height: { xs: 40, sm: 50, md: 60 },
                         bgcolor: "#1D6EF1",
-                        mr: 2,
+                        mr: { xs: 1, md: 2 },
                         border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
                         color: "white",
-
                         fontSize: { xs: "1.2rem", md: "1.5rem" },
-
                       }}
                     >
                       {user.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -1790,9 +2447,9 @@ const HomePage = () => {
                       sx={{
                         position: "absolute",
                         bottom: 0,
-                        right: 8,
-                        width: 12,
-                        height: 12,
+                        right: { xs: 4, md: 8 },
+                        width: { xs: 8, md: 12 },
+                        height: { xs: 8, md: 12 },
                         borderRadius: "50%",
                         bgcolor: user.status === "online" ? "#4CAF50" : "#9e9e9e",
                         border: "2px solid white",
@@ -1800,7 +2457,6 @@ const HomePage = () => {
                     />
                   </Box>
                   <Box sx={{ overflow: "hidden" }}>
-
                     <Tooltip title={user.name + (user.isCurrentUser ? " (You)" : "")} placement="top" arrow>
                       <Typography
                         variant="h6"
@@ -1830,7 +2486,6 @@ const HomePage = () => {
                     >
                       {user.activity}
                     </Typography>
-
                     <Tooltip title={user.email} placement="top" arrow>
                       <Typography
                         color="#666"
@@ -1873,4 +2528,3 @@ const HomePage = () => {
 }
 
 export default HomePage
-
