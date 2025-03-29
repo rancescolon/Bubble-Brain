@@ -77,21 +77,21 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((data) => {
-          // Transform API data to match our component's expected format
-          const communityData = {
-            id: data.id,
-            name: data.name || "Community",
-            description: data.description || "No description available",
-            //likes: 0,
-            authorId: data.ownerID,
-          }
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((data) => {
+        // Transform API data to match our component's expected format
+        const communityData = {
+          id: data.id,
+          name: data.name || "Community",
+          description: data.description || "No description available",
+          likes: 0,
+          authorId: data.ownerID,
+        }
 
           setCommunity(communityData)
 
@@ -205,7 +205,7 @@ export default function CommunityView() {
           setMessages(initialMessages)
         })
   }
-  //The code for study sets was created with the help of ChatGPT
+
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
     const currentCommunityId = id // Keep as string for comparison
@@ -286,20 +286,20 @@ export default function CommunityView() {
                           content.type = "flashcards"
                         }
 
-                        // If we don't have content array, use an empty array
-                        if (!Array.isArray(content.content)) {
-                          content.content = []
-                        }
-                      }
-                    } catch (parseError) {
-                      console.warn("Could not parse post content as JSON:", parseError.message)
-                      // Create a default content object for non-JSON content
-                      content = {
-                        name: "Untitled Study Set",
-                        type: "flashcards",
-                        content: [{ front: post.content || "Content unavailable", back: "" }],
-                      }
+                    // If we don't have content array, use an empty array
+                    if (!Array.isArray(content.content)) {
+                      content.content = []
                     }
+                  }
+                } catch (parseError) {
+                  console.warn("Could not parse post content as JSON:", parseError.message)
+                  // Create a default content object for non-JSON content
+                  content = {
+                    name: "Untitled Study Set",
+                    type: "flashcards",
+                    content: [{ front: post.content || "Content unavailable", back: "" }],
+                  }
+                }
 
                     // Include all study sets with reasonable defaults
                     const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
@@ -427,7 +427,7 @@ export default function CommunityView() {
         description: "Created by you",
         type: selectedTemplate.type,
         content: templateContent,
-        //likes: 0,
+        likes: 0,
         groupID: Number.parseInt(currentCommunityId) || 0,
         communityId: currentCommunityId,
       }
@@ -580,7 +580,7 @@ export default function CommunityView() {
           console.error("Could not copy text: ", err)
         })
   }
-/*
+
   // Add this new function after the handleShareStudySet function
   const handleLikeStudySet = (studySetId) => {
     const token = sessionStorage.getItem("token")
@@ -620,7 +620,8 @@ export default function CommunityView() {
 
     setStudySets(updatedStudySets)
   }
-*/
+
+  // Updated handleOpenChatRoom function
   const handleOpenChatRoom = () => {
     setShowChatRoom(true)
     // Initialize with some sample messages if empty
@@ -1049,24 +1050,26 @@ export default function CommunityView() {
                   </button>
                 </div>
 
-                {/* Step indicators */}
-                <div className="flex mb-6">
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} rounded-l-xl`}
-                  >
-                    1. Name
-                  </div>
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
-                  >
-                    2. Template
-                  </div>
-                  <div
-                      className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} rounded-r-xl`}
-                  >
-                    3. Content
-                  </div>
+              {/* Rest of the dialog content remains the same */}
+
+              {/* Step indicators */}
+              <div className="flex mb-4 md:mb-6 rounded-xl overflow-hidden">
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  1. Name
                 </div>
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  2. Template
+                </div>
+                <div
+                  className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                >
+                  3. Content
+                </div>
+              </div>
 
                 {/* Step 1: Name */}
                 {currentStep === 1 && (
