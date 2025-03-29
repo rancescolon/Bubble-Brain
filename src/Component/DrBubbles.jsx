@@ -269,4 +269,3 @@ const DrBubbles = ({ onClose }) => {
 }
 
 export default DrBubbles
-

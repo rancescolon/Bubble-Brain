@@ -21,7 +21,6 @@ import { LogOut, Save, Upload, Users } from "lucide-react"
 import background from "../assets/image3.png"
 
 // Custom styled components following style guide
-//The code for Profile.jsx was created with the help of ChatGPT
 const StyledTextField = styled(TextField)(({ theme }) => ({
   "& .MuiOutlinedInput-root": {
     color: "black",
@@ -1146,4 +1145,3 @@ export default function Profile() {
     </Box>
   )
 }
-

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { MessageSquare, Plus, Heart, Share2, Trash2, ArrowLeft, Send, Users, X } from "lucide-react"
+import { MessageSquare, Plus, Share2, Trash2, ArrowLeft, Send, Users, X } from "lucide-react"
 import { socket } from "../App"
 import { useMediaQuery, useTheme } from "@mui/material"
 
@@ -107,21 +107,20 @@ export default function CommunityView() {
         Authorization: `Bearer ${token}`,
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then((data) => {
-          // Transform API data to match our component's expected format
-          const communityData = {
-            id: data.id,
-            name: data.name || "Community",
-            description: data.description || "No description available",
-            //likes: 0,
-            authorId: data.ownerID,
-          }
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
+      .then((data) => {
+        // Transform API data to match our component's expected format
+        const communityData = {
+          id: data.id,
+          name: data.name || "Community",
+          description: data.description || "No description available",
+          authorId: data.ownerID,
+        }
 
         setCommunity(communityData)
 
@@ -275,7 +274,7 @@ export default function CommunityView() {
         setMessages(initialMessages)
       })
   }
-  //The code for study sets was created with the help of ChatGPT
+
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
     const currentCommunityId = id // Keep as string for comparison
@@ -356,20 +355,9 @@ export default function CommunityView() {
                       content.type = "flashcards"
                     }
 
-
-                    // Include all study sets with reasonable defaults
-                    const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-
-                    return {
-                      id: post.id,
-                      title: content.name || "Untitled Study Set",
-                      description: `Created by ${creatorName}`,
-                      type: content.type || "flashcards",
-                      content: content.content || [],
-                      fileId: post.fileId,
-                      //likes: post._count?.reactions || 0,
-                      groupID: post.groupID,
-                      communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                    // If we don't have content array, use an empty array
+                    if (!Array.isArray(content.content)) {
+                      content.content = []
                     }
                   }
                 } catch (parseError) {
@@ -393,7 +381,6 @@ export default function CommunityView() {
                   type: content.type || "flashcards",
                   content: content.content || [],
                   fileId: post.fileId,
-                  likes: post._count?.reactions || 0,
                   groupID: post.groupID,
                   communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
                   creator: creator,
@@ -510,7 +497,6 @@ export default function CommunityView() {
         description: "Created by you",
         type: selectedTemplate.type,
         content: templateContent,
-        //likes: 0,
         groupID: Number.parseInt(currentCommunityId) || 0,
         communityId: currentCommunityId,
       }
@@ -667,50 +653,8 @@ export default function CommunityView() {
         console.error("Could not copy text: ", err)
       })
   }
-/*
-  // Add this new function after the handleShareStudySet function
-  const handleLikeStudySet = (studySetId) => {
-    const token = sessionStorage.getItem("token")
-    const user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null
-
-    if (!token || !user) return
-
-    const reactionData = {
-      userID: user.id,
-      postID: studySetId,
-      type: "like",
-    }
-
-    fetch(`${API_BASE_URL}/reactions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(reactionData),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-        return res.json()
-      })
-      .catch((error) => {
-        console.error("Error liking study set:", error)
-      })
-
-    // Update the UI optimistically
-    const updatedStudySets = studySets.map((set) => {
-      if (set.id === studySetId) {
-        return { ...set, likes: set.likes + 1 }
-      }
-      return set
-    })
-
-    setStudySets(updatedStudySets)
-  }
 
   // Updated handleOpenChatRoom function
-
-*/
   const handleOpenChatRoom = () => {
     console.log("Opening community chat room for community ID:", id)
 
@@ -1101,13 +1045,6 @@ export default function CommunityView() {
                           >
                             <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
                               <button
-                                className={`flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2`}
-                                onClick={() => handleLikeStudySet(studySet.id)}
-                              >
-                                <Heart size={isMobile ? 14 : 16} className="mr-1" fill="#EF7B6C" />
-                                <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{studySet.likes}</span>
-                              </button>
-                              <button
                                 className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
                                 onClick={() => handleShareStudySet(studySet.id)}
                               >
@@ -1238,85 +1175,7 @@ export default function CommunityView() {
                 <div
                   className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
                 >
-                  <Users size={18} className="mr-2" />
-                  <span>Members</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Study Sets Section */}
-            {studySets.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 w-full">
-                  {studySets
-                      .filter((set) => selectedType === "all" || set.type === selectedType)
-                      .map((studySet) => (
-                          <div
-                              key={studySet.id}
-                              className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
-                          >
-                            <div className="p-5">
-                              <div className="flex items-start">
-                                <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4 flex-shrink-0">
-                                  <span className="font-semibold">{studySet.title.charAt(0)}</span>
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-start mb-2">
-                                    <div className="min-w-0">
-                                      <h2
-                                          className="text-[26px] font-semibold text-[#1D1D20] cursor-pointer truncate"
-                                          onClick={() => handleViewStudySet(studySet)}
-                                      >
-                                        {studySet.title}
-                                      </h2>
-                                      <p className="text-[14px] text-[#1D1D20]/70 truncate text-left w-full">
-                                        {studySet.description}
-                                      </p>
-                                    </div>
-                                    <span className="text-[14px] bg-[#1D6EF1] px-3 py-1 rounded-xl ml-2 flex-shrink-0">
-                              {formatStudySetType(studySet.type)}
-                            </span>
-                                  </div>
-                                  <div className="flex justify-between items-center mt-3">
-                                    <div className="flex items-center">
-                                      {/*
-                                      <button
-                                          className="flex items-center bg-[#C5EDFD] text-[#EF7B6C] py-1 px-3 rounded-xl mr-2"
-                                          onClick={() => handleLikeStudySet(studySet.id)}
-                                      >
-                                        <Heart size={16} className="mr-1" fill="#EF7B6C" />
-                                        <span className="text-[14px]">{studySet.likes}</span>
-                                      </button>
-                                      */}
-                                      <button
-                                          className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-3 rounded-xl mr-2 flex items-center"
-                                          onClick={() => handleShareStudySet(studySet.id)}
-                                      >
-                                        {copiedSetId === studySet.id ? (
-                                            <span className="text-[14px]">Copied!</span>
-                                        ) : (
-                                            <>
-                                              <Share2 size={16} className="mr-1" />
-                                              <span className="text-[14px]">Share</span>
-                                            </>
-                                        )}
-                                      </button>
-                                      <button
-                                          className="text-[14px] text-[#F4FDFF] flex items-center bg-[#1D1D20] hover:bg-[#DC2626] p-1 px-3 rounded-xl transition-colors"
-                                          onClick={() => handleDeleteStudySet(studySet.id)}
-                                      >
-                                        <Trash2 size={16} className="mr-1 text-[#F4FDFF]" />
-                                        <span>Delete</span>
-                                      </button>
-                                    </div>
-                                    <div className="flex-shrink-0 ml-4">
-                                      <p className="text-[14px] font-semibold text-left">You</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                      ))}
+                  2. Template
                 </div>
                 <div
                   className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
@@ -1662,4 +1521,3 @@ export default function CommunityView() {
     </div>
   )
 }
-
