@@ -15,6 +15,11 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { LogOut, Save, Upload, Users } from "lucide-react"
@@ -70,6 +75,15 @@ const LogoutButton = styled(Button)({
   },
 })
 
+const DeleteAccountButton = styled(Button)({
+  backgroundColor: "#991B1B",
+  color: "white",
+  marginTop: "1rem",
+  "&:hover": {
+    backgroundColor: "#7F1D1D",
+  },
+})
+
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function Profile() {
@@ -100,6 +114,8 @@ export default function Profile() {
   })
   // eslint-disable-next-line no-unused-vars
   const [newUsername, setNewUsername] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -499,6 +515,108 @@ export default function Profile() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+      const userStr = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userStr || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      // Parse the user ID correctly
+      let userId
+      try {
+        const parsed = JSON.parse(userStr)
+        if (typeof parsed === "object" && parsed !== null && parsed.id) {
+          userId = parsed.id
+        } else if (typeof parsed === "number" || !isNaN(Number(parsed))) {
+          userId = Number(parsed)
+        } else {
+          throw new Error("Invalid user data format")
+        }
+      } catch (e) {
+        if (!isNaN(Number(userStr))) {
+          userId = Number(userStr)
+        } else {
+          throw new Error("Invalid user data format")
+        }
+      }
+
+      console.log("Attempting to delete user with ID:", userId)
+
+      // First, delete all user's study sets
+      const postsResponse = await fetch(`${API_BASE_URL}/posts?authorID=${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (postsResponse.ok) {
+        const posts = await postsResponse.json()
+        console.log("Found posts to delete:", posts)
+        // Delete each study set
+        for (const post of posts) {
+          if (post.id) { // Only delete if post has an ID
+            const deletePostResponse = await fetch(`${API_BASE_URL}/posts/${post.id}`, {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            })
+            if (!deletePostResponse.ok) {
+              console.warn(`Failed to delete post ${post.id}:`, await deletePostResponse.text())
+            }
+          }
+        }
+      }
+
+      // Delete the user account
+      console.log("Attempting to delete user account...")
+      const deleteResponse = await fetch(`${API_BASE_URL}/users/${userId}?relatedObjectsAction=delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      })
+
+      if (!deleteResponse.ok) {
+        const errorText = await deleteResponse.text()
+        console.error("Delete user response error:", errorText)
+        throw new Error(`Failed to delete account: ${errorText}`)
+      }
+
+      // Clear all session storage and local storage
+      sessionStorage.clear()
+      localStorage.clear()
+      
+      // Show success message
+      setNotification({
+        open: true,
+        message: "Account successfully deleted",
+        severity: "success",
+      })
+
+      // Force a page reload to clear all state
+      window.location.href = "/register"
+
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      setNotification({
+        open: true,
+        message: error.message || "Failed to delete account. Please try again.",
+        severity: "error",
+      })
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -690,6 +808,17 @@ export default function Profile() {
                       >
                         Logout
                       </LogoutButton>
+                      <DeleteAccountButton
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={isDeleting}
+                        sx={{
+                          height: "32px",
+                          fontSize: "0.9rem",
+                          mt: 1,
+                        }}
+                      >
+                        Delete Account
+                      </DeleteAccountButton>
                     </Box>
                   </Box>
                 </Box>
@@ -1142,6 +1271,30 @@ export default function Profile() {
           {notification.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+      >
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete your account? This action cannot be undone.
+            All your study sets and data will be permanently deleted.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteAccount}
+            color="error"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Delete Account"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }
