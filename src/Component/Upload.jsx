@@ -35,10 +35,12 @@ const Upload = () => {
   const [templateType, setTemplateType] = useState("")
   const [templateContent, setTemplateContent] = useState("")
   const [templateName, setTemplateName] = useState("")
+
   const [membersOnly, setMembersOnly] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
   const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
   const [communityMembers, setCommunityMembers] = useState([])
+
 
   // Add this function to get the base URL
   const getBaseUrl = () => {

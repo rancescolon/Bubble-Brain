@@ -15,24 +15,26 @@ import {
   Box,
   Avatar,
   CircularProgress,
+
   Grid,
   Snackbar,
   Stack,
   Tooltip,
   useMediaQuery,
   useTheme,
+
 } from "@mui/material"
-import { motion } from "framer-motion"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
 import fish3 from "../assets/fish3.png"
 import logo from "../assets/Frame.png"
 import DrBubbles from "./DrBubbles"
+
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
 import { BackgroundContext } from "../App"
 
+
 // Fallback mock users in case API fails
-//The code for Homepage.jsx was created with the help of ChatGPT
 const MOCK_USERS = [
   {
     id: "mock1",
@@ -73,10 +75,11 @@ const HomePage = () => {
   const [showGuide, setShowGuide] = useState(true)
   const [latestCommunities, setLatestCommunities] = useState([])
   const [latestCourses, setLatestCourses] = useState([])
-  const [activeUsers, setActiveUsers] = useState([])
+  const [activeUsers, setActiveUsers] = useState([]) // Start with empty array
   const [loadingCommunities, setLoadingCommunities] = useState(true)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
+
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
   const [recentStudySets, setRecentStudySets] = useState([])
@@ -91,66 +94,11 @@ const HomePage = () => {
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
 
+
   // Refs for carousel scrolling
   const communitiesRef = useRef(null)
   const coursesRef = useRef(null)
   const usersRef = useRef(null)
-  const leaderboardRef = useRef(null)
-
-  // Ref for tracking navbar width changes
-  const drawerRef = useRef(null)
-
-  // Update help bubble position when drawer state changes or on screen size change
-  useEffect(() => {
-    // Adjust these values to position the bubble correctly based on screen size
-    const xPos = isMobile ? 55 : isDrawerCompact ? 55 : 30
-    const yPos = isMobile ? -70 : 0
-    
-    setHelpBubblePosition({
-      x: xPos,
-      y: yPos,
-    })
-  }, [isDrawerCompact, isMobile, isTablet])
-
-  // Update the scroll amount based on screen size
-  const getScrollAmount = () => {
-    if (isMobile) return 200
-    if (isTablet) return 250
-    return 300
-  }
-
-  // Function to scroll carousels horizontally
-  const scrollCarousel = (ref, direction) => {
-    if (ref.current) {
-      const scrollAmount = direction === "left" ? -getScrollAmount() : getScrollAmount()
-      ref.current.scrollBy({ left: scrollAmount, behavior: "smooth" })
-    }
-  }
-
-  // Get vertical scroll amount based on screen size
-  const getVerticalScrollAmount = () => {
-    if (isMobile) return 150
-    if (isTablet) return 175
-    return 200
-  }
-
-  // Function to scroll carousels vertically
-  const scrollVerticalCarousel = (ref, direction) => {
-    if (ref.current) {
-      const scrollAmount = direction === "up" ? -getVerticalScrollAmount() : getVerticalScrollAmount()
-      ref.current.scrollBy({ top: scrollAmount, behavior: "smooth" })
-    }
-  }
-
-  // Helper function to truncate text based on screen size
-  const truncateText = (text, maxLength) => {
-    if (!text) return '';
-    // If no specific maxLength provided, use responsive default
-    if (maxLength === undefined) {
-      maxLength = isMobile ? 8 : isTablet ? 12 : 15;
-    }
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-  };
 
   useEffect(() => {
     const token = sessionStorage.getItem("token")
@@ -161,12 +109,10 @@ const HomePage = () => {
       fetchLatestCommunities()
       fetchLatestCourses()
       fetchActiveUsers() // Fetch real users
-      fetchUserStats() // Fetch user statistics
     } else {
       // If no token, use mock data
       setActiveUsers(MOCK_USERS)
       setLoadingUsers(false)
-      setLoadingUserStats(false)
     }
   }, [])
 
@@ -598,6 +544,7 @@ const HomePage = () => {
     setIsLoggedIn(false)
   }
 
+
   const handleCommunityClick = (communityId) => {
     navigate(`/community/view/${communityId}`)
   }
@@ -608,10 +555,6 @@ const HomePage = () => {
 
   const handleUserClick = (userId) => {
     navigate(`/profile/${userId}`)
-  }
-
-  const handleStudySetClick = (studySetId) => {
-    navigate(`/study-sets/${studySetId}`)
   }
 
   // Track render attempts for debugging
@@ -640,6 +583,7 @@ const HomePage = () => {
       clearInterval(intervalId)
     }
   }, [])
+
 
   // Add this helper function to format the study time
   const formatTime = (seconds) => {
@@ -1323,6 +1267,7 @@ const HomePage = () => {
               <Typography
                 variant="h6"
                 component="div"
+
                 sx={{
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 800,
@@ -1330,6 +1275,7 @@ const HomePage = () => {
                   color: "#F4FDFF",
                 }}
               >
+
                 Bubble Brain
               </Typography>
             </Box>
@@ -1513,14 +1459,17 @@ const HomePage = () => {
               align="center"
               color="#1D1D20"
               gutterBottom
+
               sx={{
                 fontFamily: "SourGummy, sans-serif",
+
                 fontWeight: 800,
                 fontSize: { xs: "28px", sm: "42px", md: "52px" },
               }}
             >
               Dive into Learning
             </Typography>
+
             <Typography
               variant="h5"
               align="center"
@@ -1528,12 +1477,15 @@ const HomePage = () => {
               paragraph
               sx={{
                 fontFamily: "SourGummy, sans-serif",
+
                 fontWeight: 600,
                 fontSize: { xs: "14px", sm: "22px", md: "26px" },
+
               }}
             >
               Explore our gamified courses and quizzes designed to make learning fun and engaging.
             </Typography>
+
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
               <Button
                 variant="contained"
@@ -1557,12 +1509,14 @@ const HomePage = () => {
               >
                 Get Started
               </Button>
+
             </Box>
           </Box>
 
           {/* Latest Communities Carousel */}
           <Box
             sx={{
+
               mt: 6,
               mb: 6,
               bgcolor: "#FFFFFF",
@@ -1583,6 +1537,7 @@ const HomePage = () => {
                 ml: 0,
                 mr: 0,
               }
+
             }}
           >
             <Box sx={{ 
@@ -1620,6 +1575,7 @@ const HomePage = () => {
                 <Button
                   onClick={() => scrollCarousel(communitiesRef, "left")}
                   sx={{
+
                     minWidth: { xs: "32px", md: "40px" },
                     height: { xs: "32px", md: "40px" },
                     borderRadius: "50%",
@@ -1627,8 +1583,10 @@ const HomePage = () => {
                     color: "white",
                     "&:hover": { bgcolor: "#e66a59" },
                     p: { xs: 0.5, md: 1 },
+
                   }}
                 >
+
                   <ChevronLeft size={isMobile ? 16 : 24} />
                 </Button>
                 <Button
@@ -1641,11 +1599,13 @@ const HomePage = () => {
                     color: "white",
                     "&:hover": { bgcolor: "#e66a59" },
                     p: { xs: 0.5, md: 1 },
+
                   }}
                 >
                   <ChevronRight size={isMobile ? 16 : 24} />
                 </Button>
               </Box>
+
             </Box>
 
             <Box
@@ -2434,8 +2394,10 @@ const HomePage = () => {
                     color: "white",
                     "&:hover": { bgcolor: "#e66a59" },
                     p: { xs: 0.5, md: 1 },
+
                   }}
                 >
+
                   <ChevronLeft size={isMobile ? 16 : 24} />
                 </Button>
                 <Button
@@ -2598,6 +2560,7 @@ const HomePage = () => {
                 </Box>
               )}
             </Box>
+
           </Box>
         </Container>
       </Box>
