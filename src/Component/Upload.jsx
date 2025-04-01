@@ -2,12 +2,24 @@
 
 import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
-import { Box, Typography, Button, Card, CardContent, Container, TextField, Alert, Snackbar, Select, MenuItem, FormControl, InputLabel, IconButton, Grid, Dialog } from "@mui/material"
-import { Upload as UploadIcon, Share2, BookOpen, Plus, Trash2, X, CheckCircle2 } from "lucide-react"
+import { Box, Typography, Button, Card, CardContent, Container, TextField, Alert, Snackbar, Select, MenuItem, FormControl, InputLabel, IconButton, Grid, Dialog, FormControlLabel, Switch, Chip, OutlinedInput, Checkbox, ListItemText } from "@mui/material"
+import { Upload as UploadIcon, Share2, BookOpen, Plus, Trash2, X, CheckCircle2, Lock, Unlock, Users } from "lucide-react"
 import { BackgroundContext } from "../App"
 import TemplateManager from "./TemplateManager"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+
+// Style for the multiselect dropdown
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 const Upload = () => {
   const { currentBackground } = useContext(BackgroundContext);
@@ -23,6 +35,10 @@ const Upload = () => {
   const [templateType, setTemplateType] = useState("")
   const [templateContent, setTemplateContent] = useState("")
   const [templateName, setTemplateName] = useState("")
+  const [membersOnly, setMembersOnly] = useState(false)
+  const [selectedMembers, setSelectedMembers] = useState([])
+  const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
+  const [communityMembers, setCommunityMembers] = useState([])
 
   // Add this function to get the base URL
   const getBaseUrl = () => {
@@ -76,6 +92,82 @@ const Upload = () => {
     fetchCommunities()
   }, [])
 
+  // Fetch community members when a community is selected
+  useEffect(() => {
+    if (selectedCommunity) {
+      fetchCommunityMembers(selectedCommunity);
+    } else {
+      setCommunityMembers([]);
+    }
+  }, [selectedCommunity]);
+
+  const fetchCommunityMembers = async (communityId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch(`${API_BASE_URL}/group-members?groupID=${communityId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch community members");
+      }
+      
+      const data = await response.json();
+      
+      if (data && data[0] && data[0].length > 0) {
+        // Fetch user details for each member
+        const membersWithDetails = await Promise.all(
+          data[0].map(async (member) => {
+            try {
+              const userResponse = await fetch(`${API_BASE_URL}/users/${member.userID}`, {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (!userResponse.ok) {
+                return {
+                  id: member.id,
+                  userID: member.userID,
+                  email: "Unknown User",
+                  isAdmin: false,
+                };
+              }
+
+              const userData = await userResponse.json();
+              return {
+                id: member.id,
+                userID: member.userID,
+                email: userData.email,
+                isAdmin: false, // We don't have owner info here
+              };
+            } catch (error) {
+              console.error("Error fetching user details:", error);
+              return {
+                id: member.id,
+                userID: member.userID,
+                email: "Unknown User",
+                isAdmin: false,
+              };
+            }
+          })
+        );
+        setCommunityMembers(membersWithDetails);
+      } else {
+        setCommunityMembers([]);
+      }
+    } catch (err) {
+      console.error("Error fetching community members:", err);
+      setCommunityMembers([]);
+    }
+  };
+
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template)
     setTemplateType(template.type)
@@ -110,19 +202,28 @@ const Upload = () => {
         name: studySetName,
         type: selectedTemplate.type || "flashcards",
         content: selectedTemplate.content || [],
-        communityId: communityIdString
+        communityId: communityIdString,
+        membersOnly: membersOnly,
+        accessType: accessType,
+        selectedMembers: accessType === "specificMembers" ? selectedMembers : []
       }),
       type: "study_set",
       authorID: parseInt(userId),
       attributes: {
         description: "Study set created by Anonymous",
-        communityId: communityIdString
+        communityId: communityIdString,
+        membersOnly: membersOnly,
+        accessType: accessType,
+        selectedMembers: accessType === "specificMembers" ? selectedMembers : []
       }
     }
 
     console.log("Sending post data:", postData)
     console.log("Creating study set for community ID:", communityIdString)
     console.log("JSON content:", postData.content)
+    console.log("Members only:", membersOnly)
+    console.log("Access type:", accessType)
+    console.log("Selected members:", selectedMembers)
 
     try {
       const response = await fetch(`${API_BASE_URL}/posts`, {
@@ -162,7 +263,10 @@ const Upload = () => {
           body: JSON.stringify({
             attributes: {
               ...result.attributes,
-              communityId: communityIdString
+              communityId: communityIdString,
+              membersOnly: membersOnly,
+              accessType: accessType,
+              selectedMembers: accessType === "specificMembers" ? selectedMembers : []
             }
           }),
         })
@@ -200,6 +304,11 @@ const Upload = () => {
         throw new Error("Please enter a name for your study set")
       }
 
+      // Check if specific members option is selected but no members chosen
+      if (accessType === "specificMembers" && selectedMembers.length === 0) {
+        throw new Error("Please select at least one member who can access this study set")
+      }
+
       // Create a post with the template content
       console.log("Creating study set...")
       const result = await createPost()
@@ -210,6 +319,9 @@ const Upload = () => {
       setStudySetName("")
       setSelectedCommunity("")
       setSelectedTemplate(null)
+      setMembersOnly(false)
+      setSelectedMembers([])
+      setAccessType("everyone")
       
       // Show a more detailed success message
       setTimeout(() => {
@@ -401,10 +513,198 @@ const Upload = () => {
               </Box>
             )}
 
+            <Typography
+              variant="h6"
+              sx={{
+                fontFamily: "SourGummy, sans-serif",
+                mb: 2,
+                mt: 1,
+                maxWidth: "600px",
+                width: "100%",
+                color: "#1D1D20",
+              }}
+            >
+              Access Control
+            </Typography>
+
+            <FormControl component="fieldset" sx={{ maxWidth: "600px", width: "100%" }}>
+              <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
+                Who can view this study set?
+              </Typography>
+              <Grid container direction="column" spacing={1}>
+                <Grid item>
+                  <FormControlLabel
+                    value="everyone"
+                    control={
+                      <Switch
+                        checked={accessType === "everyone"}
+                        onChange={() => {
+                          setAccessType("everyone")
+                          setMembersOnly(false)
+                          setSelectedMembers([])
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Unlock size={16} />
+                        <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
+                          Everyone - Study set visible to all users
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ 
+                      "& .MuiFormControlLabel-label": {
+                        fontFamily: "SourGummy, sans-serif",
+                      },
+                    }}
+                  />
+                </Grid>
+
+                <Grid item>
+                  <FormControlLabel
+                    value="allMembers"
+                    control={
+                      <Switch
+                        checked={accessType === "allMembers"}
+                        onChange={() => {
+                          setAccessType("allMembers")
+                          setMembersOnly(true)
+                          setSelectedMembers([])
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Lock size={16} />
+                        <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
+                          Community Members Only - Only visible to anyone who joined the community
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ 
+                      "& .MuiFormControlLabel-label": {
+                        fontFamily: "SourGummy, sans-serif",
+                      },
+                    }}
+                  />
+                </Grid>
+
+                <Grid item>
+                  <FormControlLabel
+                    value="specificMembers"
+                    control={
+                      <Switch
+                        checked={accessType === "specificMembers"}
+                        onChange={() => {
+                          setAccessType("specificMembers")
+                          setMembersOnly(true)
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Users size={16} />
+                        <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
+                          Specific Members - Choose exactly who can see this study set
+                        </Typography>
+                      </Box>
+                    }
+                    sx={{ 
+                      "& .MuiFormControlLabel-label": {
+                        fontFamily: "SourGummy, sans-serif",
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </FormControl>
+
+            {/* Show member selection when specific members option is chosen */}
+            {accessType === "specificMembers" && selectedCommunity && (
+              <FormControl fullWidth sx={{ maxWidth: "600px", mt: 2 }}>
+                <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                  Select Members
+                </InputLabel>
+                <Select
+                  labelId="member-selection-label"
+                  id="member-selection"
+                  multiple
+                  value={selectedMembers}
+                  onChange={(e) => {
+                    console.log("Selected members:", e.target.value);
+                    setSelectedMembers(e.target.value);
+                  }}
+                  input={<OutlinedInput label="Select Members" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => {
+                        const member = communityMembers.find(m => m.userID === value || m.id === value);
+                        return (
+                          <Chip 
+                            key={value} 
+                            label={member ? member.email : `Member ${value}`} 
+                            sx={{ fontFamily: "SourGummy, sans-serif" }} 
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 224,
+                        width: 250,
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: "bottom",
+                      horizontal: "left"
+                    }
+                  }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      fontFamily: "SourGummy, sans-serif",
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontFamily: "SourGummy, sans-serif",
+                    },
+                  }}
+                >
+                  {communityMembers.length > 0 ? (
+                    communityMembers.map((member) => (
+                      <MenuItem key={member.userID || member.id} value={member.userID || member.id}>
+                        <Checkbox checked={selectedMembers.includes(member.userID) || selectedMembers.includes(member.id)} />
+                        <ListItemText 
+                          primary={
+                            <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
+                              {member.email} {member.isAdmin ? " (Admin)" : ""}
+                            </Typography>
+                          } 
+                        />
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>
+                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
+                        No members found in this community
+                      </Typography>
+                    </MenuItem>
+                  )}
+                </Select>
+                <Typography variant="caption" sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", color: "#1D1D20", display: 'block' }}>
+                  Only selected members will be able to view this study set
+                </Typography>
+              </FormControl>
+            )}
+
             <Button
               variant="contained"
               onClick={handleUpload}
-              disabled={!studySetName || !selectedCommunity || !selectedTemplate || uploading}
+              disabled={!studySetName || !selectedCommunity || !selectedTemplate || uploading || (accessType === "specificMembers" && selectedMembers.length === 0)}
               sx={{
                 bgcolor: "#EF7B6C",
                 "&:hover": {
@@ -415,6 +715,8 @@ const Upload = () => {
                 fontSize: "18px",
                 px: 4,
                 py: 1,
+                maxWidth: "600px",
+                width: "100%",
               }}
             >
               {uploading ? "Posting..." : `Post "${studySetName}" to ${communities.find(c => c.id === selectedCommunity)?.name || 'community'}`}
