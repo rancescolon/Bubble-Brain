@@ -105,6 +105,12 @@ export default function Profile() {
     error: null,
   })
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" })
+  const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
+  const [hasShownStreakPopup, setHasShownStreakPopup] = useState(() => {
+    const lastShown = sessionStorage.getItem("lastStreakPopupDate")
+    const today = new Date().toISOString().split("T")[0] // "YYYY-MM-DD"
+    return lastShown === today
+  })
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
   const [userData, setUserData] = useState({
@@ -351,9 +357,102 @@ export default function Profile() {
 
       console.log("Final processed stats:", { totalTime, recentSets })
 
+      // Step 1: Normalize dates to YYYY-MM-DD (remove time) and use Set to avoid duplicates
+      const normalizeDate = (isoString) => {
+        const date = new Date(isoString)
+        date.setHours(0, 0, 0, 0)
+        return date.getTime()
+      }
+
+      const uniqueStudyDates = new Set(
+        studyTimeLogs
+          .map((log) => {
+            try {
+              const content = JSON.parse(log.content || "{}")
+              return content.timestamp || log.createdAt
+            } catch {
+              return log.createdAt
+            }
+          })
+          .filter(Boolean)
+          .map(normalizeDate)
+      )
+
+      // Step 2: Sort dates from newest to oldest
+      const sortedDates = Array.from(uniqueStudyDates).sort((a, b) => b - a)
+
+      // Step 3: Calculate current streak
+      let streak = 0
+      let current = new Date()
+      current.setHours(0, 0, 0, 0)
+
+      for (let i = 0; i < sortedDates.length; i++) {
+        const diffDays = (current.getTime() - sortedDates[i]) / (1000 * 60 * 60 * 24)
+      
+        if (diffDays === 0 || diffDays === 1) {
+          streak++
+          current.setDate(current.getDate() - 1)
+        } else if (diffDays > 1) {
+          break
+        }
+      }
+
+
+      // 🧪 Dev mode: 3-minute streak window
+      //let streak = 0
+      //let current = new Date()
+      //    
+      //// Normalize to nearest 5-minute block
+      //current.setSeconds(0, 0)
+      //const roundTo5Min = (date) => {
+      //  const d = new Date(date)
+      //  const ms = 1000 * 60 * 3
+      //  return Math.floor(d.getTime() / ms) * ms
+      //}
+      //
+      //const uniqueStudyBlocks = new Set(
+      //  studyTimeLogs
+      //    .map((log) => {
+      //      try {
+      //        const content = JSON.parse(log.content || "{}")
+      //        return content.timestamp || log.createdAt
+      //      } catch {
+      //        return log.createdAt
+      //      }
+      //    })
+      //    .filter(Boolean)
+      //    .map(roundTo5Min)
+      //)
+      //
+      //const sortedBlocks = Array.from(uniqueStudyBlocks).sort((a, b) => b - a)
+      //
+      //// Go back in 5-minute intervals
+      //const interval = 1000 * 60 * 3
+      //
+      //let currentBlock = roundTo5Min(current)
+      //
+      //for (let i = 0; i < sortedBlocks.length; i++) {
+      //  if (uniqueStudyBlocks.has(currentBlock)) {
+      //    streak++
+      //    currentBlock -= interval
+      //  } else {
+      //    break
+      //  }
+      //}
+      if (streak > 0 && !hasShownStreakPopup) {
+        const today = new Date().toISOString().split("T")[0]
+        setStreakPopup({
+          open: true,
+          message: `🔥 You’re on a ${streak}-day streak! Keep going!`,
+        })
+        setHasShownStreakPopup(true)
+        sessionStorage.setItem("lastStreakPopupDate", today)
+      }
+          
       setStudyStats({
         totalTime,
         recentSets,
+        streak, // ✅ new
         loading: false,
         error: null,
       })
@@ -926,7 +1025,26 @@ export default function Profile() {
                   Current Streak
                 </Typography>
                 <Box sx={{ textAlign: "center", py: 0.5 }}>
-                  <Typography sx={{ color: "#6B7280" }}>No streak tracked yet</Typography>
+                <Typography
+                    sx={{
+                      fontSize: { xs: "1.75rem", sm: "2rem" },
+                      fontWeight: "bold",
+                      color: "#1D6EF1",
+                    }}
+                  >
+                    {studyStats.streak ?? 0} day{studyStats.streak === 1 ? "" : "s"}
+                    {studyStats.streak >= 5 && "🔥".repeat(Math.floor(studyStats.streak / 5))}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                      color: "#4B5563",
+                      mt: 0.5,
+                    }}
+                  >
+                    Keep it up!
+                  </Typography>
+
                 </Box>
               </CardContent>
             </Card>
@@ -1270,6 +1388,21 @@ export default function Profile() {
           variant="filled"
         >
           {notification.message}
+        </Alert>
+      </Snackbar>
+            <Snackbar
+        open={streakPopup.open}
+        autoHideDuration={5000}
+        onClose={() => setStreakPopup({ ...streakPopup, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setStreakPopup({ ...streakPopup, open: false })}
+          severity="success"
+          variant="filled"
+          sx={{ fontWeight: 600 }}
+        >
+          {streakPopup.message}
         </Alert>
       </Snackbar>
 
