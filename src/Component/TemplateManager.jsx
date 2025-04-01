@@ -1344,4 +1344,3 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
 }
 
 export default TemplateManager
-

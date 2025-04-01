@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, UserMinus, Ban, MessageCircle } from "lucide-react"
-import background from "../assets/image3.png"
-import { socket } from "../App" // Import the shared socket instance
+import { socket, BackgroundContext } from "../App" // Import BackgroundContext along with socket
 
 const Friends = () => {
+  const { currentBackground } = useContext(BackgroundContext);
   const [connections, setConnections] = useState([])
   const [blockedUsers, setBlockedUsers] = useState([])
   const [pendingRequests, setPendingRequests] = useState([])
@@ -577,7 +577,7 @@ const Friends = () => {
     <div
       className="min-h-screen bg-[#1D1D20] text-white"
       style={{
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -878,4 +878,3 @@ const Friends = () => {
 }
 
 export default Friends
-

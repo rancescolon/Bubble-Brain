@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Box,
@@ -15,10 +15,15 @@ import {
   Stack,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { LogOut, Save, Upload, Users } from "lucide-react"
-import background from "../assets/image3.png"
+import { BackgroundContext } from "../App"
 
 // Custom styled components following style guide
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -70,9 +75,19 @@ const LogoutButton = styled(Button)({
   },
 })
 
+const DeleteAccountButton = styled(Button)({
+  backgroundColor: "#991B1B",
+  color: "white",
+  marginTop: "1rem",
+  "&:hover": {
+    backgroundColor: "#7F1D1D",
+  },
+})
+
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function Profile() {
+  const { currentBackground } = useContext(BackgroundContext);
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
   // eslint-disable-next-line no-unused-vars
@@ -90,6 +105,12 @@ export default function Profile() {
     error: null,
   })
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" })
+  const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
+  const [hasShownStreakPopup, setHasShownStreakPopup] = useState(() => {
+    const lastShown = sessionStorage.getItem("lastStreakPopupDate")
+    const today = new Date().toISOString().split("T")[0] // "YYYY-MM-DD"
+    return lastShown === today
+  })
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
   const [userData, setUserData] = useState({
@@ -100,6 +121,8 @@ export default function Profile() {
   })
   // eslint-disable-next-line no-unused-vars
   const [newUsername, setNewUsername] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -334,9 +357,102 @@ export default function Profile() {
 
       console.log("Final processed stats:", { totalTime, recentSets })
 
+      // Step 1: Normalize dates to YYYY-MM-DD (remove time) and use Set to avoid duplicates
+      const normalizeDate = (isoString) => {
+        const date = new Date(isoString)
+        date.setHours(0, 0, 0, 0)
+        return date.getTime()
+      }
+
+      const uniqueStudyDates = new Set(
+        studyTimeLogs
+          .map((log) => {
+            try {
+              const content = JSON.parse(log.content || "{}")
+              return content.timestamp || log.createdAt
+            } catch {
+              return log.createdAt
+            }
+          })
+          .filter(Boolean)
+          .map(normalizeDate)
+      )
+
+      // Step 2: Sort dates from newest to oldest
+      const sortedDates = Array.from(uniqueStudyDates).sort((a, b) => b - a)
+
+      // Step 3: Calculate current streak
+      let streak = 0
+      let current = new Date()
+      current.setHours(0, 0, 0, 0)
+
+      for (let i = 0; i < sortedDates.length; i++) {
+        const diffDays = (current.getTime() - sortedDates[i]) / (1000 * 60 * 60 * 24)
+      
+        if (diffDays === 0 || diffDays === 1) {
+          streak++
+          current.setDate(current.getDate() - 1)
+        } else if (diffDays > 1) {
+          break
+        }
+      }
+
+
+      // 🧪 Dev mode: 3-minute streak window
+      //let streak = 0
+      //let current = new Date()
+      //    
+      //// Normalize to nearest 5-minute block
+      //current.setSeconds(0, 0)
+      //const roundTo5Min = (date) => {
+      //  const d = new Date(date)
+      //  const ms = 1000 * 60 * 3
+      //  return Math.floor(d.getTime() / ms) * ms
+      //}
+      //
+      //const uniqueStudyBlocks = new Set(
+      //  studyTimeLogs
+      //    .map((log) => {
+      //      try {
+      //        const content = JSON.parse(log.content || "{}")
+      //        return content.timestamp || log.createdAt
+      //      } catch {
+      //        return log.createdAt
+      //      }
+      //    })
+      //    .filter(Boolean)
+      //    .map(roundTo5Min)
+      //)
+      //
+      //const sortedBlocks = Array.from(uniqueStudyBlocks).sort((a, b) => b - a)
+      //
+      //// Go back in 5-minute intervals
+      //const interval = 1000 * 60 * 3
+      //
+      //let currentBlock = roundTo5Min(current)
+      //
+      //for (let i = 0; i < sortedBlocks.length; i++) {
+      //  if (uniqueStudyBlocks.has(currentBlock)) {
+      //    streak++
+      //    currentBlock -= interval
+      //  } else {
+      //    break
+      //  }
+      //}
+      if (streak > 0 && !hasShownStreakPopup) {
+        const today = new Date().toISOString().split("T")[0]
+        setStreakPopup({
+          open: true,
+          message: `🔥 You’re on a ${streak}-day streak! Keep going!`,
+        })
+        setHasShownStreakPopup(true)
+        sessionStorage.setItem("lastStreakPopupDate", today)
+      }
+          
       setStudyStats({
         totalTime,
         recentSets,
+        streak, // ✅ new
         loading: false,
         error: null,
       })
@@ -499,6 +615,108 @@ export default function Profile() {
     }
   }
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true)
+      const userStr = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userStr || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      // Parse the user ID correctly
+      let userId
+      try {
+        const parsed = JSON.parse(userStr)
+        if (typeof parsed === "object" && parsed !== null && parsed.id) {
+          userId = parsed.id
+        } else if (typeof parsed === "number" || !isNaN(Number(parsed))) {
+          userId = Number(parsed)
+        } else {
+          throw new Error("Invalid user data format")
+        }
+      } catch (e) {
+        if (!isNaN(Number(userStr))) {
+          userId = Number(userStr)
+        } else {
+          throw new Error("Invalid user data format")
+        }
+      }
+
+      console.log("Attempting to delete user with ID:", userId)
+
+      // First, delete all user's study sets
+      const postsResponse = await fetch(`${API_BASE_URL}/posts?authorID=${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (postsResponse.ok) {
+        const posts = await postsResponse.json()
+        console.log("Found posts to delete:", posts)
+        // Delete each study set
+        for (const post of posts) {
+          if (post.id) { // Only delete if post has an ID
+            const deletePostResponse = await fetch(`${API_BASE_URL}/posts/${post.id}`, {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            })
+            if (!deletePostResponse.ok) {
+              console.warn(`Failed to delete post ${post.id}:`, await deletePostResponse.text())
+            }
+          }
+        }
+      }
+
+      // Delete the user account
+      console.log("Attempting to delete user account...")
+      const deleteResponse = await fetch(`${API_BASE_URL}/users/${userId}?relatedObjectsAction=delete`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      })
+
+      if (!deleteResponse.ok) {
+        const errorText = await deleteResponse.text()
+        console.error("Delete user response error:", errorText)
+        throw new Error(`Failed to delete account: ${errorText}`)
+      }
+
+      // Clear all session storage and local storage
+      sessionStorage.clear()
+      localStorage.clear()
+      
+      // Show success message
+      setNotification({
+        open: true,
+        message: "Account successfully deleted",
+        severity: "success",
+      })
+
+      // Force a page reload to clear all state
+      window.location.href = "/register"
+
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      setNotification({
+        open: true,
+        message: error.message || "Failed to delete account. Please try again.",
+        severity: "error",
+      })
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   return (
     <Box
       sx={{
@@ -507,7 +725,7 @@ export default function Profile() {
         maxWidth: "100vw",
         overflowX: "hidden",
         bgcolor: "#1b1b1b",
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         py: 3,
@@ -690,6 +908,17 @@ export default function Profile() {
                       >
                         Logout
                       </LogoutButton>
+                      <DeleteAccountButton
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={isDeleting}
+                        sx={{
+                          height: "32px",
+                          fontSize: "0.9rem",
+                          mt: 1,
+                        }}
+                      >
+                        Delete Account
+                      </DeleteAccountButton>
                     </Box>
                   </Box>
                 </Box>
@@ -796,7 +1025,26 @@ export default function Profile() {
                   Current Streak
                 </Typography>
                 <Box sx={{ textAlign: "center", py: 0.5 }}>
-                  <Typography sx={{ color: "#6B7280" }}>No streak tracked yet</Typography>
+                <Typography
+                    sx={{
+                      fontSize: { xs: "1.75rem", sm: "2rem" },
+                      fontWeight: "bold",
+                      color: "#1D6EF1",
+                    }}
+                  >
+                    {studyStats.streak ?? 0} day{studyStats.streak === 1 ? "" : "s"}
+                    {studyStats.streak >= 5 && "🔥".repeat(Math.floor(studyStats.streak / 5))}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                      color: "#4B5563",
+                      mt: 0.5,
+                    }}
+                  >
+                    Keep it up!
+                  </Typography>
+
                 </Box>
               </CardContent>
             </Card>
@@ -1142,7 +1390,45 @@ export default function Profile() {
           {notification.message}
         </Alert>
       </Snackbar>
+            <Snackbar
+        open={streakPopup.open}
+        autoHideDuration={5000}
+        onClose={() => setStreakPopup({ ...streakPopup, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setStreakPopup({ ...streakPopup, open: false })}
+          severity="success"
+          variant="filled"
+          sx={{ fontWeight: 600 }}
+        >
+          {streakPopup.message}
+        </Alert>
+      </Snackbar>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+      >
+        <DialogTitle>Delete Account</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete your account? This action cannot be undone.
+            All your study sets and data will be permanently deleted.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          <Button
+            onClick={handleDeleteAccount}
+            color="error"
+            disabled={isDeleting}
+          >
+            {isDeleting ? "Deleting..." : "Delete Account"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
-}
-
+}                     
