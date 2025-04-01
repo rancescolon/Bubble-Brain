@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import {
   Box,
@@ -23,7 +23,7 @@ import {
   IconButton,
 } from "@mui/material"
 import { ArrowLeft, Edit2, Trash2, RotateCcw } from "lucide-react"
-import background from "../assets/image3.png"
+import { BackgroundContext } from "../App"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
@@ -31,6 +31,7 @@ const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 const getLocalStorageKey = (studySetId) => `study_set_comments_${studySetId}`
 
 const StudySetView = () => {
+  const { currentBackground } = useContext(BackgroundContext);
   const { communityId, studySetId } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -63,13 +64,19 @@ const StudySetView = () => {
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
 
   const backgroundStyle = {
-    backgroundImage: `url(${background})`,
+    backgroundImage: `url(${currentBackground.image})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
     minHeight: "100vh",
     width: "100%",
     maxWidth: "100vw",
     overflowX: "hidden",
+    position: "relative",
+    '@media (max-width: 768px)': {
+      backgroundAttachment: "scroll",
+    }
   }
 
   const fontStyle = {

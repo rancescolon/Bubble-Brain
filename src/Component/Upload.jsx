@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Box, Typography, Button, Card, CardContent, Container, TextField, Alert, Snackbar, Select, MenuItem, FormControl, InputLabel, IconButton, Grid, Dialog } from "@mui/material"
 import { Upload as UploadIcon, Share2, BookOpen, Plus, Trash2, X, CheckCircle2 } from "lucide-react"
-import background from "../assets/image3.png"
+import { BackgroundContext } from "../App"
 import TemplateManager from "./TemplateManager"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 const Upload = () => {
+  const { currentBackground } = useContext(BackgroundContext);
   const navigate = useNavigate()
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
@@ -243,7 +244,7 @@ const Upload = () => {
         flexGrow: 1,
         bgcolor: "#1D1D20",
         minHeight: "100vh",
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -460,3 +461,4 @@ const Upload = () => {
 }
 
 export default Upload
+
