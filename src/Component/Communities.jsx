@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, createContext, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Search, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText } from "lucide-react"
+import { BackgroundContext } from "../App"
 
 // Create a context for navigation state
 const NavContext = createContext({
@@ -56,6 +57,7 @@ const TopBar = () => {
 }
 
 const Communities = () => {
+  const { currentBackground } = useContext(BackgroundContext);
   // Add this console log to verify the API path
   console.log("API Path:", process.env.REACT_APP_API_PATH)
 
@@ -84,10 +86,19 @@ const Communities = () => {
   const [communities, setCommunities] = useState([])
 
   const backgroundStyle = {
-    backgroundImage: `url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image3-M7gmQibPxwx9MBXzWTzonaopMrRC3Q.png')`,
+    backgroundImage: `url(${currentBackground.image})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
     minHeight: "100vh",
+    width: "100%",
+    maxWidth: "100vw",
+    overflowX: "hidden",
+    position: "relative",
+    '@media (max-width: 768px)': {
+      backgroundAttachment: "scroll",
+    }
   }
 
   const toggleNav = () => {

@@ -1,8 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, createContext, useContext } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
+import { IconButton, Tooltip, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Grid } from "@mui/material"
+import { Image } from "lucide-react"
+import { styled } from "@mui/material/styles"
 import HomePage from "./Component/HomePage"
 import Navbar from "./Component/Navbar"
 import Friends from "./Component/Friends"
@@ -30,6 +33,116 @@ import Upload from "./Component/Upload"
 import StudySetView from "./Component/StudySetView"
 import socketService from './services/socketService'
 // import SideBar from "./Component/StyleGuide/SideBar"
+
+// Import default background and other backgrounds you want to use
+import defaultBackground from "./assets/image3.png" // Your existing background
+// Import your additional backgrounds - make sure to create these files
+import background1 from "./assets/fish1.png" // Create this file
+import background2 from "./assets/fish1.png" // Create this file
+import background3 from "./assets/fish2.png" // Create this file
+import background4 from "./assets/fish3.png" // Create this file
+
+// Create Background Context
+export const BackgroundContext = createContext();
+
+// Styled component for background thumbnails
+const BackgroundThumbnail = styled(Box)(({ selected }) => ({
+  width: '100%',
+  height: '60px',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  transition: 'transform 0.2s, box-shadow 0.2s',
+  border: selected ? '3px solid #1D6EF1' : '3px solid transparent',
+  '&:hover': {
+    transform: 'scale(1.05)',
+    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+  },
+}));
+
+// Background selector component - moved inside Router context
+function BackgroundSelector() {
+  const { backgroundOptions, currentBackground, changeBackground } = useContext(BackgroundContext);
+  const [showSelector, setShowSelector] = useState(false);
+
+  return (
+    <>
+      <Tooltip title="Change Background">
+        <IconButton
+          onClick={() => setShowSelector(true)}
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            bgcolor: 'rgba(255, 255, 255, 0.8)',
+            zIndex: 1000,
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.95)',
+            },
+            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          }}
+        >
+          <Image size={24} color="#1D6EF1" />
+        </IconButton>
+      </Tooltip>
+
+      <Dialog
+        open={showSelector}
+        onClose={() => setShowSelector(false)}
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center' }}>Choose Background</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            {backgroundOptions.map((bg) => (
+              <Grid item xs={6} key={bg.id}>
+                <BackgroundThumbnail
+                  selected={currentBackground.id === bg.id}
+                  onClick={() => {
+                    changeBackground(bg);
+                    setShowSelector(false);
+                  }}
+                  sx={{
+                    backgroundImage: `url(${bg.image})`,
+                  }}
+                />
+                <Typography align="center" variant="body2" sx={{ mt: 0.5 }}>
+                  {bg.name}
+                </Typography>
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setShowSelector(false)}
+            sx={{ color: '#1D6EF1', fontWeight: 'bold' }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+}
+
+// Safe conditional component that uses useLocation inside Router
+function ConditionalBackgroundSelector({ loggedIn }) {
+  const location = useLocation();
+  const hideBackgroundSelectorPaths = ["/login", "/register", "/style-guide"];
+  const showBackgroundSelector = loggedIn && !hideBackgroundSelectorPaths.includes(location.pathname);
+  
+  if (!showBackgroundSelector) return null;
+  
+  return <BackgroundSelector />;
+}
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
   path: "/hci/api/realtime-socket/socket.io",
@@ -229,7 +342,7 @@ const theme = createTheme({
   },
 })
 
-function App() {
+function AppContent({ backgroundOptions, currentBackground, changeBackground }) {
   const [loggedIn, setLoggedIn] = useState(false)
   const [openModal, setOpenModal] = useState(false)
   const [refreshPosts, setRefreshPosts] = useState(false)
@@ -280,120 +393,172 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router basename={process.env.PUBLIC_URL}>
-        <div className="App">
-          <header className="App-header">
-            <NavbarWrapper toggleModal={toggleModal} logout={logout} />
-            <div className="maincontent" id="mainContent">
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    loggedIn ? (
-                      <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
-                />
-                <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route
-                  path="/friends"
-                  element={
-                    <ProtectedRoute>
-                      <Friends />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/groups"
-                  element={
-                    <ProtectedRoute>
-                      <Groups />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/promise" element={<PromiseComponent />} />
-                <Route
-                  path="/messages/:roomID"
-                  element={
-                    <ProtectedRoute>
-                      <Messaging />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/community"
-                  element={
-                    <ProtectedRoute>
-                      <Communities />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route 
-                  path="/community/view/:id" 
-                  element={
-                    <ProtectedRoute>
-                      <CommunityView />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/community/:communityId/chat" 
-                  element={
-                    <ProtectedRoute>
-                      <CommunityMessaging />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/akibmahdi" element={<AboutMe />} />
-                <Route path="/rances" element={<AboutRances />} />
-                <Route path="/biviji" element={<AboutTariq />} />
-                <Route path="/aboutus" element={<AboutUs />} />
-                <Route path="/jacobmie" element={<AboutJacob />} />
-                <Route path="/caydenla" element={<AboutCayden />} />
-                <Route path="/style-guide" element={<StyleGuidePage />} />
-                <Route
-                  path="/upload"
-                  element={
-                    <ProtectedRoute>
-                      <Upload />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/community/:communityId/study-set/:studySetId"
-                  element={
-                    <ProtectedRoute>
-                      <StudySetView />
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </div>
-          </header>
+    <>
+      <div className="App">
+        <header className="App-header">
+          <NavbarWrapper toggleModal={toggleModal} logout={logout} />
+          <div className="maincontent" id="mainContent">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  loggedIn ? (
+                    <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+              <Route
+                path="/login"
+                element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
+              />
+              <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/friends"
+                element={
+                  <ProtectedRoute>
+                    <Friends />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <ProtectedRoute>
+                    <Groups />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/promise" element={<PromiseComponent />} />
+              <Route
+                path="/messages/:roomID"
+                element={
+                  <ProtectedRoute>
+                    <Messaging />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ProtectedRoute>
+                    <Communities />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/community/view/:id" 
+                element={
+                  <ProtectedRoute>
+                    <CommunityView />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/community/:communityId/chat" 
+                element={
+                  <ProtectedRoute>
+                    <CommunityMessaging />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/akibmahdi" element={<AboutMe />} />
+              <Route path="/rances" element={<AboutRances />} />
+              <Route path="/biviji" element={<AboutTariq />} />
+              <Route path="/aboutus" element={<AboutUs />} />
+              <Route path="/jacobmie" element={<AboutJacob />} />
+              <Route path="/caydenla" element={<AboutCayden />} />
+              <Route path="/style-guide" element={<StyleGuidePage />} />
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <Upload />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community/:communityId/study-set/:studySetId"
+                element={
+                  <ProtectedRoute>
+                    <StudySetView />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </div>
+        </header>
 
-          <Modal show={openModal} onClose={toggleModal}>
-            This is a modal dialog!
-          </Modal>
-        </div>
-      </Router>
-    </ThemeProvider>
+        <Modal show={openModal} onClose={toggleModal}>
+          This is a modal dialog!
+        </Modal>
+        
+        {/* Background Selector - Now safely inside Router context */}
+        <ConditionalBackgroundSelector loggedIn={loggedIn} />
+      </div>
+    </>
+  )
+}
+
+function App() {
+  // Background state
+  const [backgroundOptions] = useState([
+    { id: 'default', image: defaultBackground, name: 'Default' },
+    { id: 'bg1', image: background1, name: 'Blue Gradient' },
+    { id: 'bg2', image: background2, name: 'Purple Waves' },
+    { id: 'bg3', image: background3, name: 'Green Nature' },
+    { id: 'bg4', image: background4, name: 'Orange Sunset' },
+  ]);
+  
+  const [currentBackground, setCurrentBackground] = useState(() => {
+    // Initialize from localStorage if available
+    const savedBgId = localStorage.getItem('selectedBackground');
+    return backgroundOptions.find(bg => bg.id === savedBgId) || backgroundOptions[0];
+  });
+  
+  // Function to change background
+  const changeBackground = (backgroundOption) => {
+    setCurrentBackground(backgroundOption);
+    localStorage.setItem('selectedBackground', backgroundOption.id);
+  };
+
+  return (
+    <BackgroundContext.Provider value={{ backgroundOptions, currentBackground, changeBackground }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box
+          sx={{
+            minHeight: '100vh',
+            width: '100%',
+            maxWidth: '100vw',
+            overflowX: 'hidden',
+            backgroundImage: `url(${currentBackground.image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed',
+            transition: 'background-image 0.5s ease-in-out',
+          }}
+        >
+          <Router basename={process.env.PUBLIC_URL}>
+            <AppContent 
+              backgroundOptions={backgroundOptions}
+              currentBackground={currentBackground}
+              changeBackground={changeBackground}
+            />
+          </Router>
+        </Box>
+      </ThemeProvider>
+    </BackgroundContext.Provider>
   )
 }
 

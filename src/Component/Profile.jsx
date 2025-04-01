@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Box,
@@ -23,7 +23,7 @@ import {
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { LogOut, Save, Upload, Users } from "lucide-react"
-import background from "../assets/image3.png"
+import { BackgroundContext } from "../App"
 
 // Custom styled components following style guide
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -87,6 +87,7 @@ const DeleteAccountButton = styled(Button)({
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function Profile() {
+  const { currentBackground } = useContext(BackgroundContext);
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
   // eslint-disable-next-line no-unused-vars
@@ -625,7 +626,7 @@ export default function Profile() {
         maxWidth: "100vw",
         overflowX: "hidden",
         bgcolor: "#1b1b1b",
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         py: 3,
@@ -1297,4 +1298,4 @@ export default function Profile() {
       </Dialog>
     </Box>
   )
-}
+}                     

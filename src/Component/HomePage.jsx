@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useContext } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   AppBar,
@@ -25,9 +25,9 @@ import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
 import fish3 from "../assets/fish3.png"
 import logo from "../assets/Frame.png"
-import background from "../assets/image3.png"
 import DrBubbles from "./DrBubbles"
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
+import { BackgroundContext } from "../App"
 
 // Fallback mock users in case API fails
 //The code for Homepage.jsx was created with the help of ChatGPT
@@ -65,6 +65,7 @@ const MOCK_USERS = [
 ]
 
 const HomePage = () => {
+  const { currentBackground } = useContext(BackgroundContext);
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
   const [showGuide, setShowGuide] = useState(true)
@@ -1217,7 +1218,7 @@ const HomePage = () => {
         flexGrow: 1,
         bgcolor: "#1D1D20",
         minHeight: "100vh",
-        backgroundImage: `url(${background})`,
+        backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
