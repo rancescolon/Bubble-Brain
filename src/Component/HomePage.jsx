@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useContext } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
   AppBar,
+  Alert,
   Toolbar,
   Typography,
   Button,
@@ -15,6 +16,7 @@ import {
   Avatar,
   CircularProgress,
   Grid,
+  Snackbar,
   Stack,
   Tooltip,
   useMediaQuery,
@@ -87,6 +89,7 @@ const HomePage = () => {
   const isDrawerCompact = useMediaQuery(theme.breakpoints.down("md"))
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: 80, y: 25 })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
+  const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
 
   // Refs for carousel scrolling
   const communitiesRef = useRef(null)
@@ -1198,7 +1201,79 @@ const HomePage = () => {
     // Cleanup on unmount
     return () => clearInterval(intervalId)
   }, []) // Empty dependency array since we want this to run only once on mount
-
+  useEffect(() => {
+    const token = sessionStorage.getItem("token")
+    const userStr = sessionStorage.getItem("user")
+  
+    if (!token || !userStr) return
+  
+    // Streak check (once per day)
+    const showStreakPopupIfNeeded = async () => {
+      try {
+        const user = JSON.parse(userStr)
+        const userId = typeof user === "object" ? user.id : Number(userStr)
+        const postsRes = await fetch(`${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+  
+        if (!postsRes.ok) return
+  
+        const postsData = await postsRes.json()
+        const posts = postsData[0] || []
+  
+        // Filter unique days
+        const uniqueDays = new Set(
+          posts.map(post => {
+            try {
+              const content = JSON.parse(post.content || "{}")
+              const ts = content.timestamp || post.timestamp || post.created
+              const date = new Date(ts)
+              date.setHours(0, 0, 0, 0)
+              return date.getTime()
+            } catch {
+              return null
+            }
+          }).filter(Boolean)
+        )
+  
+        // Sort by most recent
+        const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a)
+  
+        // Calculate streak (daily or 5-minute test mode if you want!)
+        let streak = 0
+        let today = new Date()
+        today.setHours(0, 0, 0, 0)
+        let current = today.getTime()
+  
+        for (let i = 0; i < sortedDays.length; i++) {
+          const diff = (current - sortedDays[i]) / (1000 * 60 * 60 * 24)
+          if (diff === 0 || diff === 1) {
+            streak++
+            current -= 86400000
+          } else {
+            break
+          }
+        }
+  
+        // Check if we've already shown it today
+        const lastShown = sessionStorage.getItem("lastStreakPopupDate")
+        const todayStr = new Date().toISOString().split("T")[0]
+  
+        if (streak > 0 && lastShown !== todayStr) {
+          setStreakPopup({
+            open: true,
+            message: `🔥 You’re on a ${streak}-day streak! Keep going!`,
+          })
+          sessionStorage.setItem("lastStreakPopupDate", todayStr)
+        }
+      } catch (e) {
+        console.error("Streak popup error:", e)
+      }
+    }
+  
+    showStreakPopupIfNeeded()
+  }, [])
+  
   // Add this useEffect to handle scroll behavior for both Dr. Bubbles and question mark bubble
   useEffect(() => {
     if (isMobile) {
@@ -1213,857 +1288,554 @@ const HomePage = () => {
   }, [isMobile])
 
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        bgcolor: "#1D1D20",
-        minHeight: "100vh",
-        backgroundImage: `url(${currentBackground.image})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        opacity: 1.0,
-        width: "100%",
-        maxWidth: "100vw",
-        overflowX: "hidden",
-        position: "relative",
-        [theme.breakpoints.down('sm')]: {
-          maxWidth: '100%',
-          margin: 0,
-          padding: 0,
-          width: '100vw',
-          overflowX: 'hidden',
-        }
-      }}
-    >
-      <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
-        <Toolbar sx={{ visibility: "hidden" }}>
-          <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-            <img
-              src={logo || "/placeholder.svg"}
-              alt="Bubble Brain Logo"
-              style={{ height: 80, width: 80, marginRight: 8 }}
-            />
-            <Typography
-              variant="h6"
-              component="div"
-              sx={{
-                fontFamily: "SourGummy, sans-serif",
-                fontWeight: 800,
-                fontSize: "52px",
-                color: "#F4FDFF",
-              }}
-            >
-              Bubble Brain
-            </Typography>
-          </Box>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
-            {["Home", "Courses", "Quizzes", "Contact"].map((item) => (
-              <Button
-                key={item}
-                id={`nav-${item.toLowerCase()}`}
-                color="inherit"
-                component={Link}
-                to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
-                sx={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 500,
-                  fontSize: "16px",
-                  color: "#F4FDFF",
-                  "&:hover": {
-                    bgcolor: "rgba(244, 253, 255, 0.1)",
-                  },
-                }}
-              >
-                {item}
-              </Button>
-            ))}
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
-      
-      {/* Help bubble that appears when guide is closed */}
-      {!showGuide && isQuestionBubbleVisible && (
-        <Tooltip title="Click for Dr. Bubbles' guide!" placement="right" arrow>
-          <Box
-            component={motion.div}
-            animate={{
-              x: helpBubblePosition.x,
-              y: helpBubblePosition.y,
-              transition: {
-                type: "spring",
-                stiffness: 100,
-                damping: 10,
-              },
-            }}
-            onClick={() => setShowGuide(true)}
-            sx={{
-              position: "fixed",
-              width: "60px",
-              height: "60px",
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #00AEEF 60%, #0095CC)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              zIndex: 900,
-              boxShadow: "0 4px 8px rgba(0,0,0,0.25)",
-              border: "3px solid white",
-              transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              "&:hover": {
-                boxShadow: "0 6px 12px rgba(0,0,0,0.3)",
-                background: "linear-gradient(135deg, #00C3FF 60%, #00A8E8)",
-              },
-              // Add a subtle shine effect
-              "&::before": {
-                content: '""',
-                position: "absolute",
-                top: "5%",
-                left: "10%",
-                width: "40%",
-                height: "20%",
-                borderRadius: "50%",
-                background: "rgba(255, 255, 255, 0.4)",
-                zIndex: 1,
-              }
-            }}
-          >
-            {/* Cartoon-style question mark */}
-            <Box
-              sx={{
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontFamily: "SourGummy, sans-serif",
-                fontSize: "36px",
-                fontWeight: "bold",
-                textShadow: "2px 2px 0 #007DAF",
-                transform: "translateY(-1px)",
-                userSelect: "none",
-                zIndex: 2,
-              }}
-            >
-              ?
-            </Box>
-            
-            {/* Pulsing ring */}
-            <Box
-              component={motion.div}
-              animate={{
-                scale: [1, 1.4, 1],
-                opacity: [0.6, 0, 0.6],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeOut",
-              }}
-              sx={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                borderRadius: "50%",
-                border: "2px solid rgba(255,255,255,0.6)",
-              }}
-            />
-            
-            {/* Floating animation */}
-            <Box
-              component={motion.div}
-              animate={{
-                y: [0, -10, 0],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "easeInOut",
-              }}
-              sx={{
-                position: "absolute",
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            />
-          </Box>
-        </Tooltip>
-      )}
-
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          px: { xs: 1, sm: 2, md: 3 },
-          width: '100%',
-          maxWidth: { xs: '100%', sm: 'lg' },
-          overflow: 'hidden',
+    <>
+      <Box
+        sx={{
+          flexGrow: 1,
+          bgcolor: "#1D1D20",
+          minHeight: "100vh",
+          backgroundImage: `url(${currentBackground.image})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          opacity: 1.0,
+          width: "100%",
+          maxWidth: "100vw",
+          overflowX: "hidden",
+          position: "relative",
           [theme.breakpoints.down('sm')]: {
             maxWidth: '100%',
-            padding: '0 8px',
             margin: 0,
-            width: '100%',
+            padding: 0,
+            width: '100vw',
             overflowX: 'hidden',
           }
         }}
       >
-        <Box
-          sx={{
-            bgcolor: "#FFFFFF",
-            py: { xs: 3, md: 8 },
-            px: { xs: 2, md: 3 },
-            mt: 2,
-            borderRadius: 2,
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            mx: { xs: 0, sm: 0, md: 0 },
-            width: { xs: '100%', sm: '100%' },
+        <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
+          <Toolbar sx={{ visibility: "hidden" }}>
+            <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
+              <img
+                src={logo || "/placeholder.svg"}
+                alt="Bubble Brain Logo"
+                style={{ height: 80, width: 80, marginRight: 8 }}
+              />
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 800,
+                  fontSize: "52px",
+                  color: "#F4FDFF",
+                }}
+              >
+                Bubble Brain
+              </Typography>
+            </Box>
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              {["Home", "Courses", "Quizzes", "Contact"].map((item) => (
+                <Button
+                  key={item}
+                  id={`nav-${item.toLowerCase()}`}
+                  color="inherit"
+                  component={Link}
+                  to={item === "Home" ? "/" : `/${item.toLowerCase()}`}
+                  sx={{
+                    fontFamily: "SourGummy, sans-serif",
+                    fontWeight: 500,
+                    fontSize: "16px",
+                    color: "#F4FDFF",
+                    "&:hover": {
+                      bgcolor: "rgba(244, 253, 255, 0.1)",
+                    },
+                  }}
+                >
+                  {item}
+                </Button>
+              ))}
+            </Box>
+          </Toolbar>
+        </AppBar>
+
+        {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
+            
+        {/* Help bubble that appears when guide is closed */}
+        {!showGuide && isQuestionBubbleVisible && (
+          <Tooltip title="Click for Dr. Bubbles' guide!" placement="right" arrow>
+            <Box
+              component={motion.div}
+              animate={{
+                x: helpBubblePosition.x,
+                y: helpBubblePosition.y,
+                transition: {
+                  type: "spring",
+                  stiffness: 100,
+                  damping: 10,
+                },
+              }}
+              onClick={() => setShowGuide(true)}
+              sx={{
+                position: "fixed",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #00AEEF 60%, #0095CC)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                zIndex: 900,
+                boxShadow: "0 4px 8px rgba(0,0,0,0.25)",
+                border: "3px solid white",
+                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                "&:hover": {
+                  boxShadow: "0 6px 12px rgba(0,0,0,0.3)",
+                  background: "linear-gradient(135deg, #00C3FF 60%, #00A8E8)",
+                },
+                // Add a subtle shine effect
+                "&::before": {
+                  content: '""',
+                  position: "absolute",
+                  top: "5%",
+                  left: "10%",
+                  width: "40%",
+                  height: "20%",
+                  borderRadius: "50%",
+                  background: "rgba(255, 255, 255, 0.4)",
+                  zIndex: 1,
+                }
+              }}
+            >
+              {/* Cartoon-style question mark */}
+              <Box
+                sx={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontFamily: "SourGummy, sans-serif",
+                  fontSize: "36px",
+                  fontWeight: "bold",
+                  textShadow: "2px 2px 0 #007DAF",
+                  transform: "translateY(-1px)",
+                  userSelect: "none",
+                  zIndex: 2,
+                }}
+              >
+                ?
+              </Box>
+              
+              {/* Pulsing ring */}
+              <Box
+                component={motion.div}
+                animate={{
+                  scale: [1, 1.4, 1],
+                  opacity: [0.6, 0, 0.6],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeOut",
+                }}
+                sx={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  border: "2px solid rgba(255,255,255,0.6)",
+                }}
+              />
+
+              {/* Floating animation */}
+              <Box
+                component={motion.div}
+                animate={{
+                  y: [0, -10, 0],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "easeInOut",
+                }}
+                sx={{
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            </Box>
+          </Tooltip>
+        )}
+
+        <Container 
+          maxWidth="lg" 
+          sx={{ 
+            px: { xs: 1, sm: 2, md: 3 },
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 'lg' },
             overflow: 'hidden',
             [theme.breakpoints.down('sm')]: {
+              maxWidth: '100%',
+              padding: '0 8px',
               margin: 0,
               width: '100%',
-              borderRadius: 0,
-              padding: '16px 8px',
               overflowX: 'hidden',
             }
           }}
         >
-          <Typography
-            variant="h2"
-            align="center"
-            color="#1D1D20"
-            gutterBottom
+          <Box
             sx={{
-              fontFamily: "SourGummy, sans-serif",
-              fontWeight: 800,
-              fontSize: { xs: "28px", sm: "42px", md: "52px" },
+              bgcolor: "#FFFFFF",
+              py: { xs: 3, md: 8 },
+              px: { xs: 2, md: 3 },
+              mt: 2,
+              borderRadius: 2,
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              mx: { xs: 0, sm: 0, md: 0 },
+              width: { xs: '100%', sm: '100%' },
+              overflow: 'hidden',
+              [theme.breakpoints.down('sm')]: {
+                margin: 0,
+                width: '100%',
+                borderRadius: 0,
+                padding: '16px 8px',
+                overflowX: 'hidden',
+              }
             }}
           >
-            Dive into Learning
-          </Typography>
-          <Typography
-            variant="h5"
-            align="center"
-            color="#1D1D20"
-            paragraph
-            sx={{
-              fontFamily: "SourGummy, sans-serif",
-              fontWeight: 600,
-              fontSize: { xs: "14px", sm: "22px", md: "26px" },
-            }}
-          >
-            Explore our gamified courses and quizzes designed to make learning fun and engaging.
-          </Typography>
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
-            <Button
-              variant="contained"
-              component={Link}
-              to="/community"
-              size="large"
+            <Typography
+              variant="h2"
+              align="center"
+              color="#1D1D20"
+              gutterBottom
               sx={{
-                bgcolor: "#EF7B6C",
-                "&:hover": {
-                  bgcolor: "#e66a59",
-                },
+                fontFamily: "SourGummy, sans-serif",
+                fontWeight: 800,
+                fontSize: { xs: "28px", sm: "42px", md: "52px" },
+              }}
+            >
+              Dive into Learning
+            </Typography>
+            <Typography
+              variant="h5"
+              align="center"
+              color="#1D1D20"
+              paragraph
+              sx={{
                 fontFamily: "SourGummy, sans-serif",
                 fontWeight: 600,
-                fontSize: { xs: "24px", sm: "28px", md: "32px" },
-                color: "#F4FDFF",
-                px: { xs: 3, md: 4 },
-                py: { xs: 0.5, md: 1 },
-                borderRadius: 2,
-                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                fontSize: { xs: "14px", sm: "22px", md: "26px" },
               }}
             >
-              Get Started
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Latest Communities Carousel */}
-        <Box
-          sx={{
-            mt: 6,
-            mb: 6,
-            bgcolor: "#FFFFFF",
-            py: { xs: 3, md: 4 },
-            px: { xs: 2, md: 2 },
-            borderRadius: 2,
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            mx: { xs: 0, sm: 0, md: 0 },
-            width: { xs: '100%', sm: '100%' },
-            overflow: 'hidden',
-            position: 'relative',
-            [theme.breakpoints.down('sm')]: {
-              margin: '24px 0',
-              width: '100%',
-              borderRadius: 0,
-              padding: '16px 8px 16px 8px',
-              overflowX: 'hidden',
-              ml: 0,
-              mr: 0,
-            }
-          }}
-        >
-          <Box sx={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            mb: 2,
-            position: 'relative',
-            zIndex: 2,
-            mt: { xs: 4, sm: 0 },
-            [theme.breakpoints.down('sm')]: {
-              padding: '0 8px',
-            }
-          }}>
-            <Typography
-              variant="h3"
-              color="#1D1D20"
-              sx={{
-                fontFamily: "SourGummy, sans-serif",
-                fontWeight: 700,
-                fontSize: { xs: "24px", sm: "30px", md: "36px" },
-              }}
-            >
-              Latest Communities
+              Explore our gamified courses and quizzes designed to make learning fun and engaging.
             </Typography>
-            <Box sx={{ 
-              display: "flex", 
-              gap: 1,
-              [theme.breakpoints.down('sm')]: {
-                position: 'relative',
-                right: 0,
-                top: 0,
-              }
-            }}>
+            <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
               <Button
-                onClick={() => scrollCarousel(communitiesRef, "left")}
+                variant="contained"
+                component={Link}
+                to="/community"
+                size="large"
                 sx={{
-                  minWidth: { xs: "32px", md: "40px" },
-                  height: { xs: "32px", md: "40px" },
-                  borderRadius: "50%",
                   bgcolor: "#EF7B6C",
-                  color: "white",
-                  "&:hover": { bgcolor: "#e66a59" },
-                  p: { xs: 0.5, md: 1 },
+                  "&:hover": {
+                    bgcolor: "#e66a59",
+                  },
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 600,
+                  fontSize: { xs: "24px", sm: "28px", md: "32px" },
+                  color: "#F4FDFF",
+                  px: { xs: 3, md: 4 },
+                  py: { xs: 0.5, md: 1 },
+                  borderRadius: 2,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
-                <ChevronLeft size={isMobile ? 16 : 24} />
-              </Button>
-              <Button
-                onClick={() => scrollCarousel(communitiesRef, "right")}
-                sx={{
-                  minWidth: { xs: "32px", md: "40px" },
-                  height: { xs: "32px", md: "40px" },
-                  borderRadius: "50%",
-                  bgcolor: "#EF7B6C",
-                  color: "white",
-                  "&:hover": { bgcolor: "#e66a59" },
-                  p: { xs: 0.5, md: 1 },
-                }}
-              >
-                <ChevronRight size={isMobile ? 16 : 24} />
+                Get Started
               </Button>
             </Box>
           </Box>
 
+          {/* Latest Communities Carousel */}
           <Box
-            ref={communitiesRef}
             sx={{
-              display: "flex",
-              overflowX: "auto",
-              gap: { xs: 1, md: 2 },
-              pb: 2,
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": { display: "none" },
-              msOverflowStyle: "none",
-              minHeight: { xs: "250px", md: "280px" },
-              px: { xs: 1, md: 0 },
-              width: '100%',
+              mt: 6,
+              mb: 6,
+              bgcolor: "#FFFFFF",
+              py: { xs: 3, md: 4 },
+              px: { xs: 2, md: 2 },
+              borderRadius: 2,
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              mx: { xs: 0, sm: 0, md: 0 },
+              width: { xs: '100%', sm: '100%' },
               overflow: 'hidden',
+              position: 'relative',
+              [theme.breakpoints.down('sm')]: {
+                margin: '24px 0',
+                width: '100%',
+                borderRadius: 0,
+                padding: '16px 8px 16px 8px',
+                overflowX: 'hidden',
+                ml: 0,
+                mr: 0,
+              }
+            }}
+          >
+            <Box sx={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center", 
+              mb: 2,
+              position: 'relative',
+              zIndex: 2,
+              mt: { xs: 4, sm: 0 },
+              [theme.breakpoints.down('sm')]: {
+                padding: '0 8px',
+              }
+            }}>
+              <Typography
+                variant="h3"
+                color="#1D1D20"
+                sx={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 700,
+                  fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                }}
+              >
+                Latest Communities
+              </Typography>
+              <Box sx={{ 
+                display: "flex", 
+                gap: 1,
+                [theme.breakpoints.down('sm')]: {
+                  position: 'relative',
+                  right: 0,
+                  top: 0,
+                }
+              }}>
+                <Button
+                  onClick={() => scrollCarousel(communitiesRef, "left")}
+                  sx={{
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
+                  }}
+                >
+                  <ChevronLeft size={isMobile ? 16 : 24} />
+                </Button>
+                <Button
+                  onClick={() => scrollCarousel(communitiesRef, "right")}
+                  sx={{
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
+                  }}
+                >
+                  <ChevronRight size={isMobile ? 16 : 24} />
+                </Button>
+              </Box>
+            </Box>
+
+            <Box
+              ref={communitiesRef}
+              sx={{
+                display: "flex",
+                overflowX: "auto",
+                gap: { xs: 1, md: 2 },
+                pb: 2,
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+                msOverflowStyle: "none",
+                minHeight: { xs: "250px", md: "280px" },
+                px: { xs: 1, md: 0 },
+                width: '100%',
+                overflow: 'hidden',
+                [theme.breakpoints.down('sm')]: {
+                  padding: '0 8px',
+                }
+              }}
+            >
+              {loadingCommunities ? (
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                  <CircularProgress sx={{ color: "#1D6EF1" }} />
+                </Box>
+              ) : latestCommunities.length > 0 ? (
+                latestCommunities.map((community) => (
+                  <Card
+                    key={community.id}
+                    sx={{
+                      minWidth: { xs: 220, sm: 250, md: 280 },
+                      maxWidth: { xs: 220, sm: 250, md: 280 },
+                      bgcolor: "#FFFFFF",
+                      borderRadius: 2,
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
+                        cursor: "pointer",
+                      },
+                      flex: "0 0 auto",
+                    }}
+                    onClick={() => handleCommunityClick(community.id)}
+                  >
+                    <CardMedia
+                      component="img"
+                      sx={{ height: { xs: 120, md: 140 }, objectFit: "contain", pt: 2 }}
+                      image={community.image}
+                      alt={community.name}
+                    />
+                    <CardContent>
+                      <Typography
+                        gutterBottom
+                        variant="h5"
+                        component="h2"
+                        color="#1D1D20"
+                        sx={{
+                          fontFamily: "SourGummy, sans-serif",
+                          fontWeight: 600,
+                          fontSize: { xs: "18px", md: "22px" },
+                        }}
+                      >
+                        {community.name}
+                      </Typography>
+                      <Typography
+                        color="#1D1D20"
+                        sx={{
+                          fontFamily: "SourGummy, sans-serif",
+                          fontWeight: 500,
+                          fontSize: { xs: "12px", md: "14px" },
+                          mb: 1,
+                          height: { xs: "48px", md: "60px" },
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
+                        {community.description}
+                      </Typography>
+                      <Typography
+                        color="#1D6EF1"
+                        sx={{
+                          fontFamily: "SourGummy, sans-serif",
+                          fontWeight: 600,
+                          fontSize: { xs: "12px", md: "14px" },
+                        }}
+                      >
+                        {community.members} members
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                  <Typography
+                    color="#1D1D20"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      fontWeight: 500,
+                      fontSize: { xs: "14px", md: "16px" },
+                    }}
+                  >
+                    No communities found. Create one to get started!
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Button
+                component={Link}
+                to="/community"
+                sx={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 600,
+                  color: "#1D6EF1",
+                  fontSize: { xs: "14px", md: "16px" },
+                }}
+              >
+                View All Communities
+              </Button>
+            </Box>
+          </Box>
+
+          {/* Two-column layout for Champions and User Achievements */}
+          <Grid 
+            container 
+            spacing={0} 
+            sx={{ 
+              mt: 3, 
+              mb: 6, 
+              px: { xs: 0, sm: 0, md: 0 },
+              width: "100%",
+              mx: 0,
               [theme.breakpoints.down('sm')]: {
                 padding: '0 8px',
               }
             }}
           >
-            {loadingCommunities ? (
-              <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                <CircularProgress sx={{ color: "#1D6EF1" }} />
-              </Box>
-            ) : latestCommunities.length > 0 ? (
-              latestCommunities.map((community) => (
-                <Card
-                  key={community.id}
-                  sx={{
-                    minWidth: { xs: 220, sm: 250, md: 280 },
-                    maxWidth: { xs: 220, sm: 250, md: 280 },
-                    bgcolor: "#FFFFFF",
-                    borderRadius: 2,
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
-                      cursor: "pointer",
-                    },
-                    flex: "0 0 auto",
-                  }}
-                  onClick={() => handleCommunityClick(community.id)}
-                >
-                  <CardMedia
-                    component="img"
-                    sx={{ height: { xs: 120, md: 140 }, objectFit: "contain", pt: 2 }}
-                    image={community.image}
-                    alt={community.name}
-                  />
-                  <CardContent>
-                    <Typography
-                      gutterBottom
-                      variant="h5"
-                      component="h2"
-                      color="#1D1D20"
-                      sx={{
-                        fontFamily: "SourGummy, sans-serif",
-                        fontWeight: 600,
-                        fontSize: { xs: "18px", md: "22px" },
-                      }}
-                    >
-                      {community.name}
-                    </Typography>
-                    <Typography
-                      color="#1D1D20"
-                      sx={{
-                        fontFamily: "SourGummy, sans-serif",
-                        fontWeight: 500,
-                        fontSize: { xs: "12px", md: "14px" },
-                        mb: 1,
-                        height: { xs: "48px", md: "60px" },
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                    >
-                      {community.description}
-                    </Typography>
-                    <Typography
-                      color="#1D6EF1"
-                      sx={{
-                        fontFamily: "SourGummy, sans-serif",
-                        fontWeight: 600,
-                        fontSize: { xs: "12px", md: "14px" },
-                      }}
-                    >
-                      {community.members} members
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                <Typography
-                  color="#1D1D20"
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    fontWeight: 500,
-                    fontSize: { xs: "14px", md: "16px" },
-                  }}
-                >
-                  No communities found. Create one to get started!
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-            <Button
-              component={Link}
-              to="/community"
-              sx={{
-                fontFamily: "SourGummy, sans-serif",
-                fontWeight: 600,
-                color: "#1D6EF1",
-                fontSize: { xs: "14px", md: "16px" },
-              }}
-            >
-              View All Communities
-            </Button>
-          </Box>
-        </Box>
-
-        {/* Two-column layout for Champions and User Achievements */}
-        <Grid 
-          container 
-          spacing={0} 
-          sx={{ 
-            mt: 3, 
-            mb: 6, 
-            px: { xs: 0, sm: 0, md: 0 },
-            width: "100%",
-            mx: 0,
-            [theme.breakpoints.down('sm')]: {
-              padding: '0 8px',
-            }
-          }}
-        >
-          {/* Bubble Brainiacs - Left column (half size) */}
-          <Grid item xs={12} md={6} sx={{ pr: { md: 1.5 }, pl: 0 }}>
-            <Box
-              sx={{
-                bgcolor: "#FFFFFF",
-                py: { xs: 2, md: 3 },
-                px: { xs: 2, md: 2 },
-                borderRadius: "24px",
-                boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
-                position: "relative",
-                overflow: "hidden",
-                height: "100%",
-                width: "100%",
-                [theme.breakpoints.down('sm')]: {
-                  padding: '0 8px',
-                }
-              }}
-            >
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    fontWeight: 700,
-                    fontSize: { xs: "24px", sm: "30px", md: "36px" },
-                    color: "#1D1D20",
-                  }}
-                >
-                  Bubble Brainiacs
-                </Typography>
-              </Box>
-              
-              <Typography
-                sx={{
-                  fontFamily: "SourGummy, sans-serif",
-                  color: "#555",
-                  fontSize: { xs: "12px", md: "14px" },
-                  mb: 2,
-                  position: "relative",
-                  zIndex: 1,
-                  textAlign: "left",
-                  pl: 0,
-                }}
-              >
-                Top students ranked by total study time. 
-              </Typography>
-
-              {/* Scrollable Container */}
+            {/* Bubble Brainiacs - Left column (half size) */}
+            <Grid item xs={12} md={6} sx={{ pr: { md: 1.5 }, pl: 0 }}>
               <Box
-                ref={leaderboardRef}
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  maxHeight: "unset",
-                  padding: 1,
-                  paddingRight: 2,
-                  // Remove scrollbar styles
+                  bgcolor: "#FFFFFF",
+                  py: { xs: 2, md: 3 },
+                  px: { xs: 2, md: 2 },
+                  borderRadius: "24px",
+                  boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
+                  position: "relative",
+                  overflow: "hidden",
+                  height: "100%",
+                  width: "100%",
+                  [theme.breakpoints.down('sm')]: {
+                    padding: '0 8px',
+                  }
                 }}
               >
-                {loadingLeaderboard ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center", py: 4 }}>
-                    <CircularProgress sx={{ color: "#1D6EF1" }} />
-                  </Box>
-                ) : leaderboardData.length > 0 ? (
-                  // Limit display to only first 3 users
-                  leaderboardData.slice(0, 3).map((user, index) => (
-                    <Card
-                      key={user.id}
-                      sx={{
-                        width: "100%",
-                        background: "#FFFFFF",
-                        backdropFilter: "blur(10px)",
-                        borderRadius: "16px",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 8px 20px rgba(29, 110, 241, 0.2)",
-                        },
-                        border: index < 3 ? `2px solid ${
-                          index === 0 ? "#FFD700" : 
-                          index === 1 ? "#C0C0C0" : 
-                          "#CD7F32"
-                        }` : "2px solid rgba(151, 199, 241, 0.5)",
-                        overflow: "hidden",
-                        position: "relative",
-                        mb: 3,
-                        height: { xs: "70px", md: "80px" },
-                        display: "flex",
-                        alignItems: "center",
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '0 8px',
-                        }
-                      }}
-                    >
-                      {/* Rank Number */}
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: "50%",
-                          left: { xs: "12px", md: "16px" },
-                          transform: "translateY(-50%)",
-                          width: { xs: "32px", md: "40px" },
-                          height: { xs: "32px", md: "40px" },
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: "transparent",
-                          borderRadius: "50%",
-                          color: "#FFFFFF",
-                          fontSize: { xs: "16px", md: "18px" },
-                          fontWeight: "bold",
-                          fontFamily: "SourGummy, sans-serif",
-                          zIndex: 2,
-                          "&::before": {
-                            content: '""',
-                            position: "absolute",
-                            inset: 0,
-                            borderRadius: "50%",
-                            padding: "2px",
-                            background: `linear-gradient(135deg, ${
-                              index === 0 ? "#FFD700, #FFA500" : 
-                              index === 1 ? "#C0C0C0, #A0A0A0" : 
-                              index === 2 ? "#CD7F32, #8B4513" : 
-                              "#1D6EF1, #97C7F1"
-                            })`,
-                            WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                            WebkitMaskComposite: "xor",
-                            maskComposite: "exclude",
-                          },
-                          "&::after": {
-                            content: '""',
-                            position: "absolute",
-                            inset: "2px",
-                            borderRadius: "50%",
-                            background: `linear-gradient(135deg, ${
-                              index === 0 ? "#FFD700, #FFA500" : 
-                              index === 1 ? "#C0C0C0, #A0A0A0" : 
-                              index === 2 ? "#CD7F32, #8B4513" : 
-                              "#1D6EF1, #97C7F1"
-                            })`,
-                            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                          },
-                        }}
-                      >
-                        <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                          {index === 0 && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                top: "-25px",
-                                left: "50%",
-                                transform: "translateX(-50%)",
-                                fontSize: { xs: "20px", md: "24px" },
-                                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
-                                animation: "float 2s ease-in-out infinite",
-                                "@keyframes float": {
-                                  "0%, 100%": { transform: "translateX(-50%) translateY(0)" },
-                                  "50%": { transform: "translateX(-50%) translateY(-5px)" },
-                                },
-                              }}
-                            >
-                              👑
-                            </Box>
-                          )}
-                          <span>
-                            {index + 1}
-                          </span>
-                        </Box>
-                      </Box>
-
-                      <CardContent sx={{ 
-                        pt: 1, 
-                        pb: 1, 
-                        pl: { xs: 5, md: 6 }, 
-                        pr: { xs: 1, md: 2 },
-                        width: "100%",
-                        height: "100%",
-                        display: "flex", 
-                        flexDirection: "column", 
-                        justifyContent: "center",
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '0 8px',
-                        }
-                      }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
-                          <Avatar
-                            src={user.avatar}
-                            alt={user.name}
-                            sx={{
-                              width: { xs: 40, md: 50 },
-                              height: { xs: 40, md: 50 },
-                              background: `linear-gradient(135deg, ${
-                                index === 0 ? "#FFD700, #FFA500" : 
-                                index === 1 ? "#C0C0C0, #A0A0A0" : 
-                                index === 2 ? "#CD7F32, #8B4513" : 
-                                "#1D6EF1, #97C7F1"
-                              })`,
-                              border: "3px solid rgba(255, 255, 255, 0.8)",
-                              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                              ml: { xs: 0, md: 1 },
-                            }}
-                          >
-                            {user.name.charAt(0).toUpperCase()}
-                          </Avatar>
-
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Tooltip title={user.name} placement="top" arrow>
-                              <Typography
-                                variant="h5"
-                                sx={{
-                                  fontFamily: "SourGummy, sans-serif",
-                                  fontWeight: 600,
-                                  fontSize: { xs: "16px", md: "18px" },
-                                  color: "#1D1D20",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  lineHeight: 1.2,
-                                }}
-                              >
-                                {truncateText(user.name, isMobile ? 8 : 10)}
-                              </Typography>
-                            </Tooltip>
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
-                              <Typography
-                                sx={{
-                                  fontFamily: "SourGummy, sans-serif",
-                                  color: "#1D6EF1",
-                                  fontWeight: 600,
-                                  fontSize: { xs: "12px", md: "14px" },
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  lineHeight: 1.1,
-                                }}
-                              >
-                                {formatTime(user.totalStudyTime)}
-                              </Typography>
-                              <Typography
-                                sx={{
-                                  fontFamily: "SourGummy, sans-serif",
-                                  color: "#48BB78",
-                                  fontSize: { xs: "10px", md: "12px" },
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  lineHeight: 1.1,
-                                }}
-                              >
-                                {user.studySessions} sessions
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
                   <Typography
+                    variant="h3"
                     sx={{
                       fontFamily: "SourGummy, sans-serif",
-                      fontSize: { xs: "14px", md: "16px" },
+                      fontWeight: 700,
+                      fontSize: { xs: "24px", sm: "30px", md: "36px" },
                       color: "#1D1D20",
-                      textAlign: "center",
-                      width: "100%",
                     }}
                   >
-                    No study time data available yet. Start studying to climb the leaderboard!
+                    Bubble Brainiacs
                   </Typography>
-                )}
-              </Box>
-            </Box>
-          </Grid>
-
-          {/* User Achievements */}
-          <Grid item xs={12} md={6} sx={{ pl: { md: 1.5 }, pr: 0, position: "relative" }}>
-            <Box
-              sx={{
-                bgcolor: "#FFFFFF",
-                py: { xs: 2, md: 3 },
-                px: { xs: 2, md: 2 },
-                borderRadius: "24px",
-                boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
-                position: "relative",
-                overflow: "hidden",
-                height: "100%",
-                width: "100%",
-                [theme.breakpoints.down('sm')]: {
-                  padding: '0 8px',
-                }
-              }}
-            >
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
+                </Box>
+                  
                 <Typography
-                  variant="h3"
                   sx={{
                     fontFamily: "SourGummy, sans-serif",
-                    fontWeight: 700,
-                    fontSize: { xs: "24px", sm: "30px", md: "36px" },
-                    color: "#1D1D20",
+                    color: "#555",
+                    fontSize: { xs: "12px", md: "14px" },
+                    mb: 2,
+                    position: "relative",
+                    zIndex: 1,
+                    textAlign: "left",
+                    pl: 0,
                   }}
                 >
-                  Bubble Achievers
+                  Top students ranked by total study time. 
                 </Typography>
-              </Box>
-              
-              <Typography
-                sx={{
-                  fontFamily: "SourGummy, sans-serif",
-                  color: "#555",
-                  fontSize: { xs: "12px", md: "14px" },
-                  mb: 2,
-                  position: "relative",
-                  zIndex: 1,
-                  textAlign: "left",
-                  pl: 0,
-                }}
-              >
-                Remarkable feats across study categories.
-              </Typography>
 
-              {loadingUserStats ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <CircularProgress sx={{ color: "#1D6EF1" }} />
-                </Box>
-              ) : userStats.length === 0 ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      textAlign: 'center', 
-                      mb: 2,
-                      fontFamily: "SourGummy, sans-serif",
-                      color: "#1D1D20",
-                      fontSize: { xs: "14px", md: "16px" },
-                    }}
-                  >
-                    No user badges available yet.
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      textAlign: 'center',
-                      fontFamily: "SourGummy, sans-serif",
-                      color: "#1D1D20",
-                      fontSize: { xs: "12px", md: "14px" }, 
-                    }}
-                  >
-                    Start studying, answering quizzes, and collecting fish to earn badges!
-                  </Typography>
-                </Box>
-              ) : (
+                {/* Scrollable Container */}
                 <Box
+                  ref={leaderboardRef}
                   sx={{
                     display: "flex",
                     flexDirection: "column",
@@ -2074,458 +1846,769 @@ const HomePage = () => {
                     // Remove scrollbar styles
                   }}
                 >
-                  {userStats.slice(0, 3).map((stat, index) => (
-                    <Card
-                      key={`${stat.id}-${index}`}
-                      sx={{
-                        width: "100%",
-                        background: "#FFFFFF",
-                        backdropFilter: "blur(10px)",
-                        borderRadius: "16px",
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          transform: "translateY(-4px)",
-                          boxShadow: "0 8px 20px rgba(29, 110, 241, 0.2)",
-                        },
-                        border: index < 3 ? `2px solid ${
-                          index === 0 ? "#EF7B6C" : // Sea 3 from style guide
-                          index === 1 ? "#5B8C5A" : // Sea 2 from style guide
-                          "#1D6EF1"                 // Sea 1 from style guide
-                        }` : "2px solid rgba(151, 199, 241, 0.5)",
-                        overflow: "hidden",
-                        position: "relative",
-                        mb: 3,
-                        height: { xs: "70px", md: "80px" },
-                        display: "flex",
-                        alignItems: "center",
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '0 8px',
-                        }
-                      }}
-                    >
-                      {/* Badge Icon */}
-                      <Box
+                  {loadingLeaderboard ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center", py: 4 }}>
+                      <CircularProgress sx={{ color: "#1D6EF1" }} />
+                    </Box>
+                  ) : leaderboardData.length > 0 ? (
+                    // Limit display to only first 3 users
+                    leaderboardData.slice(0, 3).map((user, index) => (
+                      <Card
+                        key={user.id}
                         sx={{
-                          position: "absolute",
-                          top: "50%",
-                          left: { xs: "12px", md: "16px" },
-                          transform: "translateY(-50%)",
-                          width: { xs: "32px", md: "40px" },
-                          height: { xs: "32px", md: "40px" },
+                          width: "100%",
+                          background: "#FFFFFF",
+                          backdropFilter: "blur(10px)",
+                          borderRadius: "16px",
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            boxShadow: "0 8px 20px rgba(29, 110, 241, 0.2)",
+                          },
+                          border: index < 3 ? `2px solid ${
+                            index === 0 ? "#FFD700" : 
+                            index === 1 ? "#C0C0C0" : 
+                            "#CD7F32"
+                          }` : "2px solid rgba(151, 199, 241, 0.5)",
+                          overflow: "hidden",
+                          position: "relative",
+                          mb: 3,
+                          height: { xs: "70px", md: "80px" },
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: "transparent",
-                          borderRadius: "50%",
-                          color: "#FFFFFF",
-                          fontSize: { xs: "16px", md: "18px" },
-                          fontWeight: "bold",
-                          fontFamily: "SourGummy, sans-serif",
-                          zIndex: 2,
-                          "&::before": {
-                            content: '""',
-                            position: "absolute",
-                            inset: 0,
-                            borderRadius: "50%",
-                            padding: "2px",
-                            background: `linear-gradient(135deg, ${
-                              index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
-                              index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
-                              index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
-                              "#1D6EF1, #97C7F1"
-                            })`,
-                            WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                            WebkitMaskComposite: "xor",
-                            maskComposite: "exclude",
-                          },
-                          "&::after": {
-                            content: '""',
-                            position: "absolute",
-                            inset: "2px",
-                            borderRadius: "50%",
-                            background: `linear-gradient(135deg, ${
-                              index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
-                              index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
-                              index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
-                              "#1D6EF1, #97C7F1"
-                            })`,
-                            boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-                          },
+                          [theme.breakpoints.down('sm')]: {
+                            padding: '0 8px',
+                          }
                         }}
                       >
-                        <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          {getStatIcon(stat.statType)}
-                        </Box>
-                      </Box>
-
-                      <CardContent sx={{ 
-                        pt: 1, 
-                        pb: 1, 
-                        pl: { xs: 5, md: 6 }, 
-                        pr: { xs: 1, md: 2 },
-                        width: "100%",
-                        height: "100%",
-                        display: "flex", 
-                        flexDirection: "column", 
-                        justifyContent: "center",
-                        [theme.breakpoints.down('sm')]: {
-                          padding: '0 8px',
-                        }
-                      }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
-                          <Avatar
-                            src={stat.avatar}
-                            alt={stat.name}
-                            sx={{
-                              width: { xs: 40, md: 50 },
-                              height: { xs: 40, md: 50 },
+                        {/* Rank Number */}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: { xs: "12px", md: "16px" },
+                            transform: "translateY(-50%)",
+                            width: { xs: "32px", md: "40px" },
+                            height: { xs: "32px", md: "40px" },
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: "transparent",
+                            borderRadius: "50%",
+                            color: "#FFFFFF",
+                            fontSize: { xs: "16px", md: "18px" },
+                            fontWeight: "bold",
+                            fontFamily: "SourGummy, sans-serif",
+                            zIndex: 2,
+                            "&::before": {
+                              content: '""',
+                              position: "absolute",
+                              inset: 0,
+                              borderRadius: "50%",
+                              padding: "2px",
                               background: `linear-gradient(135deg, ${
-                                index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
-                                index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
-                                index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                                index === 0 ? "#FFD700, #FFA500" : 
+                                index === 1 ? "#C0C0C0, #A0A0A0" : 
+                                index === 2 ? "#CD7F32, #8B4513" : 
                                 "#1D6EF1, #97C7F1"
                               })`,
-                              border: "3px solid rgba(255, 255, 255, 0.8)",
-                              boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                              ml: { xs: 0, md: 1 },
-                            }}
-                          >
-                            {stat.name?.charAt(0).toUpperCase() || "?"}
-                          </Avatar>
-
-                          <Box sx={{ flexGrow: 1, position: "relative" }}>
-                            {/* Title and caption container */}
-                            <Box sx={{ position: "relative" }}>
-                              <Typography
-                                variant="h5"
+                              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                              WebkitMaskComposite: "xor",
+                              maskComposite: "exclude",
+                            },
+                            "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              inset: "2px",
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${
+                                index === 0 ? "#FFD700, #FFA500" : 
+                                index === 1 ? "#C0C0C0, #A0A0A0" : 
+                                index === 2 ? "#CD7F32, #8B4513" : 
+                                "#1D6EF1, #97C7F1"
+                              })`,
+                              boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                            },
+                          }}
+                        >
+                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                            {index === 0 && (
+                              <Box
                                 sx={{
-                                  fontFamily: "SourGummy, sans-serif",
-                                  fontWeight: 600,
-                                  fontSize: { xs: "14px", md: "18px" },
-                                  color: "#1D1D20",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  mb: 0.5,
-                                  lineHeight: 1.2,
-                                  textAlign: "center",
+                                  position: "absolute",
+                                  top: "-25px",
+                                  left: "50%",
+                                  transform: "translateX(-50%)",
+                                  fontSize: { xs: "20px", md: "24px" },
+                                  filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+                                  animation: "float 2s ease-in-out infinite",
+                                  "@keyframes float": {
+                                    "0%, 100%": { transform: "translateX(-50%) translateY(0)" },
+                                    "50%": { transform: "translateX(-50%) translateY(-5px)" },
+                                  },
                                 }}
                               >
-                                {getStatTitle(stat.statType)}
-                              </Typography>
-                            </Box>
-                            
-                            {/* User name and stat value */}
-                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: { xs: 0.5, md: 1.5 } }}>
-                              <Tooltip title={stat.name} placement="top" arrow>
+                                👑
+                              </Box>
+                            )}
+                            <span>
+                              {index + 1}
+                            </span>
+                          </Box>
+                        </Box>
+
+                        <CardContent sx={{ 
+                          pt: 1, 
+                          pb: 1, 
+                          pl: { xs: 5, md: 6 }, 
+                          pr: { xs: 1, md: 2 },
+                          width: "100%",
+                          height: "100%",
+                          display: "flex", 
+                          flexDirection: "column", 
+                          justifyContent: "center",
+                          [theme.breakpoints.down('sm')]: {
+                            padding: '0 8px',
+                          }
+                        }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+                            <Avatar
+                              src={user.avatar}
+                              alt={user.name}
+                              sx={{
+                                width: { xs: 40, md: 50 },
+                                height: { xs: 40, md: 50 },
+                                background: `linear-gradient(135deg, ${
+                                  index === 0 ? "#FFD700, #FFA500" : 
+                                  index === 1 ? "#C0C0C0, #A0A0A0" : 
+                                  index === 2 ? "#CD7F32, #8B4513" : 
+                                  "#1D6EF1, #97C7F1"
+                                })`,
+                                border: "3px solid rgba(255, 255, 255, 0.8)",
+                                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                                ml: { xs: 0, md: 1 },
+                              }}
+                            >
+                              {user.name.charAt(0).toUpperCase()}
+                            </Avatar>
+
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Tooltip title={user.name} placement="top" arrow>
+                                <Typography
+                                  variant="h5"
+                                  sx={{
+                                    fontFamily: "SourGummy, sans-serif",
+                                    fontWeight: 600,
+                                    fontSize: { xs: "16px", md: "18px" },
+                                    color: "#1D1D20",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.2,
+                                  }}
+                                >
+                                  {truncateText(user.name, isMobile ? 8 : 10)}
+                                </Typography>
+                              </Tooltip>
+                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
                                 <Typography
                                   sx={{
                                     fontFamily: "SourGummy, sans-serif",
-                                    color: "#1D1D20",
+                                    color: "#1D6EF1",
                                     fontWeight: 600,
                                     fontSize: { xs: "12px", md: "14px" },
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: "nowrap",
                                     lineHeight: 1.1,
-                                    maxWidth: { xs: "80px", md: "140px" }, // Smaller max width on mobile
                                   }}
                                 >
-                                  {truncateText(stat.name, isMobile ? 8 : 10)}
+                                  {formatTime(user.totalStudyTime)}
                                 </Typography>
-                              </Tooltip>
+                                <Typography
+                                  sx={{
+                                    fontFamily: "SourGummy, sans-serif",
+                                    color: "#48BB78",
+                                    fontSize: { xs: "10px", md: "12px" },
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.1,
+                                  }}
+                                >
+                                  {user.studySessions} sessions
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <Typography
+                      sx={{
+                        fontFamily: "SourGummy, sans-serif",
+                        fontSize: { xs: "14px", md: "16px" },
+                        color: "#1D1D20",
+                        textAlign: "center",
+                        width: "100%",
+                      }}
+                    >
+                      No study time data available yet. Start studying to climb the leaderboard!
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* User Achievements */}
+            <Grid item xs={12} md={6} sx={{ pl: { md: 1.5 }, pr: 0, position: "relative" }}>
+              <Box
+                sx={{
+                  bgcolor: "#FFFFFF",
+                  py: { xs: 2, md: 3 },
+                  px: { xs: 2, md: 2 },
+                  borderRadius: "24px",
+                  boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
+                  position: "relative",
+                  overflow: "hidden",
+                  height: "100%",
+                  width: "100%",
+                  [theme.breakpoints.down('sm')]: {
+                    padding: '0 8px',
+                  }
+                }}
+              >
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
+                  <Typography
+                    variant="h3"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      fontWeight: 700,
+                      fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                      color: "#1D1D20",
+                    }}
+                  >
+                    Bubble Achievers
+                  </Typography>
+                </Box>
+                  
+                <Typography
+                  sx={{
+                    fontFamily: "SourGummy, sans-serif",
+                    color: "#555",
+                    fontSize: { xs: "12px", md: "14px" },
+                    mb: 2,
+                    position: "relative",
+                    zIndex: 1,
+                    textAlign: "left",
+                    pl: 0,
+                  }}
+                >
+                  Remarkable feats across study categories.
+                </Typography>
+
+                {loadingUserStats ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress sx={{ color: "#1D6EF1" }} />
+                  </Box>
+                ) : userStats.length === 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        textAlign: 'center', 
+                        mb: 2,
+                        fontFamily: "SourGummy, sans-serif",
+                        color: "#1D1D20",
+                        fontSize: { xs: "14px", md: "16px" },
+                      }}
+                    >
+                      No user badges available yet.
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        textAlign: 'center',
+                        fontFamily: "SourGummy, sans-serif",
+                        color: "#1D1D20",
+                        fontSize: { xs: "12px", md: "14px" }, 
+                      }}
+                    >
+                      Start studying, answering quizzes, and collecting fish to earn badges!
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 2,
+                      maxHeight: "unset",
+                      padding: 1,
+                      paddingRight: 2,
+                      // Remove scrollbar styles
+                    }}
+                  >
+                    {userStats.slice(0, 3).map((stat, index) => (
+                      <Card
+                        key={`${stat.id}-${index}`}
+                        sx={{
+                          width: "100%",
+                          background: "#FFFFFF",
+                          backdropFilter: "blur(10px)",
+                          borderRadius: "16px",
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            transform: "translateY(-4px)",
+                            boxShadow: "0 8px 20px rgba(29, 110, 241, 0.2)",
+                          },
+                          border: index < 3 ? `2px solid ${
+                            index === 0 ? "#EF7B6C" : // Sea 3 from style guide
+                            index === 1 ? "#5B8C5A" : // Sea 2 from style guide
+                            "#1D6EF1"                 // Sea 1 from style guide
+                          }` : "2px solid rgba(151, 199, 241, 0.5)",
+                          overflow: "hidden",
+                          position: "relative",
+                          mb: 3,
+                          height: { xs: "70px", md: "80px" },
+                          display: "flex",
+                          alignItems: "center",
+                          [theme.breakpoints.down('sm')]: {
+                            padding: '0 8px',
+                          }
+                        }}
+                      >
+                        {/* Badge Icon */}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "50%",
+                            left: { xs: "12px", md: "16px" },
+                            transform: "translateY(-50%)",
+                            width: { xs: "32px", md: "40px" },
+                            height: { xs: "32px", md: "40px" },
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: "transparent",
+                            borderRadius: "50%",
+                            color: "#FFFFFF",
+                            fontSize: { xs: "16px", md: "18px" },
+                            fontWeight: "bold",
+                            fontFamily: "SourGummy, sans-serif",
+                            zIndex: 2,
+                            "&::before": {
+                              content: '""',
+                              position: "absolute",
+                              inset: 0,
+                              borderRadius: "50%",
+                              padding: "2px",
+                              background: `linear-gradient(135deg, ${
+                                index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                                index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                                index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                                "#1D6EF1, #97C7F1"
+                              })`,
+                              WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                              WebkitMaskComposite: "xor",
+                              maskComposite: "exclude",
+                            },
+                            "&::after": {
+                              content: '""',
+                              position: "absolute",
+                              inset: "2px",
+                              borderRadius: "50%",
+                              background: `linear-gradient(135deg, ${
+                                index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                                index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                                index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                                "#1D6EF1, #97C7F1"
+                              })`,
+                              boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+                            },
+                          }}
+                        >
+                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {getStatIcon(stat.statType)}
+                          </Box>
+                        </Box>
+
+                        <CardContent sx={{ 
+                          pt: 1, 
+                          pb: 1, 
+                          pl: { xs: 5, md: 6 }, 
+                          pr: { xs: 1, md: 2 },
+                          width: "100%",
+                          height: "100%",
+                          display: "flex", 
+                          flexDirection: "column", 
+                          justifyContent: "center",
+                          [theme.breakpoints.down('sm')]: {
+                            padding: '0 8px',
+                          }
+                        }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+                            <Avatar
+                              src={stat.avatar}
+                              alt={stat.name}
+                              sx={{
+                                width: { xs: 40, md: 50 },
+                                height: { xs: 40, md: 50 },
+                                background: `linear-gradient(135deg, ${
+                                  index === 0 ? "#EF7B6C, #E9D0CE" : // Sea 3 & Sand 1 gradient
+                                  index === 1 ? "#5B8C5A, #9DDCB1" : // Sea 2 & Sea 5 gradient
+                                  index === 2 ? "#1D6EF1, #97C7F1" : // Sea 1 & Water 3 gradient
+                                  "#1D6EF1, #97C7F1"
+                                })`,
+                                border: "3px solid rgba(255, 255, 255, 0.8)",
+                                boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+                                ml: { xs: 0, md: 1 },
+                              }}
+                            >
+                              {stat.name?.charAt(0).toUpperCase() || "?"}
+                            </Avatar>
+
+                            <Box sx={{ flexGrow: 1, position: "relative" }}>
+                              {/* Title and caption container */}
+                              <Box sx={{ position: "relative" }}>
+                                <Typography
+                                  variant="h5"
+                                  sx={{
+                                    fontFamily: "SourGummy, sans-serif",
+                                    fontWeight: 600,
+                                    fontSize: { xs: "14px", md: "18px" },
+                                    color: "#1D1D20",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    mb: 0.5,
+                                    lineHeight: 1.2,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {getStatTitle(stat.statType)}
+                                </Typography>
+                              </Box>
+                                
+                              {/* User name and stat value */}
+                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: { xs: 0.5, md: 1.5 } }}>
+                                <Tooltip title={stat.name} placement="top" arrow>
+                                  <Typography
+                                    sx={{
+                                      fontFamily: "SourGummy, sans-serif",
+                                      color: "#1D1D20",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "12px", md: "14px" },
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      lineHeight: 1.1,
+                                      maxWidth: { xs: "80px", md: "140px" }, // Smaller max width on mobile
+                                    }}
+                                  >
+                                    {truncateText(stat.name, isMobile ? 8 : 10)}
+                                  </Typography>
+                                </Tooltip>
+                                <Typography
+                                  sx={{
+                                    fontFamily: "SourGummy, sans-serif",
+                                    color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
+                                           index === 1 ? "#5B8C5A" : // Sea 2 from style guide
+                                           index === 2 ? "#1D6EF1" : // Sea 1 from style guide
+                                           "#48BB78",
+                                    fontSize: { xs: "10px", md: "12px" },
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                    lineHeight: 1.1,
+                                  }}
+                                >
+                                  {formatStatValue(stat.statType, stat.statValue)}
+                                </Typography>
+                              </Box>
+                                
+                              {/* Caption text positioned at the bottom and centered - hide on mobile */}
                               <Typography
                                 sx={{
+                                  position: "absolute",
+                                  bottom: "2px",
+                                  left: 0,
+                                  right: 0,
+                                  width: "100%",
+                                  textAlign: "center",
                                   fontFamily: "SourGummy, sans-serif",
-                                  color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
-                                         index === 1 ? "#5B8C5A" : // Sea 2 from style guide
-                                         index === 2 ? "#1D6EF1" : // Sea 1 from style guide
-                                         "#48BB78",
-                                  fontSize: { xs: "10px", md: "12px" },
+                                  color: "#555",
+                                  fontSize: { xs: "8px", md: "10px" },
+                                  lineHeight: 1,
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
-                                  lineHeight: 1.1,
+                                  opacity: 0.9,
+                                  display: { xs: "none", sm: "block" },
                                 }}
                               >
-                                {formatStatValue(stat.statType, stat.statValue)}
+                                {getStatCaption(stat.statType)}
                               </Typography>
                             </Box>
-                            
-                            {/* Caption text positioned at the bottom and centered - hide on mobile */}
-                            <Typography
-                              sx={{
-                                position: "absolute",
-                                bottom: "2px",
-                                left: 0,
-                                right: 0,
-                                width: "100%",
-                                textAlign: "center",
-                                fontFamily: "SourGummy, sans-serif",
-                                color: "#555",
-                                fontSize: { xs: "8px", md: "10px" },
-                                lineHeight: 1,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                opacity: 0.9,
-                                display: { xs: "none", sm: "block" },
-                              }}
-                            >
-                              {getStatCaption(stat.statType)}
-                            </Typography>
                           </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </Box>
-              )}
-            </Box>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
 
-        {/* Active Users Section */}
-        <Box
-          sx={{
-            mt: 6,
-            mb: 6,
-            bgcolor: "#FFFFFF",
-            py: { xs: 3, md: 4 },
-            px: { xs: 2, md: 2 },
-            borderRadius: 2,
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            mx: { xs: 0, sm: 0, md: 0 },
-            width: { xs: '100%', sm: '100%' },
-            overflow: 'hidden',
-            position: 'relative',
-            [theme.breakpoints.down('sm')]: {
-              margin: 0,
-              width: '100%',
-              borderRadius: 0,
-              padding: '16px 8px 16px 8px',
-              overflowX: 'hidden',
-              mt: 4,
-              ml: 0,
-              mr: 0,
-            }
-          }}
-        >
-          <Box sx={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            mb: 2,
-            position: 'relative',
-            zIndex: 2,
-            mt: { xs: 0, sm: 0 },
-            [theme.breakpoints.down('sm')]: {
-              padding: '0 8px',
-              mb: 3,
-            }
-          }}>
-            <Typography
-              variant="h3"
-              color="#1D1D20"
-              sx={{
-                fontFamily: "SourGummy, sans-serif",
-                fontWeight: 700,
-                fontSize: { xs: "24px", sm: "30px", md: "36px" },
-                [theme.breakpoints.down('sm')]: {
-                  mt: 1,
-                  ml: 1,
-                }
-              }}
-            >
-              Active Users
-            </Typography>
-            <Box sx={{ 
-              display: "flex", 
-              gap: 1,
-              [theme.breakpoints.down('sm')]: {
-                position: 'relative',
-                right: 0,
-                top: 0,
-              }
-            }}>
-              <Button
-                onClick={() => scrollCarousel(usersRef, "left")}
-                sx={{
-                  minWidth: { xs: "32px", md: "40px" },
-                  height: { xs: "32px", md: "40px" },
-                  borderRadius: "50%",
-                  bgcolor: "#EF7B6C",
-                  color: "white",
-                  "&:hover": { bgcolor: "#e66a59" },
-                  p: { xs: 0.5, md: 1 },
-                }}
-              >
-                <ChevronLeft size={isMobile ? 16 : 24} />
-              </Button>
-              <Button
-                onClick={() => scrollCarousel(usersRef, "right")}
-                sx={{
-                  minWidth: { xs: "32px", md: "40px" },
-                  height: { xs: "32px", md: "40px" },
-                  borderRadius: "50%",
-                  bgcolor: "#EF7B6C",
-                  color: "white",
-                  "&:hover": { bgcolor: "#e66a59" },
-                  p: { xs: 0.5, md: 1 },
-                }}
-              >
-                <ChevronRight size={isMobile ? 16 : 24} />
-              </Button>
-            </Box>
-          </Box>
-
+          {/* Active Users Section */}
           <Box
-            ref={usersRef}
             sx={{
-              display: "flex",
-              overflowX: "auto",
-              gap: { xs: 1, md: 2 },
-              pb: 2,
-              scrollbarWidth: "none",
-              "&::-webkit-scrollbar": { display: "none" },
-              msOverflowStyle: "none",
-              minHeight: { xs: "130px", md: "150px" },
-              px: { xs: 1, md: 0 },
-              width: '100%',
+              mt: 6,
+              mb: 6,
+              bgcolor: "#FFFFFF",
+              py: { xs: 3, md: 4 },
+              px: { xs: 2, md: 2 },
+              borderRadius: 2,
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              mx: { xs: 0, sm: 0, md: 0 },
+              width: { xs: '100%', sm: '100%' },
               overflow: 'hidden',
+              position: 'relative',
               [theme.breakpoints.down('sm')]: {
-                padding: '0 8px',
-                mt: 1, // Add small top margin on mobile
+                margin: 0,
+                width: '100%',
+                borderRadius: 0,
+                padding: '16px 8px 16px 8px',
+                overflowX: 'hidden',
+                mt: 4,
+                ml: 0,
+                mr: 0,
               }
             }}
           >
-            {loadingUsers ? (
-              <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                <CircularProgress sx={{ color: "#1D6EF1" }} />
-              </Box>
-            ) : activeUsers && activeUsers.length > 0 ? (
-              activeUsers.map((user) => (
-                <Card
-                  key={user.id}
+            <Box sx={{ 
+              display: "flex", 
+              justifyContent: "space-between", 
+              alignItems: "center", 
+              mb: 2,
+              position: 'relative',
+              zIndex: 2,
+              mt: { xs: 0, sm: 0 },
+              [theme.breakpoints.down('sm')]: {
+                padding: '0 8px',
+                mb: 3,
+              }
+            }}>
+              <Typography
+                variant="h3"
+                color="#1D1D20"
+                sx={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 700,
+                  fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                  [theme.breakpoints.down('sm')]: {
+                    mt: 1,
+                    ml: 1,
+                  }
+                }}
+              >
+                Active Users
+              </Typography>
+              <Box sx={{ 
+                display: "flex", 
+                gap: 1,
+                [theme.breakpoints.down('sm')]: {
+                  position: 'relative',
+                  right: 0,
+                  top: 0,
+                }
+              }}>
+                <Button
+                  onClick={() => scrollCarousel(usersRef, "left")}
                   sx={{
-                    minWidth: { xs: 200, sm: 240, md: 280 },
-                    maxWidth: { xs: 200, sm: 240, md: 280 },
-                    bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
-                    borderRadius: 2,
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    "&:hover": {
-                      transform: "translateY(-4px)",
-                      boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
-                      cursor: "pointer",
-                    },
-                    flex: "0 0 auto",
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    p: { xs: 1, md: 2 },
-                    position: "relative",
-                    border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
                   }}
-                  onClick={() => handleUserClick(user.id)}
                 >
-                  <Box sx={{ position: "relative" }}>
-                    <Avatar
-                      src={user.avatar}
-                      alt={user.name}
-                      sx={{
-                        width: { xs: 40, sm: 50, md: 60 },
-                        height: { xs: 40, sm: 50, md: 60 },
-                        bgcolor: "#1D6EF1",
-                        mr: { xs: 1, md: 2 },
-                        border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
-                        color: "white",
-                        fontSize: { xs: "1.2rem", md: "1.5rem" },
-                      }}
-                    >
-                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                    </Avatar>
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        bottom: 0,
-                        right: { xs: 4, md: 8 },
-                        width: { xs: 8, md: 12 },
-                        height: { xs: 8, md: 12 },
-                        borderRadius: "50%",
-                        bgcolor: user.status === "online" ? "#4CAF50" : "#9e9e9e",
-                        border: "2px solid white",
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ overflow: "hidden" }}>
-                    <Tooltip title={user.name + (user.isCurrentUser ? " (You)" : "")} placement="top" arrow>
-                      <Typography
-                        variant="h6"
-                        color="#1D1D20"
+                  <ChevronLeft size={isMobile ? 16 : 24} />
+                </Button>
+                <Button
+                  onClick={() => scrollCarousel(usersRef, "right")}
+                  sx={{
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
+                  }}
+                >
+                  <ChevronRight size={isMobile ? 16 : 24} />
+                </Button>
+              </Box>
+            </Box>
+
+            <Box
+              ref={usersRef}
+              sx={{
+                display: "flex",
+                overflowX: "auto",
+                gap: { xs: 1, md: 2 },
+                pb: 2,
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+                msOverflowStyle: "none",
+                minHeight: { xs: "130px", md: "150px" },
+                px: { xs: 1, md: 0 },
+                width: '100%',
+                overflow: 'hidden',
+                [theme.breakpoints.down('sm')]: {
+                  padding: '0 8px',
+                  mt: 1, // Add small top margin on mobile
+                }
+              }}
+            >
+              {loadingUsers ? (
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                  <CircularProgress sx={{ color: "#1D6EF1" }} />
+                </Box>
+              ) : activeUsers && activeUsers.length > 0 ? (
+                activeUsers.map((user) => (
+                  <Card
+                    key={user.id}
+                    sx={{
+                      minWidth: { xs: 200, sm: 240, md: 280 },
+                      maxWidth: { xs: 200, sm: 240, md: 280 },
+                      bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
+                      borderRadius: 2,
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
+                        cursor: "pointer",
+                      },
+                      flex: "0 0 auto",
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      p: { xs: 1, md: 2 },
+                      position: "relative",
+                      border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                    }}
+                    onClick={() => handleUserClick(user.id)}
+                  >
+                    <Box sx={{ position: "relative" }}>
+                      <Avatar
+                        src={user.avatar}
+                        alt={user.name}
                         sx={{
-                          fontFamily: "SourGummy, sans-serif",
-                          fontWeight: 600,
-                          fontSize: { xs: "14px", sm: "16px", md: "18px" },
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          width: { xs: 40, sm: 50, md: 60 },
+                          height: { xs: 40, sm: 50, md: 60 },
+                          bgcolor: "#1D6EF1",
+                          mr: { xs: 1, md: 2 },
+                          border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
+                          color: "white",
+                          fontSize: { xs: "1.2rem", md: "1.5rem" },
                         }}
                       >
-                        {truncateText(user.name, isMobile ? 8 : 10)} {user.isCurrentUser && "(You)"}
-                      </Typography>
-                    </Tooltip>
-                    <Typography
-                      color={user.status === "online" ? "#4CAF50" : "#9e9e9e"}
-                      sx={{
-                        fontFamily: "SourGummy, sans-serif",
-                        fontWeight: 500,
-                        fontSize: "14px",
-                      }}
-                    >
-                      {user.activity}
-                    </Typography>
-                    <Tooltip title={user.email} placement="top" arrow>
+                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      </Avatar>
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          right: { xs: 4, md: 8 },
+                          width: { xs: 8, md: 12 },
+                          height: { xs: 8, md: 12 },
+                          borderRadius: "50%",
+                          bgcolor: user.status === "online" ? "#4CAF50" : "#9e9e9e",
+                          border: "2px solid white",
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ overflow: "hidden" }}>
+                      <Tooltip title={user.name + (user.isCurrentUser ? " (You)" : "")} placement="top" arrow>
+                        <Typography
+                          variant="h6"
+                          color="#1D1D20"
+                          sx={{
+                            fontFamily: "SourGummy, sans-serif",
+                            fontWeight: 600,
+                            fontSize: { xs: "14px", sm: "16px", md: "18px" },
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {truncateText(user.name, isMobile ? 8 : 10)} {user.isCurrentUser && "(You)"}
+                        </Typography>
+                      </Tooltip>
                       <Typography
-                        color="#666"
+                        color={user.status === "online" ? "#4CAF50" : "#9e9e9e"}
                         sx={{
                           fontFamily: "SourGummy, sans-serif",
                           fontWeight: 500,
-                          fontSize: "12px",
-                          mt: 0.5,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          maxWidth: "180px",
+                          fontSize: "14px",
                         }}
                       >
-                        {truncateText(user.email, 20)}
+                        {user.activity}
                       </Typography>
-                    </Tooltip>
-                  </Box>
-                </Card>
-              ))
-            ) : (
-              <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                <Typography
-                  color="#1D1D20"
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    fontWeight: 500,
-                    fontSize: "16px",
-                  }}
-                >
-                  No users active in the last 30 minutes. Be the first to engage with the community!
-                </Typography>
-              </Box>
-            )}
+                      <Tooltip title={user.email} placement="top" arrow>
+                        <Typography
+                          color="#666"
+                          sx={{
+                            fontFamily: "SourGummy, sans-serif",
+                            fontWeight: 500,
+                            fontSize: "12px",
+                            mt: 0.5,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "180px",
+                          }}
+                        >
+                          {truncateText(user.email, 20)}
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  </Card>
+                ))
+              ) : (
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                  <Typography
+                    color="#1D1D20"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                    No users active in the last 30 minutes. Be the first to engage with the community!
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Container>
-    </Box>
+        </Container>
+      </Box>
+      <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
+        <Alert onClose={() => setStreakPopup({ ...streakPopup, open: false })} severity="success" variant="filled" sx={{ fontWeight: 600 }}>
+          {streakPopup.message}
+        </Alert>
+      </Snackbar>
+    </>
   )
+  
 }
 
 export default HomePage
