@@ -2,9 +2,14 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { MessageSquare, Plus, Share2, Trash2, ArrowLeft, Send, Users, X } from "lucide-react"
+import { MessageSquare, Plus, Share2, Trash2, ArrowLeft, Send, Users, X, Lock, Unlock, FileText, BookOpen, Check } from "lucide-react"
 import { socket } from "../App"
 import { useMediaQuery, useTheme } from "@mui/material"
+import { 
+  Box, Typography, TextField, Grid, Card, CardContent, FormControlLabel, 
+  Switch, Button, FormControl, Dialog, Container, Select, MenuItem, 
+  ListItemText, Checkbox, OutlinedInput, InputLabel, Chip, CircularProgress 
+} from "@mui/material"
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
@@ -24,17 +29,59 @@ export default function CommunityView() {
   const [showAddStudySetDialog, setShowAddStudySetDialog] = useState(false)
   const [studySetName, setStudySetName] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
   const [templateContent, setTemplateContent] = useState([])
   const [currentStep, setCurrentStep] = useState(1) // 1: Name, 2: Template, 3: Content
   const messagesEndRef = useRef(null)
   const [showMembers, setShowMembers] = useState(false)
   const [copiedSetId, setCopiedSetId] = useState(null)
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" })
+  const [membersOnly, setMembersOnly] = useState(false)
+  const [selectedMembers, setSelectedMembers] = useState([])
+  const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
 
   // Theme and responsive breakpoints
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
+
+  // Define template options
+  const templateOptions = [
+    {
+      id: 1,
+      name: "Basic Flashcards",
+      type: "flashcards",
+      icon: BookOpen,
+      content: [{ front: "", back: "" }]
+    },
+    {
+      id: 2,
+      name: "Multiple Choice",
+      type: "multiple_choice",
+      icon: FileText,
+      content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }]
+    },
+    {
+      id: 3,
+      name: "Fill in the Blank",
+      type: "fill_in_blank",
+      icon: FileText,
+      content: [{ text: "", answer: "" }]
+    },
+    {
+      id: 4,
+      name: "Matching",
+      type: "matching",
+      icon: FileText,
+      content: [{ left: "", right: "" }]
+    }
+  ]
+
+  // Handle template change
+  const handleTemplateChange = (template) => {
+    setSelectedTemplateId(template.id)
+    setSelectedTemplate(template)
+  }
 
   // Add viewport meta tag to document head
   useEffect(() => {
@@ -278,8 +325,36 @@ export default function CommunityView() {
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
     const currentCommunityId = id // Keep as string for comparison
+    const userId = sessionStorage.getItem("user") // Get current user ID
+
+    // First check if the user is a member of this community
+    const checkMembership = async () => {
+      try {
+        if (!userId) return false;
+        
+        const membershipResponse = await fetch(`${API_BASE_URL}/group-members?groupID=${currentCommunityId}&userID=${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          }
+        });
+        
+        if (!membershipResponse.ok) {
+          console.warn("Failed to check membership status");
+          return false;
+        }
+        
+        const membershipData = await membershipResponse.json();
+        return membershipData && membershipData[0] && membershipData[0].length > 0;
+      } catch (error) {
+        console.error("Error checking membership:", error);
+        return false;
+      }
+    };
 
     // Try to fetch study sets specifically for this community
+    checkMembership().then(isMember => {
     fetch(`${API_BASE_URL}/posts?type=study_set`, {
       method: "GET",
       headers: {
@@ -333,6 +408,67 @@ export default function CommunityView() {
               (post.parentID && String(post.parentID) === currentCommunityId)
             )
           })
+            .filter((post) => {
+              // Check if the study set is members-only and filter accordingly
+              let contentObj = null;
+              try {
+                if (post.content && typeof post.content === "string") {
+                  contentObj = JSON.parse(post.content);
+                }
+              } catch (e) {
+                console.warn("Could not parse content for post", post.id);
+              }
+              
+              // Check if current user is the creator of the post
+              const isCreator = post.authorID === parseInt(userId) || post.authorID === userId;
+              
+              // If user is the creator, always show the post
+              if (isCreator) {
+                return true;
+              }
+              
+              // Get access control settings
+              const postAccessType = 
+                contentObj?.accessType || 
+                post.attributes?.accessType || 
+                (contentObj?.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
+                
+              const selectedMembers = 
+                contentObj?.selectedMembers || 
+                post.attributes?.selectedMembers || 
+                [];
+                
+              // If access is for everyone, show the post
+              if (postAccessType === "everyone") {
+                return true;
+              }
+              
+              // If access is for all members and user is a member, show the post
+              if (postAccessType === "allMembers" && isMember) {
+                return true;
+              }
+              
+              // If access is for specific members, check if user is in the list
+              if (postAccessType === "specificMembers") {
+                if (selectedMembers.includes(parseInt(userId)) || selectedMembers.includes(userId)) {
+                  return true;
+                }
+                return false;
+              }
+              
+              // For backward compatibility, check the old membersOnly flag
+              const isMembersOnly = 
+                (contentObj && contentObj.membersOnly === true) || 
+                (post.attributes && post.attributes.membersOnly === true);
+              
+              // If it's members-only and user is not a member, filter it out
+              if (isMembersOnly && !isMember) {
+                return false;
+              }
+              
+              // Default behavior - if not members-only, show to everyone
+              return !isMembersOnly || (isMembersOnly && isMember);
+            });
 
           // Transform API data to match our component's expected format
           const studySetsData = communityStudySets
@@ -374,6 +510,17 @@ export default function CommunityView() {
                 const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
                 const creator = post.author?.id
 
+                  // Determine access type for display
+                  const accessType = 
+                    content.accessType || 
+                    post.attributes?.accessType || 
+                    (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
+                    
+                  const selectedMembers = 
+                    content.selectedMembers || 
+                    post.attributes?.selectedMembers || 
+                    [];
+
                 return {
                   id: post.id,
                   title: content.name || "Untitled Study Set",
@@ -384,6 +531,9 @@ export default function CommunityView() {
                   groupID: post.groupID,
                   communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
                   creator: creator,
+                    membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
+                    accessType: accessType,
+                    selectedMembers: selectedMembers
                 }
               } catch (error) {
                 console.error("Error processing post:", error)
@@ -400,6 +550,7 @@ export default function CommunityView() {
       .catch((error) => {
         console.error("Error fetching study sets:", error)
         setStudySets([])
+        })
       })
   }
 
@@ -409,6 +560,7 @@ export default function CommunityView() {
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template)
+    setSelectedTemplateId(template.id)
 
     // Initialize with empty content based on the template type
     let initialContent = []
@@ -463,6 +615,8 @@ export default function CommunityView() {
           type: selectedTemplate.type,
           content: templateContent,
           communityId: currentCommunityId,
+          membersOnly: membersOnly,
+          selectedMembers: accessType === "specificMembers" ? selectedMembers : []
         }),
         type: "study_set",
         authorID: Number.parseInt(userId),
@@ -470,6 +624,9 @@ export default function CommunityView() {
         attributes: {
           description: "Study set created in community",
           communityId: currentCommunityId,
+          membersOnly: membersOnly,
+          accessType: accessType,
+          selectedMembers: accessType === "specificMembers" ? selectedMembers : []
         },
       }
 
@@ -499,6 +656,7 @@ export default function CommunityView() {
         content: templateContent,
         groupID: Number.parseInt(currentCommunityId) || 0,
         communityId: currentCommunityId,
+        membersOnly: membersOnly
       }
 
       // Update state in a safe way
@@ -508,6 +666,9 @@ export default function CommunityView() {
       setStudySetName("")
       setSelectedTemplate(null)
       setTemplateContent([])
+      setMembersOnly(false)
+      setSelectedMembers([])
+      setAccessType("everyone")
       setCurrentStep(1)
       setShowAddStudySetDialog(false)
 
@@ -1021,18 +1182,24 @@ export default function CommunityView() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-2">
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex items-center">
                               <h2
                                 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20] cursor-pointer truncate`}
                                 onClick={() => handleViewStudySet(studySet)}
                               >
                                 {studySet.title}
                               </h2>
-                              <p
-                                className={`${isMobile ? "text-[12px]" : "text-[14px]"} text-[#1D1D20]/70 truncate text-left w-full`}
-                              >
-                                {studySet.description}
-                              </p>
+                              {/* Add the badge here for members-only study sets */}
+                              {studySet.membersOnly && (
+                                <div className="ml-2 bg-[#1D6EF1] text-white px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                  <Lock size={14} />
+                                  <span className={`text-[${isMobile ? "10px" : "12px"}]`}>
+                                    {studySet.selectedMembers && studySet.selectedMembers.length > 0 
+                                      ? "Selected Members" 
+                                      : "Members Only"}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                             <span
                               className={`${isMobile ? "text-[12px]" : "text-[14px]"} bg-[#1D6EF1] px-${isMobile ? "2" : "3"} py-1 rounded-xl ml-2 flex-shrink-0`}
@@ -1040,6 +1207,11 @@ export default function CommunityView() {
                               {formatStudySetType(studySet.type)}
                             </span>
                           </div>
+                          <p
+                            className={`${isMobile ? "text-[12px]" : "text-[14px]"} text-[#1D1D20]/70 truncate text-left w-full`}
+                          >
+                            {studySet.description}
+                          </p>
                           <div
                             className={`flex ${isMobile ? "flex-col" : "justify-between"} items-${isMobile ? "start" : "center"} mt-3 ${isMobile ? "gap-2" : ""}`}
                           >
@@ -1163,8 +1335,6 @@ export default function CommunityView() {
                 </button>
               </div>
 
-              {/* Rest of the dialog content remains the same */}
-
               {/* Step indicators */}
               <div className="flex mb-4 md:mb-6 rounded-xl overflow-hidden">
                 <div
@@ -1186,30 +1356,277 @@ export default function CommunityView() {
 
               {/* Step 1: Name */}
               {currentStep === 1 && (
-                <div>
-                  <div className="mb-6">
-                    <label className={`block text-[#1D1D20] mb-2 text-[${isMobile ? "14px" : "16px"}]`}>
+                <Box sx={{ p: 3 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      mb: 2,
+                    }}
+                  >
                       Study Set Name
-                    </label>
-                    <input
-                      type="text"
-                      className={`w-full p-${isMobile ? "2" : "3"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter a name for your study set"
                       value={studySetName}
                       onChange={(e) => setStudySetName(e.target.value)}
-                      placeholder="Enter a name for your study set"
-                    />
-                  </div>
+                    sx={{
+                      mb: 3,
+                      "& .MuiOutlinedInput-root": {
+                        fontFamily: "SourGummy, sans-serif",
+                      },
+                    }}
+                  />
 
-                  <div className="flex justify-end">
-                    <button
-                      className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
-                      onClick={handleNextStep}
-                      disabled={!studySetName.trim()}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      mb: 2,
+                    }}
+                  >
+                    Template Type
+                  </Typography>
+
+                  <Grid container spacing={2}>
+                    {templateOptions.map((template) => (
+                      <Grid item xs={6} sm={4} key={template.id}>
+                        <Card
+                          sx={{
+                            cursor: "pointer",
+                            bgcolor: selectedTemplateId === template.id ? "#E8F4F9" : "white",
+                            border: selectedTemplateId === template.id ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                            transition: "all 0.2s ease-in-out",
+                            height: "100%",
+                            "&:hover": {
+                              transform: "translateY(-4px)",
+                              boxShadow: "0 8px 16px rgba(0,0,0,0.1)",
+                            },
+                          }}
+                          onClick={() => handleTemplateChange(template)}
+                        >
+                          <CardContent>
+                            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", p: 1 }}>
+                              <template.icon size={36} color={selectedTemplateId === template.id ? "#1D6EF1" : "#64748B"} />
+                              <Typography
+                                variant="subtitle1"
+                                sx={{
+                                  fontFamily: "SourGummy, sans-serif",
+                                  textAlign: "center",
+                                  mt: 1,
+                                  color: selectedTemplateId === template.id ? "#1D6EF1" : "#1D1D20",
+                                }}
+                              >
+                                {template.name}
+                              </Typography>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
+                  
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      mb: 2,
+                      mt: 4
+                    }}
+                  >
+                    Access Control
+                  </Typography>
+                  
+                  <FormControl component="fieldset" sx={{ width: "100%" }}>
+                    <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px" }}>
+                      Who can view this study set?
+                    </Typography>
+                    <Grid container direction="column" spacing={1}>
+                      <Grid item>
+                        <FormControlLabel
+                          value="everyone"
+                          control={
+                            <Switch
+                              checked={accessType === "everyone"}
+                              onChange={() => {
+                                setAccessType("everyone")
+                                setMembersOnly(false)
+                                setSelectedMembers([])
+                              }}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Unlock size={16} />
+                              <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                Everyone - Study set visible to all users
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ 
+                            "& .MuiFormControlLabel-label": {
+                              fontFamily: "SourGummy, sans-serif",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item>
+                        <FormControlLabel
+                          value="allMembers"
+                          control={
+                            <Switch
+                              checked={accessType === "allMembers"}
+                              onChange={() => {
+                                setAccessType("allMembers")
+                                setMembersOnly(true)
+                                setSelectedMembers([])
+                              }}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Lock size={16} />
+                              <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                Community Members Only - Only visible to anyone who joined the community
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ 
+                            "& .MuiFormControlLabel-label": {
+                              fontFamily: "SourGummy, sans-serif",
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid item>
+                        <FormControlLabel
+                          value="specificMembers"
+                          control={
+                            <Switch
+                              checked={accessType === "specificMembers"}
+                              onChange={() => {
+                                setAccessType("specificMembers")
+                                setMembersOnly(true)
+                              }}
+                              color="primary"
+                            />
+                          }
+                          label={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Users size={16} />
+                              <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                Specific Members - Choose exactly who can see this study set
+                              </Typography>
+                            </Box>
+                          }
+                          sx={{ 
+                            "& .MuiFormControlLabel-label": {
+                              fontFamily: "SourGummy, sans-serif",
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </FormControl>
+
+                  {/* Show member selection when specific members option is chosen */}
+                  {accessType === "specificMembers" && (
+                    <FormControl fullWidth sx={{ mt: 2 }}>
+                      <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                        Select Members
+                      </InputLabel>
+                      <Select
+                        labelId="member-selection-label"
+                        id="member-selection"
+                        multiple
+                        value={selectedMembers}
+                        onChange={(e) => setSelectedMembers(e.target.value)}
+                        input={<OutlinedInput label="Select Members" />}
+                        renderValue={(selected) => (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {selected.map((value) => {
+                              const member = members.find(m => m.userID === value);
+                              return (
+                                <Chip 
+                                  key={value} 
+                                  label={member ? member.email : value} 
+                                  sx={{ fontFamily: "SourGummy, sans-serif" }} 
+                                />
+                              );
+                            })}
+                          </Box>
+                        )}
+                        MenuProps={{
+                          PaperProps: {
+                            style: {
+                              maxHeight: 224,
+                              width: 250,
+                            },
+                          },
+                          anchorOrigin: {
+                            vertical: "bottom",
+                            horizontal: "left"
+                          }
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "SourGummy, sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "SourGummy, sans-serif",
+                          },
+                        }}
+                      >
+                        {members.length > 0 ? (
+                          members.map((member) => (
+                            <MenuItem key={member.userID} value={member.userID}>
+                              <Checkbox checked={selectedMembers.includes(member.userID)} />
+                              <ListItemText 
+                                primary={
+                                  <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                    {member.email} {member.isAdmin ? " (Admin)" : ""}
+                                  </Typography>
+                                } 
+                              />
+                            </MenuItem>
+                          ))
+                        ) : (
+                          <MenuItem disabled>
+                            <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                              No members found in this community
+                            </Typography>
+                          </MenuItem>
+                        )}
+                      </Select>
+                      <Typography variant="caption" sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", display: 'block' }}>
+                        Only selected members will be able to view this study set
+                      </Typography>
+                    </FormControl>
+                  )}
+
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => setCurrentStep(2)}
+                      disabled={!studySetName.trim() || !selectedTemplateId}
+                      sx={{
+                        bgcolor: "#1D6EF1",
+                        "&:hover": {
+                          bgcolor: "#1557B0",
+                        },
+                        fontFamily: "SourGummy, sans-serif",
+                      }}
                     >
-                      Next
-                    </button>
-                  </div>
-                </div>
+                      Choose Template
+                    </Button>
+                  </Box>
+                </Box>
               )}
 
               {/* Step 2: Template Selection */}
