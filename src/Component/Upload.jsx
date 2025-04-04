@@ -1,5 +1,5 @@
 "use client"
-
+//The code for the upload page was assisted with the help of ChatGPT
 import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Box, Typography, Button, Card, CardContent, Container, TextField, Alert, Snackbar, Select, MenuItem, FormControl, InputLabel, IconButton, Grid, Dialog, FormControlLabel, Switch, Chip, OutlinedInput, Checkbox, ListItemText } from "@mui/material"

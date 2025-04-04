@@ -1,5 +1,5 @@
 "use client"
-
+//The code for the study set view was assisted with the help of ChatGPT
 import { useState, useEffect, useContext } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import {

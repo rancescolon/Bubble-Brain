@@ -1078,21 +1078,11 @@ const Communities = () => {
                                             <p className="text-sm md:text-base text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
                                               {community.description}
                                             </p>
-                                            <div className="grid grid-cols-3 gap-2 mt-3">
-                                              <button
-                                                  className="flex items-center justify-center bg-[#C5EDFD] text-[#1D1D20] px-2 py-1 md:px-3 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors w-full"
-                                                  onClick={() => handleLikeCommunity(community.id)}
-                                              >
-                                                <Heart className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2 text-[#EF7B6C]" />
-                                                <span style={fontStyle} className="text-sm md:text-base">
-                                        {community.likes || 0}
-                                      </span>
-                                              </button>
+                                            <div className="grid grid-cols-2 gap-2 mt-3">
                                               <button
                                                   className="bg-[#1D6EF1] text-white px-3 py-1 md:px-4 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors text-sm md:text-base w-full"
                                                   onClick={() => handleJoinCommunity(community.id)}
                                                   data-community-id={community.id}
-                                                  style={fontStyle}
                                               >
                                                 Join
                                               </button>
