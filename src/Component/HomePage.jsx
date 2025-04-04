@@ -15,24 +15,21 @@ import {
   Box,
   Avatar,
   CircularProgress,
-
   Grid,
   Snackbar,
   Stack,
   Tooltip,
   useMediaQuery,
   useTheme,
-
 } from "@mui/material"
+import { motion } from "framer-motion"
 import fish1 from "../assets/fish1.png"
 import fish2 from "../assets/fish2.png"
 import fish3 from "../assets/fish3.png"
 import logo from "../assets/Frame.png"
 import DrBubbles from "./DrBubbles"
-
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
 import { BackgroundContext } from "../App"
-
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -94,8 +91,8 @@ const HomePage = () => {
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
 
-
-  // Refs for carousel scrolling
+  // Add missing refs
+  const leaderboardRef = useRef(null)
   const communitiesRef = useRef(null)
   const coursesRef = useRef(null)
   const usersRef = useRef(null)
@@ -1206,7 +1203,7 @@ const HomePage = () => {
         if (streak > 0 && lastShown !== todayStr) {
           setStreakPopup({
             open: true,
-            message: `🔥 You’re on a ${streak}-day streak! Keep going!`,
+            message: `🔥 You're on a ${streak}-day streak! Keep going!`,
           })
           sessionStorage.setItem("lastStreakPopupDate", todayStr)
         }
@@ -1230,6 +1227,22 @@ const HomePage = () => {
       return () => window.removeEventListener('scroll', handleScroll)
     }
   }, [isMobile])
+
+  // Add missing functions
+  const scrollCarousel = (ref, direction) => {
+    if (ref.current) {
+      const scrollAmount = direction === "left" ? -300 : 300
+      ref.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth"
+      })
+    }
+  }
+
+  const truncateText = (text, maxLength) => {
+    if (!text) return ""
+    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text
+  }
 
   return (
     <>
