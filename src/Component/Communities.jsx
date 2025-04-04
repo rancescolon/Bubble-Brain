@@ -1214,7 +1214,7 @@ const Communities = () => {
                     </label>
                       <input
                         type="text"
-                        maxLength={30}
+                        maxLength={20}
                         placeholder="Enter a name for your community"
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
