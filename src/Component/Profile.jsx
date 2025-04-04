@@ -978,7 +978,7 @@ export default function Profile({ setLoggedIn }) {
                     <StyledTextField
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      inputProps={{ maxLength: 30 }}
+                      inputProps={{ maxLength: 20 }}
                       size="small"
                       sx={{
                         width: { xs: "100%", sm: "150px" },
