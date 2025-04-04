@@ -1023,13 +1023,17 @@ const Communities = () => {
                         </div>
 
                         <input
-                            type="text"
-                            placeholder="Search communities by name..."
-                            className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={fontStyle}
+                          type="text"
+                          placeholder="Search communities by name..."
+                          maxLength={30}
+                          className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          style={fontStyle}
                         />
+                        {searchQuery.length === 30 && (
+                          <p className="text-red-500 text-sm mt-1">Maximum of 30 characters reached.</p>
+                        )}
                       </div>
 
                       {loading ? (
@@ -1208,8 +1212,9 @@ const Communities = () => {
                     <label className="block text-[#1D1D20] mb-1 md:mb-2 text-base md:text-lg" style={fontStyle}>
                       Community Name
                     </label>
-                    <input
+                      <input
                         type="text"
+                        maxLength={30}
                         placeholder="Enter a name for your community"
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
@@ -1224,6 +1229,7 @@ const Communities = () => {
                     </label>
                     <textarea
                         placeholder="Describe your community"
+                        maxLength={200}
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent min-h-[80px] md:min-h-[100px] text-sm md:text-base"
                         value={communityDescription}
                         onChange={(e) => setCommunityDescription(e.target.value)}
