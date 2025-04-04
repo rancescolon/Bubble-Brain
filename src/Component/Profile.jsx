@@ -1,5 +1,5 @@
 "use client"
-
+//The code for the profile page was assisted with the help of ChatGPT
 import { useEffect, useState, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import {
@@ -86,7 +86,7 @@ const DeleteAccountButton = styled(Button)({
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
-export default function Profile() {
+export default function Profile({ setLoggedIn }) {
   const { currentBackground } = useContext(BackgroundContext);
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
@@ -443,7 +443,7 @@ export default function Profile() {
         const today = new Date().toISOString().split("T")[0]
         setStreakPopup({
           open: true,
-          message: `🔥 You’re on a ${streak}-day streak! Keep going!`,
+          message: `🔥 You're on a ${streak}-day streak! Keep going!`,
         })
         setHasShownStreakPopup(true)
         sessionStorage.setItem("lastStreakPopupDate", today)
@@ -553,6 +553,7 @@ export default function Profile() {
     sessionStorage.removeItem("firstname")
     sessionStorage.removeItem("lastname")
     sessionStorage.removeItem("email")
+    setLoggedIn(false)
     navigate("/login")
   }
 
@@ -977,6 +978,7 @@ export default function Profile() {
                     <StyledTextField
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
+                      inputProps={{ maxLength: 20 }}
                       size="small"
                       sx={{
                         width: { xs: "100%", sm: "150px" },

@@ -1023,13 +1023,17 @@ const Communities = () => {
                         </div>
 
                         <input
-                            type="text"
-                            placeholder="Search communities by name..."
-                            className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            style={fontStyle}
+                          type="text"
+                          placeholder="Search communities by name..."
+                          maxLength={30}
+                          className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          style={fontStyle}
                         />
+                        {searchQuery.length === 30 && (
+                          <p className="text-red-500 text-sm mt-1">Maximum of 30 characters reached.</p>
+                        )}
                       </div>
 
                       {loading ? (
@@ -1078,21 +1082,11 @@ const Communities = () => {
                                             <p className="text-sm md:text-base text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
                                               {community.description}
                                             </p>
-                                            <div className="grid grid-cols-3 gap-2 mt-3">
-                                              <button
-                                                  className="flex items-center justify-center bg-[#C5EDFD] text-[#1D1D20] px-2 py-1 md:px-3 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors w-full"
-                                                  onClick={() => handleLikeCommunity(community.id)}
-                                              >
-                                                <Heart className="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2 text-[#EF7B6C]" />
-                                                <span style={fontStyle} className="text-sm md:text-base">
-                                        {community.likes || 0}
-                                      </span>
-                                              </button>
+                                            <div className="grid grid-cols-2 gap-2 mt-3">
                                               <button
                                                   className="bg-[#1D6EF1] text-white px-3 py-1 md:px-4 md:py-2 rounded-xl hover:bg-[#97C7F1] transition-colors text-sm md:text-base w-full"
                                                   onClick={() => handleJoinCommunity(community.id)}
                                                   data-community-id={community.id}
-                                                  style={fontStyle}
                                               >
                                                 Join
                                               </button>
@@ -1218,8 +1212,9 @@ const Communities = () => {
                     <label className="block text-[#1D1D20] mb-1 md:mb-2 text-base md:text-lg" style={fontStyle}>
                       Community Name
                     </label>
-                    <input
+                      <input
                         type="text"
+                        maxLength={20}
                         placeholder="Enter a name for your community"
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
@@ -1234,6 +1229,7 @@ const Communities = () => {
                     </label>
                     <textarea
                         placeholder="Describe your community"
+                        maxLength={200}
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent min-h-[80px] md:min-h-[100px] text-sm md:text-base"
                         value={communityDescription}
                         onChange={(e) => setCommunityDescription(e.target.value)}
