@@ -435,7 +435,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                 path="/profile"
                 element={
                   <ProtectedRoute>
-                    <Profile />
+                    <Profile setLoggedIn={setLoggedIn} />
                   </ProtectedRoute>
                 }
               />

@@ -1,5 +1,5 @@
 "use client"
-
+//The code for the homepage was assisted with the help of ChatGPT
 import { useEffect, useState, useRef, useContext } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import {
@@ -87,7 +87,11 @@ const HomePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const isTablet = useMediaQuery(theme.breakpoints.down("md"))
   const isDrawerCompact = useMediaQuery(theme.breakpoints.down("md"))
-  const [helpBubblePosition, setHelpBubblePosition] = useState({ x: 80, y: 25 })
+
+  // Adjust initial Y position for mobile
+  const initialX = isMobile ? 40 : 50;
+  const initialY = isMobile ? -75 : 5; 
+  const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
 
@@ -1434,7 +1438,7 @@ const HomePage = () => {
         <Container 
           maxWidth="lg" 
           sx={{ 
-            px: { xs: 1, sm: 2, md: 3 },
+            px: { xs: 2, sm: 2, md: 3 }, // Increase xs padding to 16px
             width: '100%',
             maxWidth: { xs: '100%', sm: 'lg' },
             overflow: 'hidden',
@@ -1458,13 +1462,19 @@ const HomePage = () => {
               mx: { xs: 0, sm: 0, md: 0 },
               width: { xs: '100%', sm: '100%' },
               overflow: 'hidden',
+              position: 'relative',
               [theme.breakpoints.down('sm')]: {
-                margin: 0,
+                margin: '24px 0',
                 width: '100%',
                 borderRadius: 0,
-                padding: '16px 8px',
+                paddingTop: '16px', // Keep vertical padding if needed
+                paddingBottom: '16px', // Keep vertical padding if needed
+                // Remove horizontal padding override here
                 overflowX: 'hidden',
+                ml: 0, // Ensure no extra margin
+                mr: 0, // Ensure no extra margin
               }
+
             }}
           >
             <Typography
@@ -1490,10 +1500,12 @@ const HomePage = () => {
               paragraph
               sx={{
                 fontFamily: "SourGummy, sans-serif",
-
                 fontWeight: 600,
                 fontSize: { xs: "14px", sm: "22px", md: "26px" },
-
+                [theme.breakpoints.down('sm')]: {
+                  maxWidth: '80%', // Limit width on mobile to encourage wrapping
+                  mx: 'auto', // Center the text block
+                }
               }}
             >
               Explore our gamified courses and quizzes designed to make learning fun and engaging.
@@ -1529,28 +1541,29 @@ const HomePage = () => {
           {/* Latest Communities Carousel */}
           <Box
             sx={{
-
               mt: 6,
               mb: 6,
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 4 },
-              px: { xs: 2, md: 2 },
+              px: { xs: 1, md: 2 }, // Keep outer padding 8px (1) on xs
+              overflow: 'visible', // Remove overflow: hidden
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
               mx: { xs: 0, sm: 0, md: 0 },
               width: { xs: '100%', sm: '100%' },
-              overflow: 'hidden',
               position: 'relative',
               [theme.breakpoints.down('sm')]: {
                 margin: '24px 0',
                 width: '100%',
                 borderRadius: 0,
-                padding: '16px 8px 16px 8px',
-                overflowX: 'hidden',
-                ml: 0,
-                mr: 0,
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                paddingLeft: theme.spacing(1), // Use px property above for padding
+                paddingRight: theme.spacing(1), // Use px property above for padding
+                overflowX: 'visible', // Ensure not hidden on mobile either
+                ml: 0, // Ensure no extra margin
+                mr: 0, // Ensure no extra margin
               }
-
             }}
           >
             <Box sx={{ 
@@ -1563,6 +1576,9 @@ const HomePage = () => {
               mt: { xs: 4, sm: 0 },
               [theme.breakpoints.down('sm')]: {
                 padding: '0 8px',
+                // Center title on mobile
+                flexDirection: 'column', // Stack title and arrows vertically
+                alignItems: 'center', // Center items horizontally
               }
             }}>
               <Typography
@@ -1572,6 +1588,10 @@ const HomePage = () => {
                   fontFamily: "SourGummy, sans-serif",
                   fontWeight: 700,
                   fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                  // Ensure title is centered when stacked
+                  textAlign: { xs: 'center', sm: 'left' },
+                  width: '100%', // Take full width for centering
+                  mb: { xs: 1, sm: 0 }, // Add margin below title on mobile
                 }}
               >
                 Latest Communities
@@ -1581,8 +1601,10 @@ const HomePage = () => {
                 gap: 1,
                 [theme.breakpoints.down('sm')]: {
                   position: 'relative',
-                  right: 0,
+                  right: '0', // Reset right positioning if needed
                   top: 0,
+                  // Shift arrows slightly left by reducing gap or adding negative margin
+                  marginLeft: '-5px', // Example shift
                 }
               }}>
                 <Button
@@ -1625,18 +1647,21 @@ const HomePage = () => {
               ref={communitiesRef}
               sx={{
                 display: "flex",
-                overflowX: "auto",
-                gap: { xs: 1, md: 2 },
+                overflowX: "auto", // Explicitly auto
+                gap: { xs: 1, md: 2 }, // Keep gap 8px (1) on xs
                 pb: 2,
                 scrollbarWidth: "none",
                 "&::-webkit-scrollbar": { display: "none" },
                 msOverflowStyle: "none",
                 minHeight: { xs: "250px", md: "280px" },
-                px: { xs: 1, md: 0 },
+                px: { xs: 1, md: 0 }, // Add inner padding 8px (1) on xs
                 width: '100%',
-                overflow: 'hidden',
+                // overflow: 'hidden', // Remove this from inner box
+                scrollSnapType: 'x mandatory',
                 [theme.breakpoints.down('sm')]: {
-                  padding: '0 8px',
+                  paddingLeft: theme.spacing(1), // Ensure inner padding is 8px
+                  paddingRight: theme.spacing(1), // Ensure inner padding is 8px
+                  // No mt needed here
                 }
               }}
             >
@@ -1649,8 +1674,8 @@ const HomePage = () => {
                   <Card
                     key={community.id}
                     sx={{
-                      minWidth: { xs: 220, sm: 250, md: 280 },
-                      maxWidth: { xs: 220, sm: 250, md: 280 },
+                      minWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Set width to calc(50% - 4px)
+                      maxWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Set width to calc(50% - 4px)
                       bgcolor: "#FFFFFF",
                       borderRadius: 2,
                       transition: "transform 0.2s, box-shadow 0.2s",
@@ -1660,6 +1685,7 @@ const HomePage = () => {
                         cursor: "pointer",
                       },
                       flex: "0 0 auto",
+                      scrollSnapAlign: 'start',
                     }}
                     onClick={() => handleCommunityClick(community.id)}
                   >
@@ -1773,11 +1799,25 @@ const HomePage = () => {
                   height: "100%",
                   width: "100%",
                   [theme.breakpoints.down('sm')]: {
-                    padding: '0 8px',
+                    padding: '16px 8px', // Adjusted padding for mobile consistency
+                    // Center title and subtitle box
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                   }
                 }}
               >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: 'column', // Stack title and subtitle
+                  justifyContent: "center", // Center vertically within this box
+                  alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
+                  mb: 2, 
+                  position: "relative", 
+                  zIndex: 1,
+                  width: '100%', // Ensure box takes full width for centering
+                  textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
+                }}>
                   <Typography
                     variant="h3"
                     sx={{
@@ -1789,22 +1829,22 @@ const HomePage = () => {
                   >
                     Bubble Brainiacs
                   </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      color: "#555",
+                      fontSize: { xs: "12px", md: "14px" },
+                      // mb: 2, // Removed mb from here as parent Box handles spacing
+                      position: "relative",
+                      zIndex: 1,
+                      textAlign: "center", // Ensure text is centered
+                      pl: 0,
+                      mt: 0.5, // Add slight top margin
+                    }}
+                  >
+                    Top students ranked by total study time. 
+                  </Typography>
                 </Box>
-                  
-                <Typography
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    color: "#555",
-                    fontSize: { xs: "12px", md: "14px" },
-                    mb: 2,
-                    position: "relative",
-                    zIndex: 1,
-                    textAlign: "left",
-                    pl: 0,
-                  }}
-                >
-                  Top students ranked by total study time. 
-                </Typography>
 
                 {/* Scrollable Container */}
                 <Box
@@ -1816,6 +1856,13 @@ const HomePage = () => {
                     maxHeight: "unset",
                     padding: 1,
                     paddingRight: 2,
+                    width: '100%', // Ensure container takes full width
+                    [theme.breakpoints.down('sm')]: {
+                      // Shift cards slightly right
+                      pl: 'calc(1rem + 5px)', // Add 5px to existing padding/margin
+                      pr: 'calc(1rem - 5px)', // Adjust right padding if needed
+                      boxSizing: 'border-box',
+                    }
                     // Remove scrollbar styles
                   }}
                 >
@@ -1933,7 +1980,7 @@ const HomePage = () => {
                         <CardContent sx={{ 
                           pt: 1, 
                           pb: 1, 
-                          pl: { xs: 5, md: 6 }, 
+                          pl: { xs: '44px', md: 6 }, 
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
@@ -1942,9 +1989,11 @@ const HomePage = () => {
                           justifyContent: "center",
                           [theme.breakpoints.down('sm')]: {
                             padding: '0 8px',
+                            pl: '44px',
                           }
                         }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+                          {/* Ensure smaller gap for mobile */}
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
                             <Avatar
                               src={user.avatar}
                               alt={user.name}
@@ -1965,7 +2014,8 @@ const HomePage = () => {
                               {user.name.charAt(0).toUpperCase()}
                             </Avatar>
 
-                            <Box sx={{ flexGrow: 1 }}>
+                            {/* Apply negative margin on mobile */}
+                            <Box sx={{ flexGrow: 1, marginLeft: { xs: '-2px', md: 0 } }}>
                               <Tooltip title={user.name} placement="top" arrow>
                                 <Typography
                                   variant="h5"
@@ -2048,11 +2098,26 @@ const HomePage = () => {
                   height: "100%",
                   width: "100%",
                   [theme.breakpoints.down('sm')]: {
-                    padding: '0 8px',
+                    padding: '16px 8px', // Adjusted padding
+                    mt: 2, // Add margin top on mobile to separate from brainiacs
+                    // Center title and subtitle box
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                   }
                 }}
               >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "relative", zIndex: 1 }}>
+                <Box sx={{ 
+                  display: "flex", 
+                  flexDirection: 'column', // Stack title and subtitle
+                  justifyContent: "center", // Center vertically
+                  alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
+                  mb: 2, 
+                  position: "relative", 
+                  zIndex: 1,
+                  width: '100%', // Ensure box takes full width for centering
+                  textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
+                }}>
                   <Typography
                     variant="h3"
                     sx={{
@@ -2064,22 +2129,22 @@ const HomePage = () => {
                   >
                     Bubble Achievers
                   </Typography>
+                  <Typography
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      color: "#555",
+                      fontSize: { xs: "12px", md: "14px" },
+                      // mb: 2, // Removed mb from here
+                      position: "relative",
+                      zIndex: 1,
+                      textAlign: "center", // Ensure text is centered
+                      pl: 0,
+                       mt: 0.5, // Add slight top margin
+                    }}
+                  >
+                    Remarkable feats across study categories.
+                  </Typography>
                 </Box>
-                  
-                <Typography
-                  sx={{
-                    fontFamily: "SourGummy, sans-serif",
-                    color: "#555",
-                    fontSize: { xs: "12px", md: "14px" },
-                    mb: 2,
-                    position: "relative",
-                    zIndex: 1,
-                    textAlign: "left",
-                    pl: 0,
-                  }}
-                >
-                  Remarkable feats across study categories.
-                </Typography>
 
                 {loadingUserStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -2120,6 +2185,13 @@ const HomePage = () => {
                       maxHeight: "unset",
                       padding: 1,
                       paddingRight: 2,
+                      width: '100%', // Ensure container takes full width
+                       [theme.breakpoints.down('sm')]: {
+                         // Shift cards slightly right
+                         pl: 'calc(1rem + 5px)', // Add 5px to existing padding/margin
+                         pr: 'calc(1rem - 5px)', // Adjust right padding if needed
+                         boxSizing: 'border-box',
+                       }
                       // Remove scrollbar styles
                     }}
                   >
@@ -2210,7 +2282,7 @@ const HomePage = () => {
                         <CardContent sx={{ 
                           pt: 1, 
                           pb: 1, 
-                          pl: { xs: 5, md: 6 }, 
+                          pl: { xs: '40px', md: 6 }, 
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
@@ -2218,10 +2290,13 @@ const HomePage = () => {
                           flexDirection: "column", 
                           justifyContent: "center",
                           [theme.breakpoints.down('sm')]: {
-                            padding: '0 8px',
+                            padding: '0 8px', 
+                            // Reduce mobile pl override
+                            pl: '40px', 
                           }
                         }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 1, md: 2 } }}>
+                          {/* Remove gap for mobile */}
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
                             <Avatar
                               src={stat.avatar}
                               alt={stat.name}
@@ -2242,7 +2317,8 @@ const HomePage = () => {
                               {stat.name?.charAt(0).toUpperCase() || "?"}
                             </Avatar>
 
-                            <Box sx={{ flexGrow: 1, position: "relative" }}>
+                            {/* Apply negative margin on mobile */}
+                            <Box sx={{ flexGrow: 1, position: "relative", marginLeft: { xs: '-2px', md: 0 } }}>
                               {/* Title and caption container */}
                               <Box sx={{ position: "relative" }}>
                                 <Typography
@@ -2341,19 +2417,21 @@ const HomePage = () => {
               mb: 6,
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 4 },
-              px: { xs: 2, md: 2 },
+              px: { xs: 1, md: 2 }, // Ensure outer padding is 8px (1) on xs
+              overflow: 'visible', // Keep overflow visible
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
               mx: { xs: 0, sm: 0, md: 0 },
               width: { xs: '100%', sm: '100%' },
-              overflow: 'hidden',
               position: 'relative',
               [theme.breakpoints.down('sm')]: {
                 margin: 0,
                 width: '100%',
                 borderRadius: 0,
-                padding: '16px 8px 16px 8px',
-                overflowX: 'hidden',
+                // Remove specific padding Left/Right, rely on px above
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                overflowX: 'visible',
                 mt: 4,
                 ml: 0,
                 mr: 0,
@@ -2371,6 +2449,9 @@ const HomePage = () => {
               [theme.breakpoints.down('sm')]: {
                 padding: '0 8px',
                 mb: 3,
+                // Center title on mobile
+                flexDirection: 'column', // Stack title and arrows vertically
+                alignItems: 'center', // Center items horizontally
               }
             }}>
               <Typography
@@ -2383,6 +2464,10 @@ const HomePage = () => {
                   [theme.breakpoints.down('sm')]: {
                     mt: 1,
                     ml: 1,
+                    // Ensure title is centered when stacked
+                    textAlign: 'center',
+                    width: '100%', // Take full width for centering
+                    mb: 1, // Add margin below title on mobile
                   }
                 }}
               >
@@ -2393,8 +2478,10 @@ const HomePage = () => {
                 gap: 1,
                 [theme.breakpoints.down('sm')]: {
                   position: 'relative',
-                  right: 0,
+                  right: '0', // Reset right positioning if needed
                   top: 0,
+                   // Shift arrows slightly left by reducing gap or adding negative margin
+                   marginLeft: '-5px', // Example shift
                 }
               }}>
                 <Button
@@ -2441,12 +2528,14 @@ const HomePage = () => {
                 "&::-webkit-scrollbar": { display: "none" },
                 msOverflowStyle: "none",
                 minHeight: { xs: "130px", md: "150px" },
-                px: { xs: 1, md: 0 },
+                px: { xs: 0, md: 0 }, // Set inner padding to 0 on xs
                 width: '100%',
-                overflow: 'hidden',
+                scrollSnapType: 'x mandatory',
+                boxSizing: 'border-box', // Keep box-sizing
                 [theme.breakpoints.down('sm')]: {
-                  padding: '0 8px',
-                  mt: 1, // Add small top margin on mobile
+                  paddingLeft: 0, // Ensure inner padding is 0
+                  paddingRight: 0, // Ensure inner padding is 0
+                  mt: 1,
                 }
               }}
             >
@@ -2459,8 +2548,8 @@ const HomePage = () => {
                   <Card
                     key={user.id}
                     sx={{
-                      minWidth: { xs: 200, sm: 240, md: 280 },
-                      maxWidth: { xs: 200, sm: 240, md: 280 },
+                      minWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
+                      maxWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
                       bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
                       borderRadius: 2,
                       transition: "transform 0.2s, box-shadow 0.2s",
@@ -2476,6 +2565,9 @@ const HomePage = () => {
                       p: { xs: 1, md: 2 },
                       position: "relative",
                       border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                      scrollSnapAlign: 'start',
+                      boxSizing: 'border-box',
+                      mx: { xs: '1px', sm: 0 }, // Add small horizontal margin on xs
                     }}
                     onClick={() => handleUserClick(user.id)}
                   >
@@ -2573,7 +2665,6 @@ const HomePage = () => {
                 </Box>
               )}
             </Box>
-
           </Box>
         </Container>
       </Box>
