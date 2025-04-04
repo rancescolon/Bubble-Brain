@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, createContext, useContext } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, Search, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText } from "lucide-react"
+import { Plus, Search, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText, Heart } from "lucide-react"
 import { BackgroundContext } from "../App"
 
 // Create a context for navigation state
@@ -522,6 +522,46 @@ const Communities = () => {
 
     // Clear the message input
     setNewMessage("")
+  }
+
+  const handleLikeCommunity = async (communityId) => {
+    const token = sessionStorage.getItem("token")
+    const userId = sessionStorage.getItem("user") ? parseInt(sessionStorage.getItem("user")) : null
+
+    if (!token || !userId) {
+      alert("You must be logged in to like a community")
+      return
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_PATH}/groups/${communityId}/like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Update the communities list with the new like count
+      const updatedCommunities = communities.map((community) => {
+        if (community.id === communityId) {
+          return {
+            ...community,
+            likes: (community.likes || 0) + 1,
+          }
+        }
+        return community
+      })
+      setCommunities(updatedCommunities)
+    } catch (error) {
+      console.error("Error liking community:", error)
+      alert("Failed to like community. Please try again.")
+    }
   }
 
   // Chat Room Component
