@@ -19,6 +19,7 @@ const Friends = () => {
   const [allUsers, setAllUsers] = useState([])
   const [userSearchQuery, setUserSearchQuery] = useState("")
   const [showAllUsers, setShowAllUsers] = useState(false)
+  const [selectedOption, setSelectedOption] = useState(1) // 1 for Option 1 (with blocking), 2 for Option 2 (without blocking)
   const navigate = useNavigate()
 
   const fontStyle = {
@@ -51,7 +52,7 @@ const Friends = () => {
     })
       .then((res) => res.json())
       .then(async (result) => {
-        // Filter outgoing connections to only show accepted friends
+        // Filter outgoing connections to only show accepted friends that are not blocked
         const outgoingConnections = result[0].filter(
           (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
         )
@@ -66,7 +67,7 @@ const Friends = () => {
         })
         const incomingResult = await incomingResponse.json()
 
-        // Filter incoming connections to only show accepted friends
+        // Filter incoming connections to only show accepted friends that are not blocked
         const incomingConnections = incomingResult[0].filter(
           (conn) => conn.attributes?.status === "accepted" && !conn.attributes?.blocked,
         )
@@ -310,13 +311,15 @@ const Friends = () => {
         body: JSON.stringify({
           attributes: {
             blocked: true,
+            status: "blocked", // Add this to ensure the status is updated
           },
         }),
       })
 
       if (response.ok) {
         showNotification("User blocked successfully", "success")
-        loadFriends()
+        // Immediately remove the user from the friends list
+        setConnections(prevConnections => prevConnections.filter(conn => conn.id !== connectionId))
         loadBlockedUsers()
       } else {
         showNotification("Failed to block user", "error")
@@ -340,13 +343,15 @@ const Friends = () => {
         body: JSON.stringify({
           attributes: {
             blocked: false,
+            status: "accepted", // Set status back to accepted
           },
         }),
       })
 
       if (response.ok) {
         showNotification("User unblocked successfully", "success")
-        loadBlockedUsers()
+        loadBlockedUsers() // Update blocked users list
+        loadFriends() // Reload friends list to include the unblocked user
       } else {
         showNotification("Failed to unblock user", "error")
       }
@@ -586,12 +591,40 @@ const Friends = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-t-xl p-6 shadow-lg">
-            <h1 className="text-3xl font-bold text-[#1D1D20]" style={fontStyle}>
-              Friends
-            </h1>
-            <p className="text-gray-600 mt-2" style={fontStyle}>
-              Manage your Bubble Brain connections
-            </p>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-[#1D1D20]" style={fontStyle}>
+                  Friends
+                </h1>
+                <p className="text-gray-600 mt-2" style={fontStyle}>
+                  Manage your Bubble Brain connections
+                </p>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setSelectedOption(1)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    selectedOption === 1
+                      ? "bg-[#1D6EF1] text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                  style={fontStyle}
+                >
+                  Option 1
+                </button>
+                <button
+                  onClick={() => setSelectedOption(2)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    selectedOption === 2
+                      ? "bg-[#1D6EF1] text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                  style={fontStyle}
+                >
+                  Option 2
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Search and Add Friend */}
@@ -790,13 +823,15 @@ const Friends = () => {
                             >
                               <MessageCircle size={20} />
                             </button>
-                            <button
-                              onClick={() => handleBlockUser(chatUserId, friend.id)}
-                              className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-                              title="Block"
-                            >
-                              <Ban size={20} />
-                            </button>
+                            {selectedOption === 1 && (
+                              <button
+                                onClick={() => handleBlockUser(chatUserId, friend.id)}
+                                className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+                                title="Block"
+                              >
+                                <Ban size={20} />
+                              </button>
+                            )}
                             <button
                               onClick={() => handleRemoveFriend(friend.id)}
                               className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
@@ -822,39 +857,42 @@ const Friends = () => {
               </div>
             )}
 
-            {/* Blocked Users Section */}
-            {blockedUsers.length > 0 && (
+            {/* Blocked Users Section - Only show in Option 1 */}
+            {selectedOption === 1 && blockedUsers.length > 0 && (
               <div className="mt-8">
                 <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
                   Blocked Users
                 </h2>
                 <div className="space-y-4">
-                  {blockedUsers.map((blocked) => (
-                    <div key={blocked.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
-                      <div className="flex items-center">
-                        <div className="bg-gray-400 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
-                          <span style={fontStyle}>
-                            {blocked.toUser?.attributes?.name?.charAt(0).toUpperCase() || "?"}
-                          </span>
+                  {blockedUsers.map((blocked) => {
+                    const displayName = blocked.toUser?.attributes?.name || blocked.toUser?.email || "Unknown User"
+                    const displayInitial = (displayName[0] || "?").toUpperCase()
+                    
+                    return (
+                      <div key={blocked.id} className="flex items-center justify-between p-4 bg-gray-100 rounded-lg">
+                        <div className="flex items-center">
+                          <div className="bg-gray-400 rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
+                            <span style={fontStyle}>{displayInitial}</span>
+                          </div>
+                          <div>
+                            <h3 className="text-gray-800 font-semibold" style={fontStyle}>
+                              {displayName}
+                            </h3>
+                            <p className="text-gray-600 text-sm" style={fontStyle}>
+                              Blocked
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-gray-800 font-semibold" style={fontStyle}>
-                            {blocked.toUser?.attributes?.name || "Unknown User"}
-                          </h3>
-                          <p className="text-gray-600 text-sm" style={fontStyle}>
-                            Blocked
-                          </p>
-                        </div>
+                        <button
+                          onClick={() => handleUnblockUser(blocked.id)}
+                          className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+                          style={fontStyle}
+                        >
+                          Unblock
+                        </button>
                       </div>
-                      <button
-                        onClick={() => handleUnblockUser(blocked.id)}
-                        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
-                        style={fontStyle}
-                      >
-                        Unblock
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
