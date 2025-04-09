@@ -994,6 +994,39 @@ export default function CommunityView() {
     setShowMembers(!showMembers)
   }
 
+  // Add handleDeleteCommunity function
+  const handleDeleteCommunity = async () => {
+    if (!window.confirm("Are you sure you want to delete this community? This action cannot be undone.")) {
+      return;
+    }
+
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      showNotification("You must be logged in to delete a community", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/groups/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      showNotification("Community deleted successfully", "success");
+      navigate("/community"); // Navigate back to communities list
+    } catch (error) {
+      console.error("Error deleting community:", error);
+      showNotification("Failed to delete community", "error");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F4FDFF]">
@@ -1159,6 +1192,14 @@ export default function CommunityView() {
               >
                 <Users size={isMobile ? 14 : 18} className="mr-2" />
                 <span>Members</span>
+              </button>
+
+              <button
+                className={`bg-[#DC2626] hover:bg-[#DC2626]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                onClick={handleDeleteCommunity}
+              >
+                <Trash2 size={isMobile ? 14 : 18} className="mr-2" />
+                <span>Delete Community</span>
               </button>
             </div>
           </div>
