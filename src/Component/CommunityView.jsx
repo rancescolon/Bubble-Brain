@@ -37,6 +37,7 @@ import {
   InputLabel,
   Chip,
 } from "@mui/material"
+import TagSelector from "./tag-selector"
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
@@ -71,6 +72,7 @@ export default function CommunityView() {
   const [uploading, setUploading] = useState(false)
   const [userPreferences, setUserPreferences] = useState([])
   const [sortedStudySets, setSortedStudySets] = useState([])
+  const [userCategories, setUserCategories] = useState([])
 
   // Add school categories for tag selection
   const school_categories = {
@@ -467,6 +469,7 @@ export default function CommunityView() {
 
   useEffect(() => {
     fetchCommunityDetails()
+    fetchUserCategories()
   }, [id])
 
   // Auto-scroll to bottom of messages when they change
@@ -476,14 +479,6 @@ export default function CommunityView() {
 
   useEffect(() => {
     fetchUserPreferences()
-  }, [])
-
-  // Add this at the beginning of the component to ensure we have some default preferences
-  useEffect(() => {
-    // Set some default preferences if none are loaded yet
-    if (userPreferences.length === 0) {
-      setUserPreferences(["Foreign Languages", "Math", "Science"])
-    }
   }, [])
 
   // Add this useEffect to sort study sets whenever they or user preferences change
@@ -506,43 +501,17 @@ export default function CommunityView() {
     }
   }, [userPreferences, studySets])
 
-  // Add a useEffect to log the current state for debugging
-  useEffect(() => {
-    console.log("Current user preferences:", userPreferences)
-    console.log("Current study sets:", studySets)
-    console.log("Sorted study sets:", sortedStudySets)
-  }, [userPreferences, studySets, sortedStudySets])
-
   // Add this function to fetch user's category preferences
   const fetchUserPreferences = async () => {
     const token = sessionStorage.getItem("token")
     const userId = sessionStorage.getItem("user")
 
     if (!token || !userId) {
-      console.log("No token or user ID found, using default preferences")
-      setUserPreferences(["Foreign Languages", "Math", "Science"])
       return
     }
 
     try {
-      console.log("Fetching user preferences for user ID:", userId)
-
-      // First try to get preferences from sessionStorage (set during login)
-      const storedPreferences = sessionStorage.getItem("userPreferences")
-      if (storedPreferences) {
-        try {
-          const parsedPreferences = JSON.parse(storedPreferences)
-          console.log("Found stored preferences in session:", parsedPreferences)
-          if (Array.isArray(parsedPreferences) && parsedPreferences.length > 0) {
-            setUserPreferences(parsedPreferences)
-            return
-          }
-        } catch (e) {
-          console.error("Error parsing stored preferences:", e)
-        }
-      }
-
-      // If no stored preferences, try to get from badges
+      // Fetch user badges to get category preferences
       const response = await fetch(`${API_BASE_URL}/user-badge?userID=${userId}`, {
         headers: {
           "Content-Type": "application/json",
@@ -558,10 +527,7 @@ export default function CommunityView() {
 
       // Extract category names from badge attributes
       if (data && data[0] && data[0].length > 0) {
-        // For debugging
-        console.log("Raw user badges:", data[0])
-
-        // Extract preferences from badges
+        // Look for badges with type "category" or directly use the category name
         const preferences = data[0]
             .map((badge) => {
               // Try to get category from attributes first
@@ -569,71 +535,17 @@ export default function CommunityView() {
                 return badge.attributes.category
               }
               // If no category in attributes, use the badge name directly
-              // Remove any "badge-" prefix if it exists
-              const name = badge.name || ""
-              return name.startsWith("badge-") ? name.substring(6) : name
+              return badge.name
             })
-            .filter(Boolean) // Remove any undefined/null/empty values
+            .filter(Boolean) // Remove any undefined/null values
 
-        // Add some hardcoded preferences for testing if none are found
-        if (preferences.length === 0) {
-          preferences.push("Foreign Languages", "Math", "Science")
-        }
-
-        console.log("Extracted user preferences:", preferences)
+        console.log("User preferences extracted:", preferences)
         setUserPreferences(preferences)
-
-        // Store in sessionStorage for future use
-        sessionStorage.setItem("userPreferences", JSON.stringify(preferences))
-      } else {
-        // If no badges found, check if we have categories in localStorage
-        const localCategories = localStorage.getItem("selectedCategories")
-        if (localCategories) {
-          try {
-            const parsedCategories = JSON.parse(localCategories)
-            console.log("Found categories in localStorage:", parsedCategories)
-            if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
-              setUserPreferences(parsedCategories)
-              sessionStorage.setItem("userPreferences", JSON.stringify(parsedCategories))
-              return
-            }
-          } catch (e) {
-            console.error("Error parsing localStorage categories:", e)
-          }
-        }
-
-        // Default preferences if nothing else works
-        console.log("No preferences found, using defaults")
-        setUserPreferences(["Foreign Languages", "Math", "Science"])
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error)
-      // Set some default preferences for testing
-      setUserPreferences(["Foreign Languages", "Math", "Science"])
     }
   }
-
-  // Add this function to check for preferences in localStorage during component mount
-  useEffect(() => {
-    // Check if we already have preferences in state
-    if (userPreferences.length === 0) {
-      // Try to get from localStorage (set during category selection at first login)
-      const localCategories = localStorage.getItem("selectedCategories")
-      if (localCategories) {
-        try {
-          const parsedCategories = JSON.parse(localCategories)
-          console.log("Found categories in localStorage during mount:", parsedCategories)
-          if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
-            setUserPreferences(parsedCategories)
-            // Also store in sessionStorage for consistency
-            sessionStorage.setItem("userPreferences", JSON.stringify(parsedCategories))
-          }
-        } catch (e) {
-          console.error("Error parsing localStorage categories during mount:", e)
-        }
-      }
-    }
-  }, [])
 
   // Add this function to sort study sets based on user preferences
   const sortStudySetsByPreferences = () => {
@@ -645,8 +557,9 @@ export default function CommunityView() {
     // Create a copy of study sets to sort
     const sorted = [...studySets].sort((a, b) => {
       // Check if study set categories match user preferences
-      const aMatches = matchesUserInterests(a)
-      const bMatches = matchesUserInterests(b)
+      const aMatches = a.categories?.some((category) => userPreferences.includes(category)) || false
+
+      const bMatches = b.categories?.some((category) => userPreferences.includes(category)) || false
 
       // Sort matching sets first
       if (aMatches && !bMatches) return -1
@@ -659,7 +572,7 @@ export default function CommunityView() {
         sorted.map((set) => ({
           title: set.title,
           categories: set.categories,
-          matches: matchesUserInterests(set),
+          matches: set.categories?.some((cat) => userPreferences.includes(cat)),
         })),
     )
 
@@ -671,18 +584,10 @@ export default function CommunityView() {
     if (!userPreferences.length) return false
     if (!studySet.categories || !studySet.categories.length) return false
 
-    // Case-insensitive comparison
-    const normalizedPreferences = userPreferences.map((pref) => pref.toLowerCase())
-    const normalizedCategories = studySet.categories.map((cat) => cat.toLowerCase())
-
-    // Check if any category matches any preference
-    const matches = normalizedCategories.some((category) =>
-        normalizedPreferences.some((pref) => category.includes(pref) || pref.includes(category)),
+    // Check if any of the study set categories match user preferences
+    return studySet.categories.some(
+        (category) => userPreferences.includes(category) || userPreferences.some((pref) => pref === category),
     )
-
-    console.log(`Study set "${studySet.title}" categories:`, studySet.categories, "matches user preferences:", matches)
-
-    return matches
   }
 
   const fetchCommunityDetails = () => {
@@ -815,6 +720,78 @@ export default function CommunityView() {
         })
   }
 
+  // Add the fetchUserCategories function after the fetchMembers function
+  const fetchUserCategories = async () => {
+    const token = sessionStorage.getItem("token")
+    const userId = sessionStorage.getItem("user")
+
+    if (!token || !userId) {
+      return
+    }
+
+    try {
+      // Fetch user badges
+      const response = await fetch(`${API_BASE_URL}/user-badge?userID=${userId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user badges")
+      }
+
+      const data = await response.json()
+
+      // Extract category names from badge attributes
+      if (data && data[0] && data[0].length > 0) {
+        // First try to get categories from badge attributes
+        let categories = data[0]
+            .filter((badge) => badge.attributes && badge.attributes.type === "category")
+            .map((badge) => badge.attributes.category || badge.name)
+            .filter(Boolean)
+
+        // If no categories found in attributes, try to get them from badge names
+        if (categories.length === 0) {
+          // Get badge IDs first
+          const badgeIds = data[0].map((userBadge) => userBadge.badgeID).filter(Boolean)
+
+          // Fetch actual badge details if we have IDs
+          if (badgeIds.length > 0) {
+            const badgePromises = badgeIds.map((badgeId) =>
+                fetch(`${API_BASE_URL}/badge/${badgeId}`, {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                }).then((res) => res.json()),
+            )
+
+            const badgeResults = await Promise.all(badgePromises)
+
+            // Extract category names from badge names
+            categories = badgeResults
+                .filter((badge) => badge.attributes && badge.attributes.type === "category")
+                .map((badge) => badge.name)
+                .filter(Boolean)
+          }
+        }
+
+        console.log("User categories from badges:", categories)
+        setUserCategories(categories)
+      }
+    } catch (error) {
+      console.error("Error fetching user categories:", error)
+    }
+  }
+
+  useEffect(() => {
+    if (userCategories.length > 0) {
+      fetchStudySets()
+    }
+  }, [userCategories])
+
   const fetchMessages = () => {
     const token = sessionStorage.getItem("token")
 
@@ -869,236 +846,196 @@ export default function CommunityView() {
         })
   }
 
+  // Update the fetchStudySets function to enhance study sets with match information
+  // Replace or modify the existing fetchStudySets function with this enhanced version
+  // that adds matchesUserInterests and matchCount properties to each study set
   const fetchStudySets = () => {
     const token = sessionStorage.getItem("token")
     const currentCommunityId = id // Keep as string for comparison
-    const userId = sessionStorage.getItem("user") // Get current user ID
-
-    // First check if the user is a member of this community
-    const checkMembership = async () => {
-      try {
-        if (!userId) return false
-
-        const membershipResponse = await fetch(
-            `${API_BASE_URL}/group-members?groupID=${currentCommunityId}&userID=${userId}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            },
-        )
-
-        if (!membershipResponse.ok) {
-          console.warn("Failed to check membership status")
-          return false
-        }
-
-        const membershipData = await membershipResponse.json()
-        return membershipData && membershipData[0] && membershipData[0].length > 0
-      } catch (error) {
-        console.error("Error checking membership:", error)
-        return false
-      }
-    }
 
     // Try to fetch study sets specifically for this community
-    checkMembership().then((isMember) => {
-      fetch(`${API_BASE_URL}/posts?type=study_set`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-          .then((res) => {
-            if (!res.ok) {
-              throw new Error(`HTTP error! status: ${res.status}`)
-            }
-            return res.json()
-          })
-          .then((result) => {
-            if (result && result[0] && result[0].length > 0) {
-              // First, filter to only include study sets for this community
-              const communityStudySets = result[0]
-                  .filter((post) => {
-                    // Try to parse the content to check for communityId
-                    let contentObj = null
-                    try {
-                      if (post.content && typeof post.content === "string") {
-                        contentObj = JSON.parse(post.content)
-                      }
-                    } catch (e) {
-                      console.warn("Could not parse content for post", post.id)
-                    }
-
-                    // Check if communityId is in the content
-                    if (contentObj && contentObj.communityId === currentCommunityId) {
-                      return true
-                    }
-
-                    // Check if the post has our custom attribute that indicates the community
-                    if (post.attributes && post.attributes.communityId === currentCommunityId) {
-                      return true
-                    }
-
-                    // Check if parentID matches the community ID
-                    if (post.parentID && String(post.parentID) === currentCommunityId) {
-                      return true
-                    }
-
-                    // Also check the groupID as string comparison
-                    const postGroupId = String(post.groupID || "")
-                    const belongsViaGroupId = postGroupId === currentCommunityId
-
-                    return (
-                        belongsViaGroupId ||
-                        (contentObj && contentObj.communityId === currentCommunityId) ||
-                        (post.attributes && post.attributes.communityId === currentCommunityId) ||
-                        (post.parentID && String(post.parentID) === currentCommunityId)
-                    )
-                  })
-                  .filter((post) => {
-                    // Check if the study set is members-only and filter accordingly
-                    let contentObj = null
-                    try {
-                      if (post.content && typeof post.content === "string") {
-                        contentObj = JSON.parse(post.content)
-                      }
-                    } catch (e) {
-                      console.warn("Could not parse content for post", post.id)
-                    }
-
-                    // Check if current user is the creator of the post
-                    const isCreator = post.authorID === Number.parseInt(userId) || post.authorID === userId
-
-                    // If user is the creator, always show the post
-                    if (isCreator) {
-                      return true
-                    }
-
-                    // Get access control settings
-                    const postAccessType =
-                        contentObj?.accessType ||
-                        post.attributes?.accessType ||
-                        (contentObj?.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone")
-
-                    const selectedMembers = contentObj?.selectedMembers || post.attributes?.selectedMembers || []
-
-                    // If access is for everyone, show the post
-                    if (postAccessType === "everyone") {
-                      return true
-                    }
-
-                    // If access is for all members and user is a member, show the post
-                    if (postAccessType === "allMembers" && isMember) {
-                      return true
-                    }
-
-                    // If access is for specific members, check if user is in the list
-                    if (postAccessType === "specificMembers") {
-                      if (selectedMembers.includes(Number.parseInt(userId)) || selectedMembers.includes(userId)) {
-                        return true
-                      }
-                      return false
-                    }
-
-                    // For backward compatibility, check the old membersOnly flag
-                    const isMembersOnly =
-                        (contentObj && contentObj.membersOnly === true) ||
-                        (post.attributes && post.attributes.membersOnly === true)
-
-                    // If it's members-only and user is not a member, filter it out
-                    if (isMembersOnly && !isMember) {
-                      return false
-                    }
-
-                    // Default behavior - if not members-only, show to everyone
-                    return !isMembersOnly || (isMembersOnly && isMember)
-                  })
-
-              // Transform API data to match our component's expected format
-              const studySetsData = communityStudySets
-                  .map((post) => {
-                    try {
-                      // Try to parse the content as JSON, but handle invalid JSON gracefully
-                      let content = {}
-
-                      try {
-                        if (post.content && typeof post.content === "string") {
-                          content = JSON.parse(post.content)
-
-                          // If we don't have a name, use a default
-                          if (!content.name) {
-                            content.name = "Untitled Study Set"
-                          }
-
-                          // If we don't have a type, use a default
-                          if (!content.type) {
-                            content.type = "flashcards"
-                          }
-
-                          // If we don't have content array, use an empty array
-                          if (!Array.isArray(content.content)) {
-                            content.content = []
-                          }
-                        }
-                      } catch (parseError) {
-                        console.warn("Could not parse post content as JSON:", parseError.message)
-                        // Create a default content object for non-JSON content
-                        content = {
-                          name: "Untitled Study Set",
-                          type: "flashcards",
-                          content: [{ front: post.content || "Content unavailable", back: "" }],
-                        }
-                      }
-
-                      // Include all study sets with reasonable defaults
-                      const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-                      const creator = post.author?.id
-
-                      // Determine access type for display
-                      const accessType =
-                          content.accessType ||
-                          post.attributes?.accessType ||
-                          (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone")
-
-                      const selectedMembers = content.selectedMembers || post.attributes?.selectedMembers || []
-
-                      return {
-                        id: post.id,
-                        title: content.name || "Untitled Study Set",
-                        description: `Created by ${creatorName}`,
-                        type: content.type || "flashcards",
-                        content: content.content || [],
-                        fileId: post.fileId,
-                        groupID: post.groupID,
-                        communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
-                        creator: creator,
-                        membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
-                        accessType: accessType,
-                        selectedMembers: selectedMembers,
-                        categories: content.categories || post.attributes?.categories || [],
-                        tags: content.tags || post.attributes?.tags || [],
-                      }
-                    } catch (error) {
-                      console.error("Error processing post:", error)
-                      return null
-                    }
-                  })
-                  .filter(Boolean) // Remove null entries
-
-              setStudySets(studySetsData)
-            } else {
-              setStudySets([])
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching study sets:", error)
-            setStudySets([])
-          })
+    fetch(`${API_BASE_URL}/posts?type=study_set`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     })
+        .then((res) => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`)
+          }
+          return res.json()
+        })
+        .then((result) => {
+          if (result && result[0] && result[0].length > 0) {
+            // First, filter to only include study sets for this community
+            const communityStudySets = result[0].filter((post) => {
+              // Try to parse the content to check for communityId
+              let contentObj = null
+              try {
+                if (post.content && typeof post.content === "string") {
+                  contentObj = JSON.parse(post.content)
+                }
+              } catch (e) {
+                console.warn("Could not parse content for post", post.id)
+              }
+
+              // Check if communityId is in the content
+              if (contentObj && contentObj.communityId === currentCommunityId) {
+                return true
+              }
+
+              // Check if the post has our custom attribute that indicates the community
+              if (post.attributes && post.attributes.communityId === currentCommunityId) {
+                return true
+              }
+
+              // Check if parentID matches the community ID
+              if (post.parentID && String(post.parentID) === currentCommunityId) {
+                return true
+              }
+
+              // Also check if the groupID as string comparison
+              const postGroupId = String(post.groupID || "")
+              const belongsViaGroupId = postGroupId === currentCommunityId
+
+              return (
+                  belongsViaGroupId ||
+                  (contentObj && contentObj.communityId === currentCommunityId) ||
+                  (post.attributes && post.attributes.communityId === currentCommunityId) ||
+                  (post.parentID && String(post.parentID) === currentCommunityId)
+              )
+            })
+
+            // Transform API data to match our component's expected format
+            const studySetsData = communityStudySets
+                .map((post) => {
+                  try {
+                    // Try to parse the content as JSON, but handle invalid JSON gracefully
+                    let content = {}
+
+                    try {
+                      if (post.content && typeof post.content === "string") {
+                        content = JSON.parse(post.content)
+
+                        // If we don't have a name, use a default
+                        if (!content.name) {
+                          content.name = "Untitled Study Set"
+                        }
+
+                        // If we don't have a type, use a default
+                        if (!content.type) {
+                          content.type = "flashcards"
+                        }
+
+                        // If we don't have content array, use an empty array
+                        if (!Array.isArray(content.content)) {
+                          content.content = []
+                        }
+                      }
+                    } catch (parseError) {
+                      console.warn("Could not parse post content as JSON:", parseError.message)
+                      // Create a default content object for non-JSON content
+                      content = {
+                        name: "Untitled Study Set",
+                        type: "flashcards",
+                        content: [{ front: post.content || "Content unavailable", back: "" }],
+                      }
+                    }
+
+                    // Extract categories and tags from different possible locations
+                    let categories = []
+                    let tags = []
+
+                    // Try to get categories and tags from content
+                    if (content.categories) {
+                      categories = Array.isArray(content.categories) ? content.categories : []
+                    }
+
+                    if (content.tags) {
+                      tags = Array.isArray(content.tags) ? content.tags : []
+                    }
+
+                    // Also check post attributes for categories and tags (used by template-manager)
+                    if (post.attributes) {
+                      // If attributes has categories as a string, split it
+                      if (post.attributes.categories && typeof post.attributes.categories === "string") {
+                        const attrCategories = post.attributes.categories.split(",").filter(Boolean)
+                        // Merge with existing categories, avoiding duplicates
+                        categories = [...new Set([...categories, ...attrCategories])]
+                      }
+
+                      // If attributes has tags as a string, split it
+                      if (post.attributes.tags && typeof post.attributes.tags === "string") {
+                        const attrTags = post.attributes.tags.split(",").filter(Boolean)
+                        // Merge with existing tags, avoiding duplicates
+                        tags = [...new Set([...tags, ...attrTags])]
+                      }
+                    }
+
+                    // Include all study sets with reasonable defaults
+                    const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
+                    const creator = post.author?.id
+
+                    return {
+                      id: post.id,
+                      title: content.name || "Untitled Study Set",
+                      description: `Created by ${creatorName}`,
+                      type: content.type || "flashcards",
+                      content: content.content || [],
+                      fileId: post.fileId,
+                      groupID: post.groupID,
+                      communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                      creator: creator,
+                      categories: categories,
+                      tags: tags,
+                      createdAt: post.createdAt || post.created || new Date().toISOString(),
+                      matchesUserInterests: false, // We'll set this later
+                      matchCount: 0, // We'll calculate this later
+                    }
+                  } catch (error) {
+                    console.error("Error processing post:", error)
+                    return null
+                  }
+                })
+                .filter(Boolean) // Remove null entries
+
+            // Calculate match count and flag for each study set
+            const enhancedStudySets = studySetsData.map((studySet) => {
+              // Count how many categories match user interests
+              const matchCount = studySet.categories.filter((cat) => userCategories.includes(cat)).length
+
+              return {
+                ...studySet,
+                matchesUserInterests: matchCount > 0,
+                matchCount: matchCount,
+              }
+            })
+
+            // Sort study sets: first by match count (descending), then by creation date (newest first)
+            const sortedStudySets = enhancedStudySets.sort((a, b) => {
+              // First sort by match count
+              if (a.matchCount !== b.matchCount) {
+                return b.matchCount - a.matchCount
+              }
+
+              // If match counts are equal, sort by creation date (newest first)
+              return new Date(b.createdAt) - new Date(a.createdAt)
+            })
+
+            console.log("User categories:", userCategories)
+            console.log("Sorted study sets:", sortedStudySets)
+
+            setStudySets(sortedStudySets)
+          } else {
+            setStudySets([])
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching study sets:", error)
+          setStudySets([])
+        })
   }
 
   const handleBack = () => {
@@ -1825,17 +1762,21 @@ export default function CommunityView() {
             {/* Study Sets Section */}
             {studySets.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 w-full">
-                  {sortedStudySets
+                  {studySets
                       .filter((set) => selectedType === "all" || set.type === selectedType)
                       .map((studySet) => (
                           <div
                               key={studySet.id}
-                              className="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1"
+                              className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${
+                                  studySet.matchesUserInterests ? "border-l-4 border-[#1D6EF1]" : ""
+                              }`}
                           >
                             <div className={`p-${isMobile ? "3" : "5"}`}>
                               <div className="flex items-start">
                                 <div
-                                    className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "10" : "12"} h-${isMobile ? "10" : "12"} flex items-center justify-center text-white mr-${isMobile ? "2" : "4"} flex-shrink-0`}
+                                    className={`${
+                                        studySet.matchesUserInterests ? "bg-[#1D6EF1]" : "bg-[#1D6EF1]"
+                                    } rounded-full w-${isMobile ? "10" : "12"} h-${isMobile ? "10" : "12"} flex items-center justify-center text-white mr-${isMobile ? "2" : "4"} flex-shrink-0`}
                                 >
                                   <span className="font-semibold">{studySet.title.charAt(0)}</span>
                                 </div>
@@ -1847,93 +1788,56 @@ export default function CommunityView() {
                                           onClick={() => handleViewStudySet(studySet)}
                                       >
                                         {studySet.title}
-                                      </h2>
-                                      {matchesUserInterests(studySet) && (
-                                          <div className="mt-1 text-[#1D6EF1] text-sm font-medium flex items-center">
-                                  <span className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-4 w-4 mr-1"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                      <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
+                                        {studySet.matchesUserInterests && (
+                                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                     Matches your interests
                                   </span>
-                                          </div>
-                                      )}
-
-                                      {/* Add the badge here for members-only study sets */}
-                                      {studySet.membersOnly && (
-                                          <div className="mt-1 bg-[#1D6EF1] text-white px-2 py-1 rounded-md flex items-center gap-1 shadow-sm inline-block">
-                                            <Lock size={14} />
-                                            <span className={`text-[${isMobile ? "10px" : "12px"}]`}>
-                                    {studySet.selectedMembers && studySet.selectedMembers.length > 0
-                                        ? "Selected Members"
-                                        : "Members Only"}
-                                  </span>
-                                          </div>
-                                      )}
+                                        )}
+                                      </h2>
+                                      <p
+                                          className={`${isMobile ? "text-[12px]" : "text-[14px]"} text-[#1D1D20]/70 truncate text-left w-full`}
+                                      >
+                                        {studySet.description}
+                                      </p>
                                     </div>
-
-                                    {/* Template type and categories badges on the right */}
-                                    <div className="flex flex-wrap gap-1 items-center">
-                              <span className="text-[12px] bg-[#1D6EF1] text-white px-2 py-1 rounded-xl flex-shrink-0">
+                                    <div className="flex items-center gap-1 flex-wrap">
+                              <span
+                                  className={`${isMobile ? "text-[12px]" : "text-[14px]"} bg-[#1D1D20] px-${isMobile ? "2" : "3"} py-1 rounded-xl h-8 flex items-center`}
+                              >
                                 {formatStudySetType(studySet.type)}
                               </span>
-
                                       {studySet.categories &&
-                                          studySet.categories.map((category, idx) => (
-                                              <div key={`cat-${idx}`} className="relative group inline-flex items-center">
-                                                {/* The category badge */}
-                                                <span
-                                                    className={`text-[12px] px-2 py-1 rounded-xl inline-flex items-center ${
-                                                        userPreferences.some(
-                                                            (pref) =>
-                                                                pref.toLowerCase() === category.toLowerCase() ||
-                                                                category.toLowerCase().includes(pref.toLowerCase()) ||
-                                                                pref.toLowerCase().includes(category.toLowerCase()),
-                                                        )
-                                                            ? "bg-[#1D6EF1] text-white ring-2 ring-yellow-300 ring-offset-1"
-                                                            : category === "Math"
-                                                                ? "bg-[#7B1FA2] text-white"
-                                                                : category === "Foreign Languages"
-                                                                    ? "bg-[#1E88E5] text-white"
-                                                                    : category === "Philosophy"
-                                                                        ? "bg-[#5D4037] text-white"
-                                                                        : "bg-[#1D6EF1] text-white"
-                                                    }`}
-                                                >
+                                          studySet.categories.slice(0, 3).map((category, idx) => (
+                                              <div key={`cat-${idx}`} className="relative group">
+                                    <span
+                                        className={`text-[14px] ${
+                                            userCategories.includes(category)
+                                                ? "bg-[#48BB78] text-white"
+                                                : "bg-[#1D6EF1] text-[#F4FDFF]"
+                                        } px-3 py-1 rounded-xl flex items-center h-8 cursor-pointer`}
+                                    >
                                       {category}
+                                      {userCategories.includes(category) && <span className="ml-1 text-xs">★</span>}
                                     </span>
 
-                                                {/* Tooltip that appears on hover */}
+                                                {/* Tags that appear on hover - fixed positioning */}
                                                 {studySet.tags && studySet.tags.length > 0 && (
-                                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 top-full z-10 hidden group-hover:block">
-                                                      <div className="bg-white shadow-lg rounded-xl p-2 border border-gray-200 min-w-[120px]">
-                                                        <div className="flex flex-wrap gap-1">
-                                                          {studySet.tags
-                                                              .filter((tag) => school_categories[category]?.includes(tag))
-                                                              .map((tag, tagIdx) => (
-                                                                  <span
-                                                                      key={`tag-${tagIdx}`}
-                                                                      className="text-[12px] bg-[#F4FDFF] text-[#1D1D20] px-2 py-1 rounded-xl"
-                                                                  >
-                                                  {tag}
-                                                </span>
-                                                              ))}
-                                                          {studySet.tags.filter((tag) => school_categories[category]?.includes(tag))
-                                                              .length === 0 && (
-                                                              <span className="text-[12px] text-gray-500">No tags</span>
-                                                          )}
-                                                        </div>
+                                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-max bg-white shadow-lg rounded-lg p-3 hidden group-hover:block z-20 max-w-[250px] max-h-[200px] overflow-y-auto">
+                                                      <div className="flex flex-wrap gap-2 justify-center">
+                                                        {studySet.tags
+                                                            .filter((tag) => school_categories[category]?.includes(tag))
+                                                            .map((tag, tagIdx) => (
+                                                                <span
+                                                                    key={`hover-tag-${tagIdx}`}
+                                                                    className="text-[14px] bg-[#1D6EF1] text-[#F4FDFF] px-3 py-1.5 rounded-xl whitespace-nowrap font-medium"
+                                                                >
+                                                {tag}
+                                              </span>
+                                                            ))}
+                                                        {studySet.tags.filter((tag) => school_categories[category]?.includes(tag))
+                                                            .length === 0 && (
+                                                            <span className="text-[14px] text-gray-500">No tags for this category</span>
+                                                        )}
                                                       </div>
                                                     </div>
                                                 )}
@@ -1941,12 +1845,6 @@ export default function CommunityView() {
                                           ))}
                                     </div>
                                   </div>
-
-                                  <p
-                                      className={`${isMobile ? "text-[12px]" : "text-[14px]"} text-[#1D1D20]/70 truncate text-left w-full`}
-                                  >
-                                    {studySet.description}
-                                  </p>
 
                                   {/* Render tags */}
                                   {renderStudySetTags(studySet)}
@@ -2680,120 +2578,40 @@ export default function CommunityView() {
 
                   {/* Step 4: Categories & Tags */}
                   {currentStep === 4 && (
-                      <Box sx={{ p: 3 }}>
-                        <Typography
-                            variant="h6"
-                            sx={{
-                              fontFamily: "SourGummy, sans-serif",
-                              mb: 2,
-                            }}
-                        >
-                          Select Categories (up to 3)
-                        </Typography>
+                      <div>
+                        <div className="mb-6">
+                          <div className="flex justify-between items-center mb-4">
+                            <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>Add Tags</h3>
+                          </div>
 
-                        <Box sx={{ mb: 4 }}>
-                          <Grid container spacing={1}>
-                            {Object.keys(school_categories).map((category) => (
-                                <Grid item key={category}>
-                                  <Chip
-                                      label={category}
-                                      onClick={() => handleCategorySelect(category)}
-                                      color={selectedCategories.includes(category) ? "primary" : "default"}
-                                      sx={{
-                                        fontFamily: "SourGummy, sans-serif",
-                                        m: 0.5,
-                                        bgcolor: selectedCategories.includes(category) ? "#1D6EF1" : "#F4FDFF",
-                                        color: selectedCategories.includes(category) ? "white" : "#1D1D20",
-                                        "&:hover": {
-                                          bgcolor: selectedCategories.includes(category) ? "#1557B0" : "#E9ECEF",
-                                        },
-                                      }}
-                                  />
-                                </Grid>
-                            ))}
-                          </Grid>
-                          <Typography variant="caption" sx={{ display: "block", mt: 1, fontFamily: "SourGummy, sans-serif" }}>
-                            Selected: {selectedCategories.length}/3
-                          </Typography>
-                        </Box>
+                          <div className="max-h-[50vh] overflow-y-auto">
+                            <TagSelector
+                                selectedCategories={selectedCategories}
+                                setSelectedCategories={setSelectedCategories}
+                                selectedTags={selectedTags}
+                                setSelectedTags={setSelectedTags}
+                                school_categories={school_categories}
+                                isMobile={isMobile}
+                                embedded={true}
+                            />
+                          </div>
+                        </div>
 
-                        {selectedCategories.length > 0 && (
-                            <>
-                              <Typography
-                                  variant="h6"
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    mb: 2,
-                                  }}
-                              >
-                                Select Tags (up to 5)
-                              </Typography>
-
-                              <Box sx={{ mb: 4 }}>
-                                {selectedCategories.map((category) => (
-                                    <Box key={category} sx={{ mb: 2 }}>
-                                      <Typography variant="subtitle1" sx={{ fontFamily: "SourGummy, sans-serif", mb: 1 }}>
-                                        {category} Tags:
-                                      </Typography>
-                                      <Grid container spacing={1}>
-                                        {school_categories[category].map((tag) => (
-                                            <Grid item key={tag}>
-                                              <Chip
-                                                  label={tag}
-                                                  onClick={() => handleTagSelect(tag)}
-                                                  color={selectedTags.includes(tag) ? "primary" : "default"}
-                                                  size="small"
-                                                  sx={{
-                                                    fontFamily: "SourGummy, sans-serif",
-                                                    m: 0.5,
-                                                    bgcolor: selectedTags.includes(tag) ? "#1D6EF1" : "#F4FDFF",
-                                                    color: selectedTags.includes(tag) ? "white" : "#1D1D20",
-                                                    "&:hover": {
-                                                      bgcolor: selectedTags.includes(tag) ? "#1557B0" : "#E9ECEF",
-                                                    },
-                                                  }}
-                                              />
-                                            </Grid>
-                                        ))}
-                                      </Grid>
-                                    </Box>
-                                ))}
-                                <Typography
-                                    variant="caption"
-                                    sx={{ display: "block", mt: 1, fontFamily: "SourGummy, sans-serif" }}
-                                >
-                                  Selected: {selectedTags.length}/5
-                                </Typography>
-                              </Box>
-                            </>
-                        )}
-
-                        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-                          <Button
-                              variant="outlined"
-                              onClick={() => setCurrentStep(3)}
-                              sx={{
-                                fontFamily: "SourGummy, sans-serif",
-                              }}
+                        <div className="flex justify-between">
+                          <button
+                              className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                              onClick={handleBackStep}
                           >
                             Back
-                          </Button>
-                          <Button
-                              variant="contained"
+                          </button>
+                          <button
+                              className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={createStudySet}
-                              disabled={selectedCategories.length === 0 || uploading}
-                              sx={{
-                                bgcolor: "#EF7B6C",
-                                "&:hover": {
-                                  bgcolor: "#e66a59",
-                                },
-                                fontFamily: "SourGummy, sans-serif",
-                              }}
                           >
-                            {uploading ? "Posting..." : "Create Study Set"}
-                          </Button>
-                        </Box>
-                      </Box>
+                            Create Study Set
+                          </button>
+                        </div>
+                      </div>
                   )}
                 </div>
               </div>

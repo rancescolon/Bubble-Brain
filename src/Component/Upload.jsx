@@ -503,6 +503,15 @@ const Upload = () => {
     setTemplateType(template.type)
     setTemplateContent(template.content)
     setTemplateName(template.name)
+
+    // Extract categories and tags from the template if they exist
+    if (template.categories && Array.isArray(template.categories)) {
+      setSelectedCategories(template.categories)
+    }
+
+    if (template.tags && Array.isArray(template.tags)) {
+      setSelectedTags(template.tags)
+    }
   }
 
   const createPost = async () => {
@@ -1153,10 +1162,10 @@ const Upload = () => {
                                       label={tag}
                                       onClick={() => handleTagSelect(tag)}
                                       color={selectedTags.includes(tag) ? "primary" : "default"}
-                                      variant={selectedTags.includes(tag) ? "filled" : "outlined"}
-                                      size="small"
                                       sx={{
                                         fontFamily: "SourGummy, sans-serif",
+                                        bgcolor: selectedTags.includes(tag) ? "#1D6EF1" : "#F4FDFF",
+                                        color: selectedTags.includes(tag) ? "white" : "#1D1D20",
                                         "&:hover": {
                                           bgcolor: selectedTags.includes(tag) ? "#1557B0" : "#E9ECEF",
                                         },

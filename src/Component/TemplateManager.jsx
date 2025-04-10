@@ -1755,18 +1755,19 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         {/* Tags Dialog */}
         {showTagsDialog && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <TagSelector
-                  selectedCategories={selectedCategories}
-                  setSelectedCategories={setSelectedCategories}
-                  selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
-                  school_categories={school_categories}
-                  isMobile={isMobile}
-                  onCancel={() => setShowTagsDialog(false)}
-                  onSave={completeTemplateSave}
-                  saveButtonText="Save Template"
-              />
+              {/*<TagSelector*/}
+              {/*    selectedCategories={selectedCategories}*/}
+              {/*    setSelectedCategories={setSelectedCategories}*/}
+              {/*    selectedTags={selectedTags}*/}
+              {/*    setSelectedTags={setSelectedTags}*/}
+              {/*    school_categories={school_categories}*/}
+              {/*    isMobile={isMobile}*/}
+              {/*    onCancel={() => setShowTagsDialog(false)}*/}
+              {/*    onSave={completeTemplateSave}*/}
+              {/*    saveButtonText="Save Template"*/}
+              {/*/>*/}
             </div>
+
         )}
 
         <Snackbar
