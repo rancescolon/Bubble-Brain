@@ -1399,6 +1399,20 @@ export default function CommunityView() {
       )
     }
 
+    // Add tag badges
+    if (studySet.tags && studySet.tags.length > 0) {
+      // studySet.tags.forEach((tag, index) => {
+      //   tags.push(
+      //       <span
+      //           key={`tag-${index}`}
+      //           className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700 ring-1 ring-inset ring-yellow-700/10 mr-1"
+      //       >
+      //       {tag}
+      //     </span>,
+      //   )
+      // })
+    }
+
     return tags.length > 0 ? <div className="mt-2 flex flex-wrap gap-1">{tags}</div> : null
   }
 
@@ -1637,36 +1651,38 @@ export default function CommunityView() {
 
                                     {/* Template type and categories badges on the right */}
                                     <div className="flex flex-wrap gap-1 items-center">
-                              <span className="text-[12px] bg-[#1D6EF1] text-white px-2 py-1 rounded-xl flex-shrink-0">
+                              <span className="text-[12px] bg-[#48BB78] text-white px-2 py-1 rounded-xl flex-shrink-0">
                                 {formatStudySetType(studySet.type)}
                               </span>
 
-                                      {/* Display categories next to template type */}
                                       {studySet.categories &&
                                           studySet.categories.map((category, idx) => (
-                                              <div key={`cat-${idx}`} className="relative group">
-                                    <span className="text-[12px] px-2 py-1 rounded-xl bg-[#1D6EF1] text-white">
+                                              <div key={`cat-${idx}`} className="relative group inline-flex items-center">
+                                                {/* The category badge */}
+                                                <span
+                                                    className={`text-[12px] px-2 py-1 rounded-xl inline-flex items-center bg-[#1D6EF1] text-white`}
+                                                >
                                       {category}
                                     </span>
 
                                                 {/* Tooltip that appears on hover */}
                                                 {studySet.tags && studySet.tags.length > 0 && (
-                                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 z-10 hidden group-hover:block">
-                                                      <div className="bg-white shadow-lg rounded-md p-2 border border-gray-200">
-                                                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                    <div className="absolute left-1/2 transform -translate-x-1/2 mt-1 top-full z-10 hidden group-hover:block">
+                                                      <div className="bg-white shadow-lg rounded-xl p-2 border border-gray-200 min-w-[120px]">
+                                                        <div className="flex flex-wrap gap-1">
                                                           {studySet.tags
                                                               .filter((tag) => school_categories[category]?.includes(tag))
                                                               .map((tag, tagIdx) => (
                                                                   <span
                                                                       key={`tag-${tagIdx}`}
-                                                                      className="text-[10px] bg-[#F4FDFF] text-[#1D1D20] px-2 py-0.5 rounded-md"
+                                                                      className="text-[12px] bg-[#F4FDFF] text-[#1D1D20] px-2 py-1 rounded-xl"
                                                                   >
                                                   {tag}
                                                 </span>
                                                               ))}
                                                           {studySet.tags.filter((tag) => school_categories[category]?.includes(tag))
                                                               .length === 0 && (
-                                                              <span className="text-[10px] text-gray-500">No tags</span>
+                                                              <span className="text-[12px] text-gray-500">No tags</span>
                                                           )}
                                                         </div>
                                                       </div>
