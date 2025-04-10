@@ -69,6 +69,8 @@ export default function CommunityView() {
   const [selectedCategories, setSelectedCategories] = useState([])
   const [selectedTags, setSelectedTags] = useState([])
   const [uploading, setUploading] = useState(false)
+  const [userPreferences, setUserPreferences] = useState([])
+  const [sortedStudySets, setSortedStudySets] = useState([])
 
   // Add school categories for tag selection
   const school_categories = {
@@ -471,6 +473,217 @@ export default function CommunityView() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
+
+  useEffect(() => {
+    fetchUserPreferences()
+  }, [])
+
+  // Add this at the beginning of the component to ensure we have some default preferences
+  useEffect(() => {
+    // Set some default preferences if none are loaded yet
+    if (userPreferences.length === 0) {
+      setUserPreferences(["Foreign Languages", "Math", "Science"])
+    }
+  }, [])
+
+  // Add this useEffect to sort study sets whenever they or user preferences change
+  useEffect(() => {
+    sortStudySetsByPreferences()
+  }, [studySets, userPreferences])
+
+  // Add a useEffect to log user preferences and study sets for debugging
+  useEffect(() => {
+    if (userPreferences.length > 0) {
+      console.log("Current user preferences:", userPreferences)
+      console.log(
+          "Study sets with categories:",
+          studySets.map((set) => ({
+            title: set.title,
+            categories: set.categories,
+            matches: set.categories?.some((cat) => userPreferences.includes(cat)),
+          })),
+      )
+    }
+  }, [userPreferences, studySets])
+
+  // Add a useEffect to log the current state for debugging
+  useEffect(() => {
+    console.log("Current user preferences:", userPreferences)
+    console.log("Current study sets:", studySets)
+    console.log("Sorted study sets:", sortedStudySets)
+  }, [userPreferences, studySets, sortedStudySets])
+
+  // Add this function to fetch user's category preferences
+  const fetchUserPreferences = async () => {
+    const token = sessionStorage.getItem("token")
+    const userId = sessionStorage.getItem("user")
+
+    if (!token || !userId) {
+      console.log("No token or user ID found, using default preferences")
+      setUserPreferences(["Foreign Languages", "Math", "Science"])
+      return
+    }
+
+    try {
+      console.log("Fetching user preferences for user ID:", userId)
+
+      // First try to get preferences from sessionStorage (set during login)
+      const storedPreferences = sessionStorage.getItem("userPreferences")
+      if (storedPreferences) {
+        try {
+          const parsedPreferences = JSON.parse(storedPreferences)
+          console.log("Found stored preferences in session:", parsedPreferences)
+          if (Array.isArray(parsedPreferences) && parsedPreferences.length > 0) {
+            setUserPreferences(parsedPreferences)
+            return
+          }
+        } catch (e) {
+          console.error("Error parsing stored preferences:", e)
+        }
+      }
+
+      // If no stored preferences, try to get from badges
+      const response = await fetch(`${API_BASE_URL}/user-badge?userID=${userId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user preferences")
+      }
+
+      const data = await response.json()
+
+      // Extract category names from badge attributes
+      if (data && data[0] && data[0].length > 0) {
+        // For debugging
+        console.log("Raw user badges:", data[0])
+
+        // Extract preferences from badges
+        const preferences = data[0]
+            .map((badge) => {
+              // Try to get category from attributes first
+              if (badge.attributes && badge.attributes.category) {
+                return badge.attributes.category
+              }
+              // If no category in attributes, use the badge name directly
+              // Remove any "badge-" prefix if it exists
+              const name = badge.name || ""
+              return name.startsWith("badge-") ? name.substring(6) : name
+            })
+            .filter(Boolean) // Remove any undefined/null/empty values
+
+        // Add some hardcoded preferences for testing if none are found
+        if (preferences.length === 0) {
+          preferences.push("Foreign Languages", "Math", "Science")
+        }
+
+        console.log("Extracted user preferences:", preferences)
+        setUserPreferences(preferences)
+
+        // Store in sessionStorage for future use
+        sessionStorage.setItem("userPreferences", JSON.stringify(preferences))
+      } else {
+        // If no badges found, check if we have categories in localStorage
+        const localCategories = localStorage.getItem("selectedCategories")
+        if (localCategories) {
+          try {
+            const parsedCategories = JSON.parse(localCategories)
+            console.log("Found categories in localStorage:", parsedCategories)
+            if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+              setUserPreferences(parsedCategories)
+              sessionStorage.setItem("userPreferences", JSON.stringify(parsedCategories))
+              return
+            }
+          } catch (e) {
+            console.error("Error parsing localStorage categories:", e)
+          }
+        }
+
+        // Default preferences if nothing else works
+        console.log("No preferences found, using defaults")
+        setUserPreferences(["Foreign Languages", "Math", "Science"])
+      }
+    } catch (error) {
+      console.error("Error fetching user preferences:", error)
+      // Set some default preferences for testing
+      setUserPreferences(["Foreign Languages", "Math", "Science"])
+    }
+  }
+
+  // Add this function to check for preferences in localStorage during component mount
+  useEffect(() => {
+    // Check if we already have preferences in state
+    if (userPreferences.length === 0) {
+      // Try to get from localStorage (set during category selection at first login)
+      const localCategories = localStorage.getItem("selectedCategories")
+      if (localCategories) {
+        try {
+          const parsedCategories = JSON.parse(localCategories)
+          console.log("Found categories in localStorage during mount:", parsedCategories)
+          if (Array.isArray(parsedCategories) && parsedCategories.length > 0) {
+            setUserPreferences(parsedCategories)
+            // Also store in sessionStorage for consistency
+            sessionStorage.setItem("userPreferences", JSON.stringify(parsedCategories))
+          }
+        } catch (e) {
+          console.error("Error parsing localStorage categories during mount:", e)
+        }
+      }
+    }
+  }, [])
+
+  // Add this function to sort study sets based on user preferences
+  const sortStudySetsByPreferences = () => {
+    if (!studySets.length) {
+      setSortedStudySets([])
+      return
+    }
+
+    // Create a copy of study sets to sort
+    const sorted = [...studySets].sort((a, b) => {
+      // Check if study set categories match user preferences
+      const aMatches = matchesUserInterests(a)
+      const bMatches = matchesUserInterests(b)
+
+      // Sort matching sets first
+      if (aMatches && !bMatches) return -1
+      if (!aMatches && bMatches) return 1
+      return 0
+    })
+
+    console.log(
+        "Sorted study sets:",
+        sorted.map((set) => ({
+          title: set.title,
+          categories: set.categories,
+          matches: matchesUserInterests(set),
+        })),
+    )
+
+    setSortedStudySets(sorted)
+  }
+
+  // Add this function to check if a study set matches user preferences
+  const matchesUserInterests = (studySet) => {
+    if (!userPreferences.length) return false
+    if (!studySet.categories || !studySet.categories.length) return false
+
+    // Case-insensitive comparison
+    const normalizedPreferences = userPreferences.map((pref) => pref.toLowerCase())
+    const normalizedCategories = studySet.categories.map((cat) => cat.toLowerCase())
+
+    // Check if any category matches any preference
+    const matches = normalizedCategories.some((category) =>
+        normalizedPreferences.some((pref) => category.includes(pref) || pref.includes(category)),
+    )
+
+    console.log(`Study set "${studySet.title}" categories:`, studySet.categories, "matches user preferences:", matches)
+
+    return matches
+  }
 
   const fetchCommunityDetails = () => {
     const token = sessionStorage.getItem("token")
@@ -1612,7 +1825,7 @@ export default function CommunityView() {
             {/* Study Sets Section */}
             {studySets.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 w-full">
-                  {studySets
+                  {sortedStudySets
                       .filter((set) => selectedType === "all" || set.type === selectedType)
                       .map((studySet) => (
                           <div
@@ -1635,6 +1848,27 @@ export default function CommunityView() {
                                       >
                                         {studySet.title}
                                       </h2>
+                                      {matchesUserInterests(studySet) && (
+                                          <div className="mt-1 text-[#1D6EF1] text-sm font-medium flex items-center">
+                                  <span className="inline-flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 mr-1"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                      <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                    Matches your interests
+                                  </span>
+                                          </div>
+                                      )}
 
                                       {/* Add the badge here for members-only study sets */}
                                       {studySet.membersOnly && (
@@ -1651,7 +1885,7 @@ export default function CommunityView() {
 
                                     {/* Template type and categories badges on the right */}
                                     <div className="flex flex-wrap gap-1 items-center">
-                              <span className="text-[12px] bg-[#48BB78] text-white px-2 py-1 rounded-xl flex-shrink-0">
+                              <span className="text-[12px] bg-[#1D6EF1] text-white px-2 py-1 rounded-xl flex-shrink-0">
                                 {formatStudySetType(studySet.type)}
                               </span>
 
@@ -1660,7 +1894,22 @@ export default function CommunityView() {
                                               <div key={`cat-${idx}`} className="relative group inline-flex items-center">
                                                 {/* The category badge */}
                                                 <span
-                                                    className={`text-[12px] px-2 py-1 rounded-xl inline-flex items-center bg-[#1D6EF1] text-white`}
+                                                    className={`text-[12px] px-2 py-1 rounded-xl inline-flex items-center ${
+                                                        userPreferences.some(
+                                                            (pref) =>
+                                                                pref.toLowerCase() === category.toLowerCase() ||
+                                                                category.toLowerCase().includes(pref.toLowerCase()) ||
+                                                                pref.toLowerCase().includes(category.toLowerCase()),
+                                                        )
+                                                            ? "bg-[#1D6EF1] text-white ring-2 ring-yellow-300 ring-offset-1"
+                                                            : category === "Math"
+                                                                ? "bg-[#7B1FA2] text-white"
+                                                                : category === "Foreign Languages"
+                                                                    ? "bg-[#1E88E5] text-white"
+                                                                    : category === "Philosophy"
+                                                                        ? "bg-[#5D4037] text-white"
+                                                                        : "bg-[#1D6EF1] text-white"
+                                                    }`}
                                                 >
                                       {category}
                                     </span>
