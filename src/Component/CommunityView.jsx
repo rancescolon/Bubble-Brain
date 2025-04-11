@@ -75,6 +75,9 @@ export default function CommunityView() {
   const [sortedStudySets, setSortedStudySets] = useState([])
   const [userCategories, setUserCategories] = useState([])
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
+  const [studySetPage, setStudySetPage] = useState(0)
+  const [hasMoreStudySets, setHasMoreStudySets] = useState(true)
+  const PAGE_SIZE = 10
 
   // Add school categories for tag selection
   const school_categories = {
