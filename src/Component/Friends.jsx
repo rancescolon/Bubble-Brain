@@ -842,6 +842,9 @@ const Friends = () => {
                       const chatUserId = isOutgoing ? friend.toUserID : friend.fromUserID
                       const displayName = friendUser?.attributes?.name || friendUser?.email || "Unknown User"
                       const displayInitial = (displayName[0] || "?").toUpperCase()
+                      // --- Extract picture URL for the friend ---
+                      const pictureUrl = friendUser?.picture || friendUser?.avatar || friendUser?.attributes?.picture || friendUser?.attributes?.profilePicture;
+                      // --- End of picture extraction ---
 
                       return (
                         <div
@@ -849,8 +852,30 @@ const Friends = () => {
                           className="flex items-center justify-between p-4 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors"
                         >
                           <div className="flex items-center">
-                            <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4">
-                              <span style={fontStyle}>{displayInitial}</span>
+                            <div className="bg-[#1D6EF1] rounded-full w-12 h-12 flex items-center justify-center text-white mr-4 flex-shrink-0 overflow-hidden">
+                              {shouldShowPics && pictureUrl ? (
+                                <img 
+                                  src={pictureUrl} 
+                                  alt={displayInitial}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    e.target.onerror = null; // prevent infinite loops
+                                    e.target.style.display = 'none'; // hide broken image
+                                    // Find the parent div and replace img with initial
+                                    const avatarContainer = e.target.parentNode;
+                                    if (avatarContainer) {
+                                      // Need to recreate the span with styles
+                                      avatarContainer.innerHTML = ''; // Clear broken img
+                                      const span = document.createElement('span');
+                                      span.style.fontFamily = 'SourGummy, sans-serif'; // Apply font style
+                                      span.textContent = displayInitial;
+                                      avatarContainer.appendChild(span);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span style={fontStyle}>{displayInitial}</span>
+                              )}
                             </div>
                             <div>
                               <h3 className="text-[#1D1D20] font-semibold" style={fontStyle}>
