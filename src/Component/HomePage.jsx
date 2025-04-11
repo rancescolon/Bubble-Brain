@@ -2506,7 +2506,7 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          {/* Active Users Section */}
+          {/* Active Users Section
           <Box
             sx={{
               mt: 6,
@@ -2776,7 +2776,7 @@ const HomePage = () => {
                 </Box>
               )}
             </Box>
-          </Box>
+          </Box> */}
         </Container>
       </Box>
       <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect, createContext, useContext } from "react"
+import { useState, useRef, useEffect, createContext, useContext, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Plus, Search, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText, Heart } from "lucide-react"
 import { BackgroundContext } from "../App"
@@ -78,10 +78,12 @@ const Communities = () => {
   const modalRef = useRef(null)
   const navigate = useNavigate()
   const [joinedCommunities, setJoinedCommunities] = useState([])
-
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const PAGE_SIZE = 20
   // Add a new state variable for tracking which community's share button was clicked
   const [copiedCommunityId, setCopiedCommunityId] = useState(null)
-
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
   // Communities state
   const [communities, setCommunities] = useState([])
 
@@ -100,6 +102,7 @@ const Communities = () => {
       backgroundAttachment: "scroll",
     }
   }
+  
 
   const toggleNav = () => {
     setNavOpen(!navOpen)
@@ -130,7 +133,7 @@ const Communities = () => {
   // Fetch communities on component mount
   useEffect(() => {
     fetchCommunities()
-  }, [])
+  }, [page])
 
   // Handle body overflow when nav is open on mobile
   useEffect(() => {
@@ -146,9 +149,10 @@ const Communities = () => {
   }, [navOpen])
 
   // Fetch communities from API
-  const fetchCommunities = () => {
+  const fetchCommunities = async () => {
     setLoading(true)
     setError(null)
+  
     const token = sessionStorage.getItem("token")
     const userId = sessionStorage.getItem("user") ? parseInt(sessionStorage.getItem("user")) : null
   
@@ -158,81 +162,62 @@ const Communities = () => {
       return
     }
   
-    // First fetch all communities
-    fetch(`${process.env.REACT_APP_API_PATH}/groups`, {
-      method: "GET",
-      headers: {
+    try {
+      const headers = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`)
-        return res.json()
-      })
-      .then(async (result) => {
-        if (result && result[0]) {
-          const communitiesData = result[0].map((group) => ({
-            id: group.id,
-            name: group.name,
-            description: group.description || "No description available",
-            authorId: group.ownerID,
-            members: [], // We'll fetch members separately if needed
-          }))
-          setCommunities(communitiesData)
+      }
   
-          // Now fetch group memberships for the current user
-          try {
-            // Fetch all groups the user is a member of
-            const membershipResponse = await fetch(
-              `${process.env.REACT_APP_API_PATH}/group-members?userID=${userId}`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            )
+      const offset = page * PAGE_SIZE
   
-            if (!membershipResponse.ok) {
-              throw new Error(`Failed to fetch memberships: ${membershipResponse.status}`)
-            }
+      // Fetch groups with offset/limit (MUST be supported by your API)
+      const [groupsRes, membershipsRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_PATH}/groups?offset=${offset}&limit=${PAGE_SIZE}`, { headers }),
+        fetch(`${process.env.REACT_APP_API_PATH}/group-members?userID=${userId}`, { headers }),
+      ])
   
-            const membershipData = await membershipResponse.json()
-            
-            if (membershipData && membershipData[0] && membershipData[0].length > 0) {
-              // Extract group IDs the user is a member of
-              const joinedGroupIds = membershipData[0].map(membership => membership.groupID)
-              
-              // Filter communities to only include those the user has joined
-              const userJoinedCommunities = communitiesData.filter(community => 
-                joinedGroupIds.includes(community.id) || community.authorId === userId
-              )
-              
-              setJoinedCommunities(userJoinedCommunities)
-            } else {
-              // If no memberships found, only include communities where user is author
-              const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
-              setJoinedCommunities(ownedCommunities)
-            }
-          } catch (error) {
-            console.error("Error fetching user memberships:", error)
-            // Fallback to just showing owned communities
-            const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
-            setJoinedCommunities(ownedCommunities)
-          }
+      if (!groupsRes.ok || !membershipsRes.ok) {
+        throw new Error("Failed to fetch groups or memberships")
+      }
   
-          // Still set myCommunities for communities owned by the user
-          const ownedCommunities = communitiesData.filter(community => community.authorId === userId)
-          setMyCommunities(ownedCommunities)
+      const groupsData = await groupsRes.json()
+      const membershipsData = await membershipsRes.json()
+  
+      const memberships = membershipsData[0] || []
+      const joinedGroupIds = memberships.map((m) => m.groupID)
+  
+      const newCommunities = groupsData[0]?.map((group) => {
+        const isJoined = joinedGroupIds.includes(group.id)
+        const isOwner = group.ownerID === userId
+        return {
+          id: group.id,
+          name: group.name,
+          description: group.description || "No description available",
+          authorId: group.ownerID,
+          members: [],
+          isJoined,
+          isOwner,
         }
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error("Error fetching communities:", error)
-        setError("Failed to load communities. Please try again later.")
-        setLoading(false)
-      })
+      }) || []
+  
+      // Append to existing state
+      setCommunities((prev) => [...prev, ...newCommunities])
+  
+      // Determine if there's more to load
+      if (newCommunities.length < PAGE_SIZE) {
+        setHasMore(false)
+      }
+  
+      // Update joined + owned only once (could be improved later)
+      const all = [...communities, ...newCommunities]
+      setJoinedCommunities(all.filter(c => c.isJoined || c.isOwner))
+      setMyCommunities(all.filter(c => c.isOwner))
+    } catch (error) {
+      console.error("Error fetching communities:", error)
+      setError("Failed to load communities. Please try again later.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Handle click outside of modal
@@ -264,9 +249,15 @@ const Communities = () => {
     return () => window.removeEventListener("resize", handleResize)
   }, [navOpen])
 
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timeout)
+  }, [searchQuery])
+
   // Filter communities based on search query
-  const filteredCommunities = communities.filter((community) =>
-      community.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredCommunities = useMemo(
+    () => communities.filter(c => c.name.toLowerCase().includes(debouncedQuery.toLowerCase())),
+    [debouncedQuery, communities]
   )
 
   const handleSubmit = () => {
