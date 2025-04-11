@@ -40,7 +40,8 @@ import defaultBackground from "./assets/image3.png" // Your existing background
 import background1 from "./assets/fish1.png" // Create this file
 import background2 from "./assets/fish1.png" // Create this file
 import background3 from "./assets/fish2.png" // Create this file
-import background4 from "./assets/fish3.png" // Create this file
+import background4 from "./assets/fish3.png"
+import CategorySelection from "./Component/category-selection"; // Create this file
 
 // Create Background Context
 export const BackgroundContext = createContext();
@@ -413,6 +414,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                 path="/login"
                 element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
               />
+              <Route path="/select-categories" element={<CategorySelection />} />
               <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
