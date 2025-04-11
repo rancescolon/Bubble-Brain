@@ -16,6 +16,7 @@ const CommunityMessaging = () => {
   const [isSending, setIsSending] = useState(false);
   const [members, setMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shouldShowPics, setShouldShowPics] = useState(true);
   
   const navigate = useNavigate();
   const userToken = sessionStorage.getItem("token");
@@ -32,6 +33,11 @@ const CommunityMessaging = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  useEffect(() => {
+    const storedSetting = localStorage.getItem("showProfilePics");
+    setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -216,9 +222,27 @@ const CommunityMessaging = () => {
               }
               
               const userData = await userResponse.json();
+
+              // --- Extract avatar/profile picture using prioritization ---
+              let pictureUrl = null;
+              const topLevelPic = userData.picture || userData.avatar; 
+              const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture;
+
+              if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+                pictureUrl = topLevelPic;
+              } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+                pictureUrl = attributePic;
+              } else if (topLevelPic) {
+                pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+              } else if (attributePic) {
+                pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+              }
+              // --- End of avatar extraction ---
+
               return {
                 id: member.userID,
                 name: userData.attributes?.name || userData.email?.split("@")[0] || `User ${member.userID}`,
+                picture: pictureUrl, // Store the extracted picture URL
                 isAdmin: member.userID === communityData?.ownerID,
                 isOnline: false // Default to offline, will be updated by socket events
               };
@@ -532,8 +556,25 @@ const CommunityMessaging = () => {
                   members.map((member) => (
                     <div key={member.id} className="flex items-center">
                       <div className={`w-3 h-3 rounded-full mr-2 ${member.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                      <div className="bg-[#1D6EF1] rounded-full w-8 h-8 flex items-center justify-center text-white mr-2">
-                        <span>{member.name.charAt(0).toUpperCase()}</span>
+                      <div className="bg-[#1D6EF1] rounded-full w-8 h-8 flex items-center justify-center text-white mr-2 overflow-hidden">
+                        {shouldShowPics && member.picture ? (
+                          <img 
+                            src={member.picture} 
+                            alt={member.name.charAt(0).toUpperCase()}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // prevent infinite loops
+                              e.target.style.display = 'none'; // hide broken image
+                              // Find the parent div and replace img with initial
+                              const avatarContainer = e.target.parentNode;
+                              if (avatarContainer) {
+                                avatarContainer.innerHTML = `<span>${member.name.charAt(0).toUpperCase()}</span>`;
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span>{member.name.charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
                       <div>
                         <p className="text-[#1D1D20]">{member.name}</p>
