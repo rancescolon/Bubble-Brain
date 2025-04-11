@@ -1050,7 +1050,7 @@ const Communities = () => {
                             </h2>
 
                             {filteredCommunities.length > 0 ? (
-                              <>
+                              
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                                   {filteredCommunities.map((community) => (
                                       <div
@@ -1101,18 +1101,7 @@ const Communities = () => {
                                       </div>
                                   ))}
                                 </div>
-                                {hasMore && !loading && (
-                                  <div className="flex justify-center mt-6">
-                                    <button
-                                      className="px-6 py-2 bg-[#1D6EF1] text-white rounded-lg hover:bg-[#97C7F1] transition"
-                                      onClick={() => setPage((p) => p + 1)}
-                                      style={fontStyle}
-                                    >
-                                      Load More
-                                    </button>
-                                  </div>
-                                )}
-                              </>
+                              
                             ) : (
                                 <div className="bg-white rounded-xl p-6 md:p-8 text-center">
                                   {communities.length === 0 ? (
