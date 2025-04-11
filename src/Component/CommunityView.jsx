@@ -39,6 +39,7 @@ export default function CommunityView() {
   const [membersOnly, setMembersOnly] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
   const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
+  const [shouldShowPics, setShouldShowPics] = useState(true) // Add state for pic visibility
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -104,6 +105,13 @@ export default function CommunityView() {
       // viewportMeta.content = 'width=device-width, initial-scale=1.0';
     }
   }, [])
+
+  // --- Add effect to read visibility setting --- 
+  useEffect(() => {
+    const storedSetting = localStorage.getItem("showProfilePics");
+    setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+  }, []);
+  // --- End of added effect ---
 
   // Get base URL for sharing
   const getBaseUrl = () => {
@@ -225,11 +233,28 @@ export default function CommunityView() {
 
                 const userData = await userResponse.json()
 
+                // --- Extract avatar/profile picture using prioritization ---
+                let pictureUrl = null;
+                const topLevelPic = userData.picture || userData.avatar; 
+                const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture;
+
+                if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+                  pictureUrl = topLevelPic;
+                } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+                  pictureUrl = attributePic;
+                } else if (topLevelPic) {
+                  pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+                } else if (attributePic) {
+                  pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+                }
+                // --- End of avatar extraction ---
+
                 return {
                   id: member.id,
                   userID: member.userID,
                   email: userData.email,
                   isAdmin: member.userID === community?.authorId,
+                  picture: pictureUrl, // Add picture to the member object
                 }
               } catch (error) {
                 console.error("Error fetching user details:", error)
@@ -368,10 +393,10 @@ export default function CommunityView() {
         }
         return res.json()
       })
-      .then((result) => {
+      .then(async (result) => { // Make this async to await author details
         if (result && result[0] && result[0].length > 0) {
           // First, filter to only include study sets for this community
-          const communityStudySets = result[0].filter((post) => {
+          const communityStudySetsPosts = result[0].filter((post) => {
             // Try to parse the content to check for communityId
             let contentObj = null
             try {
@@ -470,79 +495,85 @@ export default function CommunityView() {
               return !isMembersOnly || (isMembersOnly && isMember);
             });
 
-          // Transform API data to match our component's expected format
-          const studySetsData = communityStudySets
-            .map((post) => {
-              try {
-                // Try to parse the content as JSON, but handle invalid JSON gracefully
-                let content = {}
-
+          // Fetch author details for each filtered post
+          const studySetsData = await Promise.all(communityStudySetsPosts.map(async (post) => {
+            try {
+              // Fetch author details (including picture)
+              let authorDetails = { id: post.authorID, email: "Anonymous", picture: null }; // Default
+              if (post.authorID) {
                 try {
-                  if (post.content && typeof post.content === "string") {
-                    content = JSON.parse(post.content)
-
-                    // If we don't have a name, use a default
-                    if (!content.name) {
-                      content.name = "Untitled Study Set"
+                  const userResponse = await fetch(`${API_BASE_URL}/users/${post.authorID}`, {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json"
                     }
-
-                    // If we don't have a type, use a default
-                    if (!content.type) {
-                      content.type = "flashcards"
-                    }
-
-                    // If we don't have content array, use an empty array
-                    if (!Array.isArray(content.content)) {
-                      content.content = []
-                    }
+                  });
+                  if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    authorDetails = {
+                      id: userData.id,
+                      email: userData.email || "Unknown",
+                      picture: userData.attributes?.picture || userData.picture || null
+                    };
+                  } else {
+                    console.warn(`Failed to fetch author details for ID ${post.authorID}: ${userResponse.status}`);
                   }
-                } catch (parseError) {
-                  console.warn("Could not parse post content as JSON:", parseError.message)
-                  // Create a default content object for non-JSON content
-                  content = {
-                    name: "Untitled Study Set",
-                    type: "flashcards",
-                    content: [{ front: post.content || "Content unavailable", back: "" }],
-                  }
+                } catch (fetchError) {
+                  console.error(`Error fetching author ${post.authorID}:`, fetchError);
                 }
-
-                // Include all study sets with reasonable defaults
-                const creatorName = post.author?.email?.split("@")[0] || "Anonymous"
-                const creator = post.author?.id
-
-                  // Determine access type for display
-                  const accessType = 
-                    content.accessType || 
-                    post.attributes?.accessType || 
-                    (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
-                    
-                  const selectedMembers = 
-                    content.selectedMembers || 
-                    post.attributes?.selectedMembers || 
-                    [];
-
-                return {
-                  id: post.id,
-                  title: content.name || "Untitled Study Set",
-                  description: `Created by ${creatorName}`,
-                  type: content.type || "flashcards",
-                  content: content.content || [],
-                  fileId: post.fileId,
-                  groupID: post.groupID,
-                  communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
-                  creator: creator,
-                    membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
-                    accessType: accessType,
-                    selectedMembers: selectedMembers
-                }
-              } catch (error) {
-                console.error("Error processing post:", error)
-                return null
               }
-            })
-            .filter(Boolean) // Remove null entries
 
-          setStudySets(studySetsData)
+              // Try to parse the content as JSON, but handle invalid JSON gracefully
+              let content = {}
+              try {
+                if (post.content && typeof post.content === "string") {
+                  content = JSON.parse(post.content)
+                  if (!content.name) content.name = "Untitled Study Set"
+                  if (!content.type) content.type = "flashcards"
+                  if (!Array.isArray(content.content)) content.content = []
+                }
+              } catch (parseError) {
+                console.warn("Could not parse post content as JSON:", parseError.message)
+                content = {
+                  name: "Untitled Study Set",
+                  type: "flashcards",
+                  content: [{ front: post.content || "Content unavailable", back: "" }],
+                }
+              }
+
+              const accessType = 
+                content.accessType || 
+                post.attributes?.accessType || 
+                (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
+                  
+              const selectedMembers = 
+                content.selectedMembers || 
+                post.attributes?.selectedMembers || 
+                [];
+
+              return {
+                id: post.id,
+                title: content.name || "Untitled Study Set",
+                description: `Created by ${authorDetails.email.split("@")[0] || "Anonymous"}`,
+                type: content.type || "flashcards",
+                content: content.content || [],
+                fileId: post.fileId,
+                groupID: post.groupID,
+                communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                creator: authorDetails.id,
+                creatorPicture: authorDetails.picture, // Add creator picture
+                creatorEmail: authorDetails.email, // Add creator email for initial
+                membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
+                accessType: accessType,
+                selectedMembers: selectedMembers
+              }
+            } catch (error) {
+              console.error("Error processing post:", error)
+              return null
+            }
+          }));
+
+          setStudySets(studySetsData.filter(Boolean)) // Remove null entries
         } else {
           setStudySets([])
         }
@@ -550,7 +581,7 @@ export default function CommunityView() {
       .catch((error) => {
         console.error("Error fetching study sets:", error)
         setStudySets([])
-        })
+      })
       })
   }
 
@@ -1176,9 +1207,17 @@ export default function CommunityView() {
                     <div className={`p-${isMobile ? "3" : "5"}`}>
                       <div className="flex items-start">
                         <div
-                          className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "10" : "12"} h-${isMobile ? "10" : "12"} flex items-center justify-center text-white mr-${isMobile ? "2" : "4"} flex-shrink-0`}
+                          className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "10" : "12"} h-${isMobile ? "10" : "12"} flex items-center justify-center text-white mr-${isMobile ? "2" : "4"} flex-shrink-0 overflow-hidden`}
                         >
-                          <span className="font-semibold">{studySet.title.charAt(0)}</span>
+                          {shouldShowPics && studySet.creatorPicture ? (
+                            <img 
+                              src={studySet.creatorPicture} 
+                              alt={studySet.title.charAt(0)} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <span className="font-semibold">{studySet.creatorEmail ? studySet.creatorEmail.charAt(0).toUpperCase() : "?"}</span>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start mb-2">
@@ -1283,9 +1322,26 @@ export default function CommunityView() {
                   >
                     <div className="flex items-center">
                       <div
-                        className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "6" : "8"} h-${isMobile ? "6" : "8"} flex items-center justify-center text-white mr-2`}
+                        className={`bg-[#1D6EF1] rounded-full w-${isMobile ? "6" : "8"} h-${isMobile ? "6" : "8"} flex items-center justify-center text-white mr-2 overflow-hidden`}
                       >
-                        <span>{member.email ? member.email[0].toUpperCase() : "?"}</span>
+                        {shouldShowPics && member.picture ? (
+                          <img 
+                            src={member.picture} 
+                            alt={member.email ? member.email[0].toUpperCase() : "?"}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // prevent infinite loops
+                              e.target.style.display = 'none'; // hide broken image
+                              // Find the parent div and replace img with initial
+                              const avatarContainer = e.target.parentNode;
+                              if (avatarContainer) {
+                                avatarContainer.innerHTML = `<span>${member.email ? member.email[0].toUpperCase() : "?"}</span>`;
+                              }
+                            }}
+                          />
+                        ) : (
+                          <span>{member.email ? member.email[0].toUpperCase() : "?"}</span>
+                        )}
                       </div>
                       <span className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20] truncate max-w-[160px]`}>
                         {member.email}
