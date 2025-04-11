@@ -526,6 +526,20 @@ export default function Profile({ setLoggedIn }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0]
     if (file) {
+      // --- Add file size check ---
+      const MAX_SIZE_KB = 74;
+      const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
+
+      if (file.size > MAX_SIZE_BYTES) {
+        setNotification({
+          open: true,
+          message: `File size exceeds the ${MAX_SIZE_KB}KB limit.`,
+          severity: "error",
+        });
+        return; // Stop processing if file is too large
+      }
+      // --- End file size check ---
+
       // Store the current picture before attempting the update
       const oldProfilePic = profilePic;
 
