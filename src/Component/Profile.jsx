@@ -20,10 +20,13 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  IconButton,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
-import { LogOut, Save, Upload, Users } from "lucide-react"
+import { LogOut, Save, Upload, Users, UserCircle } from "lucide-react"
 import { BackgroundContext } from "../App"
+import brainToggleOn from '../assets/braintoggleon.png'; // Import ON image
+import brainToggleOff from '../assets/braintoggleoff.png'; // Import OFF image
 
 // Custom styled components following style guide
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -123,6 +126,7 @@ export default function Profile({ setLoggedIn }) {
   const [newUsername, setNewUsername] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showProfilePics, setShowProfilePics] = useState(true)
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -152,6 +156,10 @@ export default function Profile({ setLoggedIn }) {
   }, [])
 
   useEffect(() => {
+    // Load profile picture visibility setting from local storage
+    const storedSetting = localStorage.getItem("showProfilePics")
+    setShowProfilePics(storedSetting === null ? true : storedSetting === "true") // Default to true if not set
+
     const storedPic = sessionStorage.getItem("profilePicture")
     const storedUsername = sessionStorage.getItem("username")
     const storedFirstName = sessionStorage.getItem("firstname")
@@ -397,48 +405,6 @@ export default function Profile({ setLoggedIn }) {
         }
       }
 
-
-      // 🧪 Dev mode: 3-minute streak window
-      //let streak = 0
-      //let current = new Date()
-      //    
-      //// Normalize to nearest 5-minute block
-      //current.setSeconds(0, 0)
-      //const roundTo5Min = (date) => {
-      //  const d = new Date(date)
-      //  const ms = 1000 * 60 * 3
-      //  return Math.floor(d.getTime() / ms) * ms
-      //}
-      //
-      //const uniqueStudyBlocks = new Set(
-      //  studyTimeLogs
-      //    .map((log) => {
-      //      try {
-      //        const content = JSON.parse(log.content || "{}")
-      //        return content.timestamp || log.createdAt
-      //      } catch {
-      //        return log.createdAt
-      //      }
-      //    })
-      //    .filter(Boolean)
-      //    .map(roundTo5Min)
-      //)
-      //
-      //const sortedBlocks = Array.from(uniqueStudyBlocks).sort((a, b) => b - a)
-      //
-      //// Go back in 5-minute intervals
-      //const interval = 1000 * 60 * 3
-      //
-      //let currentBlock = roundTo5Min(current)
-      //
-      //for (let i = 0; i < sortedBlocks.length; i++) {
-      //  if (uniqueStudyBlocks.has(currentBlock)) {
-      //    streak++
-      //    currentBlock -= interval
-      //  } else {
-      //    break
-      //  }
-      //}
       if (streak > 0 && !hasShownStreakPopup) {
         const today = new Date().toISOString().split("T")[0]
         setStreakPopup({
@@ -452,7 +418,7 @@ export default function Profile({ setLoggedIn }) {
       setStudyStats({
         totalTime,
         recentSets,
-        streak, // ✅ new
+        streak,
         loading: false,
         error: null,
       })
@@ -560,13 +526,93 @@ export default function Profile({ setLoggedIn }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0]
     if (file) {
+      // --- Add file size check ---
+      const MAX_SIZE_KB = 74;
+      const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
+
+      if (file.size > MAX_SIZE_BYTES) {
+        setNotification({
+          open: true,
+          message: `File size exceeds the ${MAX_SIZE_KB}KB limit.`,
+          severity: "error",
+        });
+        return; // Stop processing if file is too large
+      }
+      // --- End file size check ---
+
+      // Store the current picture before attempting the update
+      const oldProfilePic = profilePic;
+
       const reader = new FileReader()
       reader.onloadend = () => {
-        const base64String = reader.result
+         const base64String = reader.result
+        // Optimistically update UI
         setProfilePic(base64String)
         sessionStorage.setItem("profilePicture", base64String)
+        // Pass both new and old picture data to the API function
+        saveProfilePictureToAPI(base64String, oldProfilePic)
       }
       reader.readAsDataURL(file)
+    }
+  }
+
+  const saveProfilePictureToAPI = async (newBase64String, oldBase64String) => {
+    try {
+      const userId = sessionStorage.getItem("user")
+      const token = sessionStorage.getItem("token")
+
+      if (!userId || !token) {
+        throw new Error("User not authenticated")
+      }
+
+      const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          attributes: {
+            picture: newBase64String, // Send the new picture
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error Data:", errorData);
+
+        // --- Revert on API error ---
+        setProfilePic(oldBase64String); 
+        sessionStorage.setItem("profilePicture", oldBase64String);
+        setUserData((prev) => ({ ...prev, picture: oldBase64String }));
+        // --- End Revert ---
+
+        throw new Error(`Failed to update profile picture: ${errorData.message || response.statusText}`);
+      }
+
+       // Optionally update userData state if necessary, though fetchUserData should handle it
+      setUserData((prev) => ({ ...prev, picture: newBase64String }));
+
+      setNotification({
+        open: true,
+        message: "Profile picture updated successfully",
+        severity: "success",
+      })
+
+    } catch (error) {
+      // --- Revert on fetch/other error ---
+      setProfilePic(oldBase64String); 
+      sessionStorage.setItem("profilePicture", oldBase64String);
+      setUserData((prev) => ({ ...prev, picture: oldBase64String }));
+      // --- End Revert ---
+
+      console.error("Error updating profile picture:", error)
+      setNotification({
+        open: true,
+        message: `Failed to update profile picture: ${error.message}`,
+        severity: "error",
+      })
     }
   }
 
@@ -718,6 +764,28 @@ export default function Profile({ setLoggedIn }) {
     }
   }
 
+  // --- Add handler for the toggle button ---
+  const handleToggleProfilePics = () => {
+    const newValue = !showProfilePics
+    setShowProfilePics(newValue)
+    localStorage.setItem("showProfilePics", String(newValue)) // Store as string
+    
+    // Dispatch a storage event to notify other components
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'showProfilePics',
+      newValue: String(newValue),
+      oldValue: String(!newValue),
+      storageArea: localStorage
+    }))
+    
+    setNotification({
+      open: true,
+      message: `Profile picture viewing ${newValue ? "enabled" : "disabled"}`,
+      severity: "info",
+    })
+  }
+  // --- End of added handler ---
+
   return (
     <Box
       sx={{
@@ -782,20 +850,47 @@ export default function Profile({ setLoggedIn }) {
                       pl: { xs: 0, sm: 2 },
                     }}
                   >
-                    <Box
-                      component="img"
-                      src={profilePic || "/placeholder.svg"}
-                      alt="Profile"
-                      sx={{
-                        width: { xs: 80, sm: 100 },
-                        height: { xs: 80, sm: 100 },
-                        borderRadius: "50%",
-                        border: "3px solid #1D6EF1",
-                        cursor: "pointer",
-                        objectFit: "cover",
-                      }}
-                      onClick={() => fileInputRef.current.click()}
-                    />
+                    {/* --- Updated Profile Picture Area --- */}
+                    {profilePic || userData.picture ? (
+                      <Box
+                        component="img"
+                        src={profilePic || userData.picture}
+                        alt="Profile"
+                        sx={{
+                          width: { xs: 80, sm: 100 },
+                          height: { xs: 80, sm: 100 },
+                          borderRadius: "50%",
+                          border: "3px solid #1D6EF1",
+                          cursor: "pointer",
+                          objectFit: "cover",
+                        }}
+                        onClick={() => fileInputRef.current.click()}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: { xs: 80, sm: 100 },
+                          height: { xs: 80, sm: 100 },
+                          borderRadius: "50%",
+                          border: "3px dashed #1D6EF1", // Dashed border for placeholder
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: "#f0f0f0", // Lighter grey background
+                          cursor: "pointer",
+                          color: "#bdbdbd", // Lighter grey icon color
+                          '&:hover': { // Add hover effect
+                            bgcolor: '#e0e0e0',
+                            color: '#757575',
+                          }
+                        }}
+                        onClick={() => fileInputRef.current.click()}
+                        title="Click to upload profile picture" // Add tooltip
+                      >
+                        <UserCircle size={isMobile ? 40 : 50} /> {/* Use UserCircle icon */}
+                      </Box>
+                    )}
+                    {/* --- End of Updated Profile Picture Area --- */}
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -1000,6 +1095,29 @@ export default function Profile({ setLoggedIn }) {
                     Save
                   </SaveButton>
                 </Box>
+                {/* --- Add Profile Picture Toggle Action Inside Profile Actions --- */}
+                <Box sx={{ mt: 3, textAlign: 'center' }}> {/* Add margin top and center align */} 
+                  <Typography
+                    variant="h6" // Match title style
+                    sx={{
+                      color: "#1D1D20",
+                      fontWeight: 800,
+                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                      mb: 1,
+                      textAlign: "center",
+                    }}
+                  >
+                    Show Profile Pictures
+                  </Typography>
+                  <IconButton onClick={handleToggleProfilePics} aria-label="toggle profile picture visibility">
+                    <img
+                      src={showProfilePics ? brainToggleOn : brainToggleOff}
+                      alt={showProfilePics ? "Profile pictures on" : "Profile pictures off"}
+                      style={{ width: '100px', height: '100px' }}
+                    />
+                  </IconButton>
+                </Box>
+                {/* --- End of Added Section --- */}
               </CardContent>
             </Card>
 
@@ -1196,9 +1314,12 @@ export default function Profile({ setLoggedIn }) {
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
+                                title: community.name,
                               }}
                             >
-                              {community.name}
+                              {community.name.length > 15
+                                ? `${community.name.substring(0, 15)}...`
+                                : community.name}
                             </Typography>
                           </Box>
                         ))}
