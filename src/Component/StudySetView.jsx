@@ -57,6 +57,9 @@ const StudySetView = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
   const [currentUserId, setCurrentUserId] = useState(null)
+  const [shouldShowPics, setShouldShowPics] = useState(true)
+  const [currentUserPicture, setCurrentUserPicture] = useState(null)
+  const [loadingCurrentUser, setLoadingCurrentUser] = useState(true);
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -105,14 +108,99 @@ const StudySetView = () => {
     }
   }, [])
 
-  // Get current user ID on component mount
+  // Get current user ID and picture on component mount - Enhanced with API call
   useEffect(() => {
-    const userId = sessionStorage.getItem("userId")
-    if (userId) {
-      setCurrentUserId(userId)
-      console.log("Current user ID:", userId)
-    }
-  }, [])
+    const fetchAndSetCurrentUser = async () => {
+      const token = sessionStorage.getItem("token");
+      const userIdStr = sessionStorage.getItem("user"); // Use "user" key for ID
+      let userId = null;
+
+      // Determine User ID
+      if (userIdStr) {
+        try {
+          const parsedUser = JSON.parse(userIdStr);
+          userId = parsedUser?.id || userIdStr;
+        } catch (e) {
+          userId = userIdStr;
+        }
+        setCurrentUserId(userId); // Set ID state early
+        console.log("[Mount Effect] Determined currentUserId:", userId);
+      } else {
+        console.warn("[Mount Effect] User ID not found in session storage.");
+        // Optionally try to fetch current user from a /me endpoint if available
+        // or handle the case where user ID is unknown
+      }
+
+      // Prioritize fetching from API if we have an ID and token
+      let userPicFromAPI = null;
+      if (userId && token) {
+        try {
+          console.log(`[Mount Effect] Fetching user data for ID: ${userId}`);
+          // *** Add cache-busting parameter here too ***
+          const cacheBuster = `?_=${Date.now()}`;
+          const response = await fetch(`${API_BASE_URL}/users/${userId}${cacheBuster}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const userData = await response.json();
+            // userPicFromAPI = userData.picture || null;
+
+            // *** Re-apply URL prioritization logic here ***
+            let pictureUrl = null;
+            const topLevelPic = userData.picture;
+            const attributePic = userData.attributes?.picture;
+
+            if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+                pictureUrl = topLevelPic; // Prefer top-level if it looks like a URL
+            } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+                pictureUrl = attributePic; // Prefer attribute if it looks like a URL
+            } else if (topLevelPic) {
+                 pictureUrl = topLevelPic; // Fall back to top-level (might be Base64)
+            } else if (attributePic) {
+                 pictureUrl = attributePic; // Fall back to attribute (might be Base64)
+            }
+             userPicFromAPI = pictureUrl; // Use the prioritized URL
+            // ******************************************
+
+            console.log("[Mount Effect] Fetched user data from API:", userData);
+            if (userPicFromAPI) {
+              setCurrentUserPicture(userPicFromAPI);
+              console.log("[Mount Effect] Set currentUserPicture from API:", userPicFromAPI);
+              // Optionally update sessionStorage if needed
+              // sessionStorage.setItem("profilePicture", userPicFromAPI);
+            } else {
+                console.log("[Mount Effect] User picture not found in API response.");
+            }
+          } else {
+            console.warn(`[Mount Effect] Failed to fetch user from API: ${response.status}`);
+          }
+        } catch (error) {
+          console.error("[Mount Effect] Error fetching user from API:", error);
+        }
+      }
+
+      // Fallback to sessionStorage if API fetch failed or didn't find a picture
+      if (!userPicFromAPI) {
+        const userPicFromSession = sessionStorage.getItem("profilePicture");
+        if (userPicFromSession) {
+          setCurrentUserPicture(userPicFromSession);
+          console.log("[Mount Effect] Set currentUserPicture from Session Storage (Fallback):", userPicFromSession);
+        } else {
+          console.warn("[Mount Effect] User picture not found in API or Session Storage.");
+        }
+      }
+
+      // Read profile picture visibility setting (remains the same)
+      const storedSetting = localStorage.getItem("showProfilePics");
+      setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+    };
+
+    fetchAndSetCurrentUser().finally(() => {
+        // Ensure loading state is set to false regardless of success/failure
+        setLoadingCurrentUser(false);
+         console.log("[Mount Effect] Finished fetching user data, setLoadingCurrentUser(false)");
+    });
+  }, []); // Empty dependency array ensures it runs only once on mount
 
   // Load comments from local storage on initial render
   useEffect(() => {
@@ -239,176 +327,179 @@ const StudySetView = () => {
     }
   }
 
+  // Helper function to fetch full author details, including picture
+  const fetchAuthorDetails = async (authorId, token) => {
+    if (!authorId || !token) return { id: null, email: "Anonymous", picture: null };
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${authorId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        const pictureUrl = userData.picture || null;
+        const authorInfo = {
+          id: userData.id,
+          email: userData.email || "Unknown",
+          picture: pictureUrl
+        };
+        return authorInfo;
+      } else {
+        console.warn(`Failed to fetch author ${authorId}: ${response.status}`);
+        return { id: authorId, email: "Anonymous", picture: null }; // Return default on failure
+      }
+    } catch (error) {
+      console.error(`Error fetching author ${authorId}:`, error);
+      return { id: authorId, email: "Anonymous", picture: null }; // Return default on error
+    }
+  };
+
   const fetchComments = async () => {
     try {
-      setLoadingComments(true)
-      const token = sessionStorage.getItem("token")
+      setLoadingComments(true);
+      const token = sessionStorage.getItem("token");
       if (!token) {
-        console.log("No token available for fetching comments")
-        setLoadingComments(false)
-        return
+        console.log("No token available for fetching comments");
+        setLoadingComments(false);
+        return;
       }
 
-      console.log(`Fetching comments for post ID: ${studySetId}`)
+      console.log(`Fetching comments for post ID: ${studySetId}`);
 
-      // Try to fetch comments using post-reactions API
+      // Fetch reactions (comments)
       const response = await fetch(`${API_BASE_URL}/post-reactions?postId=${studySetId}&type=comment`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      console.log("Comments response status:", response.status)
+      console.log("Comments response status:", response.status);
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch comments: ${response.status}`)
+        throw new Error(`Failed to fetch comments: ${response.status}`);
       }
 
-      const data = await response.json()
-      console.log("Fetched comments:", data)
+      const data = await response.json();
+      console.log("Fetched raw comments data:", data);
 
-      // Transform post-reactions to comment format if needed and filter out invalid entries
-      const formattedComments = data
-        .filter((reaction) => reaction.content && reaction.content.trim() !== "")
-        .map((reaction) => ({
-          id: reaction.id,
-          content: reaction.content || "No content",
-          createdAt: reaction.createdAt || new Date().toISOString(),
-          author: reaction.author || { email: "Anonymous" },
-        }))
+      // Fetch full author details for each comment
+      const commentsWithAuthors = await Promise.all(
+        data
+          .filter((reaction) => reaction.content && reaction.content.trim() !== "")
+          .map(async (reaction) => {
+            const authorDetails = await fetchAuthorDetails(reaction.authorID, token);
+            return {
+              id: reaction.id,
+              content: reaction.content || "No content",
+              createdAt: reaction.createdAt || new Date().toISOString(),
+              author: authorDetails, // Use fetched details
+            };
+          })
+      );
 
-      // Get existing comments from local storage to merge with server data
-      const localStorageKey = getLocalStorageKey(studySetId)
-      const savedComments = localStorage.getItem(localStorageKey)
-      let localComments = []
+      console.log("Comments with author details:", commentsWithAuthors);
+
+      // Merge with local temporary comments (if any)
+      const localStorageKey = getLocalStorageKey(studySetId);
+      const savedComments = localStorage.getItem(localStorageKey);
+      let localComments = [];
 
       if (savedComments) {
         try {
-          const parsedComments = JSON.parse(savedComments)
+          const parsedComments = JSON.parse(savedComments);
           if (Array.isArray(parsedComments)) {
-            // Keep only temporary comments (those not yet saved to server)
             localComments = parsedComments.filter(
-              (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
-            )
+              (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-")
+            );
           }
         } catch (err) {
-          console.error("Error parsing local comments:", err)
+          console.error("Error parsing local comments:", err);
         }
       }
 
-      // Combine server comments with local temporary comments
-      const combinedComments = [...formattedComments, ...localComments]
+      const combinedComments = [...commentsWithAuthors, ...localComments];
 
-      setComments(combinedComments)
+      setComments(combinedComments);
+      localStorage.setItem(localStorageKey, JSON.stringify(combinedComments)); // Save combined
+      console.log("Saved combined comments:", combinedComments);
 
-      // Save the combined comments to local storage
-      localStorage.setItem(localStorageKey, JSON.stringify(combinedComments))
-      console.log("Saved combined comments to local storage:", combinedComments)
     } catch (err) {
-      console.error("Error fetching comments:", err)
-      // Try fallback method - regular comments API
-      try {
-        const token = sessionStorage.getItem("token")
-        const fallbackResponse = await fetch(`${API_BASE_URL}/comments?postId=${studySetId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json()
-          // Filter and format fallback data
-          const formattedFallbackComments = fallbackData
-            .filter((comment) => comment.content && comment.content.trim() !== "")
-            .map((comment) => ({
-              id: comment.id,
-              content: comment.content || "No content",
-              createdAt: comment.createdAt || new Date().toISOString(),
-              author: comment.author || { email: "Anonymous" },
-            }))
-
-          // Get existing comments from local storage
-          const localStorageKey = getLocalStorageKey(studySetId)
-          const savedComments = localStorage.getItem(localStorageKey)
-          let localComments = []
-
-          if (savedComments) {
-            try {
-              const parsedComments = JSON.parse(savedComments)
-              if (Array.isArray(parsedComments)) {
-                // Keep only temporary comments
-                localComments = parsedComments.filter(
-                  (comment) => typeof comment.id === "string" && comment.id.startsWith("temp-"),
-                )
-              }
-            } catch (err) {
-              console.error("Error parsing local comments:", err)
-            }
-          }
-
-          // Combine server comments with local temporary comments
-          const combinedComments = [...formattedFallbackComments, ...localComments]
-
-          setComments(combinedComments)
-
-          // Save to local storage
-          localStorage.setItem(localStorageKey, JSON.stringify(combinedComments))
-        }
-      } catch (fallbackErr) {
-        console.error("Fallback fetch also failed:", fallbackErr)
-        // If all fetches fail, we'll still have the local storage data if available
-      }
+      console.error("Error fetching comments:", err);
+      // Consider if fallback is still needed or if local storage suffices
     } finally {
-      setLoadingComments(false)
+      setLoadingComments(false);
     }
-  }
+  };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return
+    if (!newComment.trim()) return;
 
     try {
-      setLoadingComments(true)
-      const token = sessionStorage.getItem("token")
+      setLoadingComments(true);
+      const token = sessionStorage.getItem("token");
       if (!token) {
-        alert("You must be logged in to post comments")
-        setLoadingComments(false)
-        return
+        alert("You must be logged in to post comments");
+        setLoadingComments(false);
+        return;
       }
 
-      const userId = sessionStorage.getItem("userId")
-      const userEmail = sessionStorage.getItem("email") || "Current User"
+      // Use state for user ID and email if available
+      const userId = currentUserId; // From state
+      const userEmail = sessionStorage.getItem("email") || "Current User"; // Keep session email for now
+
+      // --- Fetch picture if not already in state --- 
+      // let pictureToUse = currentUserPicture;
+      // if (!pictureToUse && userId && token) { // REMOVING JUST-IN-TIME FETCH
+      //     console.log("[handleAddComment] currentUserPicture state is null, fetching picture just-in-time...");
+      //     try {
+      //         const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+      //             headers: { Authorization: `Bearer ${token}` }
+      //         });
+      //         if (response.ok) {
+      //             const userData = await response.json();
+      //             pictureToUse = userData.attributes?.picture || userData.picture || null;
+      //             console.log("[handleAddComment] Fetched picture just-in-time:", pictureToUse);
+      //             // Optionally update state too, though the main effect should handle it eventually
+      //             // if (pictureToUse) setCurrentUserPicture(pictureToUse);
+      //         } else {
+      //              console.warn("[handleAddComment] Failed to fetch picture just-in-time:", response.status);
+      //         }
+      //     } catch (fetchError) {
+      //          console.error("[handleAddComment] Error fetching picture just-in-time:", fetchError);
+      //     }
+      // }
+      // --- End of just-in-time fetch ---
 
       // Create a temporary comment to show immediately in the UI
+      // Use currentUserPicture directly from state. It might be null initially.
       const tempComment = {
         id: `temp-${Date.now()}`,
         content: newComment,
         createdAt: new Date().toISOString(),
         author: {
           email: userEmail,
-          id: userId,
+          id: userId, // Use ID from state
+          picture: currentUserPicture, // Use picture directly from state
         },
-      }
+      };
 
       // Add to UI immediately for better user experience
-      const updatedComments = [...comments, tempComment]
-      setComments(updatedComments)
-      setNewComment("")
+      // This will trigger the useEffect to save to localStorage
+      setComments((prevComments) => [...prevComments, tempComment]);
+      setNewComment("");
 
-      // Save to local storage immediately
-      const localStorageKey = getLocalStorageKey(studySetId)
-      localStorage.setItem(localStorageKey, JSON.stringify(updatedComments))
+      // Save to local storage immediately - REMOVED, handled by useEffect
+      // const localStorageKey = getLocalStorageKey(studySetId);
+      // localStorage.setItem(localStorageKey, JSON.stringify(updatedComments));
 
       // Make sure studySetId is properly parsed as a number
-      const postId = Number.parseInt(studySetId, 10)
+      const postId = Number.parseInt(studySetId, 10);
 
       if (isNaN(postId)) {
-        console.error("Invalid study set ID:", studySetId)
-        showSnackbar("Comment saved locally but couldn't be sent to server: Invalid study set ID")
-        setLoadingComments(false)
-        return
+        console.error("Invalid study set ID:", studySetId);
+        showSnackbar("Comment saved locally but couldn't be sent to server: Invalid study set ID");
+        setLoadingComments(false);
+        return;
       }
 
-      console.log("Posting comment with postId:", postId)
+      console.log("Posting comment with postId:", postId);
 
       // Try the post-reactions endpoint with proper error handling
       const response = await fetch(`${API_BASE_URL}/post-reactions`, {
@@ -422,14 +513,14 @@ const StudySetView = () => {
           type: "comment",
           content: tempComment.content,
         }),
-      })
+      });
 
       // Log the full response for debugging
-      console.log("Server response status:", response.status)
+      console.log("Server response status:", response.status);
 
       if (!response.ok) {
         // Try alternative endpoint if the first one fails
-        console.log("First endpoint failed, trying alternative...")
+        console.log("First endpoint failed, trying alternative...");
 
         const alternativeResponse = await fetch(`${API_BASE_URL}/comments`, {
           method: "POST",
@@ -441,60 +532,76 @@ const StudySetView = () => {
             postId: postId,
             content: tempComment.content,
           }),
-        })
+        });
 
         if (!alternativeResponse.ok) {
-          throw new Error(`Failed to post comment: ${response.status}, ${alternativeResponse.status}`)
+          // Check if the error indicates the comment already exists (e.g., conflict status code 409)
+          // If so, maybe just fetch comments again instead of throwing a full error
+          if (alternativeResponse.status === 409) { 
+             console.warn("Comment might already exist (409 Conflict), attempting to fetch latest comments.");
+             fetchComments(); // Refresh comments list
+          } else {
+            throw new Error(`Failed to post comment: ${response.status}, ${alternativeResponse.status}`);
+          }
+        } else {
+            const serverComment = await alternativeResponse.json();
+            console.log("Alternative endpoint success, server response:", serverComment);
+
+            // Replace the temporary comment with the server-generated one
+            // Need to fetch author details again for the server comment
+            const authorDetails = await fetchAuthorDetails(serverComment.authorID, token);
+
+            const finalServerComment = {
+                id: serverComment.id,
+                content: serverComment.content || tempComment.content,
+                createdAt: serverComment.createdAt || tempComment.createdAt,
+                author: authorDetails, // Use newly fetched details
+            };
+
+            setComments((prevComments) =>
+                prevComments.map((comment) =>
+                comment.id === tempComment.id ? finalServerComment : comment
+                )
+            );
+            // Save updated comments list with server ID to local storage - REMOVED, handled by useEffect
+            // localStorage.setItem(localStorageKey, JSON.stringify(comments.map(c => c.id === tempComment.id ? finalServerComment : c)));
+            showSnackbar("Comment posted successfully!");
         }
-
-        const serverComment = await alternativeResponse.json()
-        console.log("Alternative endpoint success, server response:", serverComment)
-
-        // Replace the temporary comment with the server-generated one
-        const updatedWithServerComment = comments.map((comment) =>
-          comment.id === tempComment.id
-            ? {
-                id: serverComment.id,
-                content: serverComment.content || tempComment.content,
-                createdAt: serverComment.createdAt || tempComment.createdAt,
-                author: serverComment.author || tempComment.author,
-              }
-            : comment,
-        )
-
-        setComments(updatedWithServerComment)
-        localStorage.setItem(localStorageKey, JSON.stringify(updatedWithServerComment))
-        showSnackbar("Comment posted successfully!")
       } else {
-        console.log("Comment posted successfully to primary endpoint")
-        const serverComment = await response.json()
-        console.log("Server response for new comment:", serverComment)
+        console.log("Comment posted successfully to primary endpoint");
+        const serverComment = await response.json();
+        console.log("Server response for new comment:", serverComment);
 
         // Replace the temporary comment with the server-generated one
-        const updatedWithServerComment = comments.map((comment) =>
-          comment.id === tempComment.id
-            ? {
-                id: serverComment.id,
-                content: serverComment.content || tempComment.content,
-                createdAt: serverComment.createdAt || tempComment.createdAt,
-                author: serverComment.author || tempComment.author,
-              }
-            : comment,
-        )
+        // Need to fetch author details again for the server comment
+         const authorDetails = await fetchAuthorDetails(serverComment.authorID, token);
 
-        setComments(updatedWithServerComment)
-        localStorage.setItem(localStorageKey, JSON.stringify(updatedWithServerComment))
-        showSnackbar("Comment posted successfully!")
+         const finalServerComment = {
+            id: serverComment.id,
+            content: serverComment.content || tempComment.content,
+            createdAt: serverComment.createdAt || tempComment.createdAt,
+            author: authorDetails, // Use newly fetched details
+         };
+
+
+        setComments((prevComments) =>
+            prevComments.map((comment) =>
+            comment.id === tempComment.id ? finalServerComment : comment
+            )
+        );
+         // Save updated comments list with server ID to local storage - REMOVED, handled by useEffect
+         // localStorage.setItem(localStorageKey, JSON.stringify(comments.map(c => c.id === tempComment.id ? finalServerComment : c)));
+        showSnackbar("Comment posted successfully!");
       }
     } catch (err) {
-      console.error("Network error posting comment:", err)
-      showSnackbar("Comment saved locally. We'll try to sync it when connection improves.")
+      console.error("Network error posting comment:", err);
+      showSnackbar("Comment saved locally. We'll try to sync it when connection improves.");
       // We don't remove the comment from the UI even if there's an error
       // This provides a better user experience when there are network issues
     } finally {
-      setLoadingComments(false)
+      setLoadingComments(false);
     }
-  }
+  };
 
   const handleEditComment = async (commentId, newContent) => {
     if (!newContent.trim()) return
@@ -738,20 +845,20 @@ const StudySetView = () => {
   }
 
   const isCurrentUserComment = (comment) => {
-    const userId = sessionStorage.getItem("userId")
-
     // For debugging
-    console.log("Checking if comment is from current user:")
-    console.log("Current user ID:", userId)
-    console.log("Comment author ID:", comment.author?.id)
-    console.log("Comment:", comment)
+    // console.log("Checking if comment is from current user:")
+    // console.log("Current user ID (state):", currentUserId)
+    // console.log("Comment author ID:", comment.author?.id)
+    // console.log("Comment:", comment)
 
-    // Check if the comment author ID matches the current user ID
+    // Check if the comment author ID matches the current user ID (state)
     // Also consider temporary comments created by the current user
-    return (
-      (comment.author && userId === String(comment.author.id)) ||
-      (typeof comment.id === "string" && comment.id.startsWith("temp-"))
-    )
+    const isAuthorMatch = comment.author && currentUserId && String(comment.author.id) === String(currentUserId);
+    const isTempCommentByUser = (typeof comment.id === "string" && comment.id.startsWith("temp-"));
+
+    // console.log(`isAuthorMatch: ${isAuthorMatch}, isTempCommentByUser: ${isTempCommentByUser}`);
+    
+    return isAuthorMatch || isTempCommentByUser;
   }
 
   const resetMatchingGame = () => {
@@ -1488,9 +1595,10 @@ const StudySetView = () => {
               fullWidth
               multiline
               rows={isMobile ? 2 : 3}
-              placeholder="Add a comment..."
+              placeholder={loadingCurrentUser ? "Loading user info..." : "Add a comment..."}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
+              disabled={loadingCurrentUser}
               sx={{
                 mb: 2,
                 "& .MuiOutlinedInput-root": {
@@ -1508,7 +1616,7 @@ const StudySetView = () => {
             <Button
               variant="contained"
               onClick={handleAddComment}
-              disabled={!newComment.trim() || loadingComments}
+              disabled={!newComment.trim() || loadingComments || loadingCurrentUser}
               sx={{
                 alignSelf: "flex-end",
                 bgcolor: "#1D6EF1",
@@ -1549,6 +1657,13 @@ const StudySetView = () => {
               {comments.map((comment) => {
                 const isEditing = editingComment === comment.id
                 const isUserComment = isCurrentUserComment(comment)
+                // const authorPic = comment.author?.attributes?.picture || comment.author?.picture // Check both possibilities for safety
+                // console.log("Comment author data:", comment.author);
+                // Add console logs for debugging
+                console.log(`[Comment Render Debug] ID: ${comment.id}, User Comment: ${isUserComment}`);
+                console.log(`[Comment Render Debug] Author Object:`, comment.author);
+                console.log(`[Comment Render Debug] Picture URL: ${comment.author?.picture}`);
+                console.log(`[Comment Render Debug] shouldShowPics: ${shouldShowPics}`);
 
                 // Format the date properly or use a fallback
                 let formattedDate = "Unknown date"
@@ -1564,7 +1679,7 @@ const StudySetView = () => {
 
                 return (
                   <Box
-                    key={comment.id}
+                    key={`${comment.id}-${comment.author?.picture || 'no-pic'}`}
                     sx={{
                       display: "flex",
                       gap: { xs: 1, sm: 2 },
@@ -1575,6 +1690,7 @@ const StudySetView = () => {
                     }}
                   >
                     <Avatar
+                      key={comment.author?.picture || `avatar-${comment.author?.id || comment.id}`}
                       sx={{
                         bgcolor: "#1D6EF1",
                         width: { xs: 32, sm: 40 },
@@ -1582,7 +1698,29 @@ const StudySetView = () => {
                         fontSize: { xs: "0.875rem", sm: "1rem" },
                       }}
                     >
-                      {comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "?"}
+                      {/* Use currentUserPicture state for the current user's comments */}
+                      {/* Otherwise, use the picture from the comment data */}
+                      {shouldShowPics && (isCurrentUserComment ? currentUserPicture : comment.author?.picture) ? (
+                        <img
+                          // Use currentUserPicture if it's the user's own comment, else comment.author.picture
+                          src={isCurrentUserComment ? currentUserPicture : comment.author.picture}
+                          alt={comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "User"}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                          onError={(e) => {
+                            // Optional: Hide img on error or replace with initial
+                            console.warn(`Failed to load image: ${isCurrentUserComment ? currentUserPicture : comment.author.picture}`);
+                            e.target.onerror = null; // Prevent infinite loop if placeholder fails
+                            // Find the parent Avatar and replace img with initial
+                            const avatarElement = e.target.closest(".MuiAvatar-root");
+                            if (avatarElement) {
+                              avatarElement.innerHTML = comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "?";
+                            }
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        comment.author?.email ? comment.author.email.charAt(0).toUpperCase() : "?"
+                      )}
                     </Avatar>
                     <Box sx={{ flex: 1 }}>
                       <Box

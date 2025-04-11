@@ -20,11 +20,17 @@ const Friends = () => {
   const [userSearchQuery, setUserSearchQuery] = useState("")
   const [showAllUsers, setShowAllUsers] = useState(false)
   const [selectedOption, setSelectedOption] = useState(1) // 1 for Option 1 (with blocking), 2 for Option 2 (without blocking)
+  const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
   const navigate = useNavigate()
 
   const fontStyle = {
     fontFamily: "SourGummy, sans-serif",
   }
+//The code for the friends page was assisted with the help of ChatGPT
+  useEffect(() => {
+    const storedSetting = localStorage.getItem("showProfilePics");
+    setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+  }, []);
 
   useEffect(() => {
     const userToken = sessionStorage.getItem("token")
@@ -161,7 +167,30 @@ const Friends = () => {
 
       const data = await response.json()
       // Filter out the current user and format the user data
-      const filteredUsers = data[0].filter((user) => user.id !== Number.parseInt(userId))
+      const filteredUsers = data[0]
+        .filter((user) => user.id !== Number.parseInt(userId))
+        .map(user => {
+          // --- Extract avatar/profile picture using prioritization ---
+          let pictureUrl = null;
+          const topLevelPic = user.picture || user.avatar; 
+          const attributePic = user.attributes?.picture || user.attributes?.profilePicture;
+
+          if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+            pictureUrl = topLevelPic;
+          } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+            pictureUrl = attributePic;
+          } else if (topLevelPic) {
+            pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+          } else if (attributePic) {
+            pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+          }
+          // --- End of avatar extraction ---
+          return {
+            ...user,
+            picture: pictureUrl // Ensure the picture property is set
+          };
+        });
+
       setAllUsers(filteredUsers)
     } catch (error) {
       console.error("Error loading users:", error)
@@ -691,8 +720,25 @@ const Friends = () => {
                           className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-[#F4FDFF] rounded-lg hover:bg-[#C5EDFD] transition-colors gap-2"
                         >
                           <div className="flex items-center">
-                            <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3 flex-shrink-0">
-                              <span style={fontStyle}>{displayInitial}</span>
+                            <div className="bg-[#1D6EF1] rounded-full w-10 h-10 flex items-center justify-center text-white mr-3 flex-shrink-0 overflow-hidden">
+                              {shouldShowPics && user.picture ? (
+                                <img 
+                                  src={user.picture} 
+                                  alt={displayInitial}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                  onError={(e) => {
+                                    e.target.onerror = null; // prevent infinite loops
+                                    e.target.style.display = 'none'; // hide broken image
+                                    // Find the parent div and replace img with initial
+                                    const avatarContainer = e.target.parentNode;
+                                    if (avatarContainer) {
+                                      avatarContainer.innerHTML = `<span style="font-family: SourGummy, sans-serif;">${displayInitial}</span>`;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span style={fontStyle}>{displayInitial}</span>
+                              )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="text-[#1D1D20] font-semibold truncate" style={fontStyle}>

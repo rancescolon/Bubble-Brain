@@ -87,6 +87,7 @@ const HomePage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const isTablet = useMediaQuery(theme.breakpoints.down("md"))
   const isDrawerCompact = useMediaQuery(theme.breakpoints.down("md"))
+  const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
 
   // Adjust initial Y position for mobile
   const initialX = isMobile ? 40 : 50;
@@ -100,6 +101,33 @@ const HomePage = () => {
   const communitiesRef = useRef(null)
   const coursesRef = useRef(null)
   const usersRef = useRef(null)
+
+  // Effect to initialize shouldShowPics from localStorage
+  useEffect(() => {
+    const storedSetting = localStorage.getItem("showProfilePics");
+    setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+    
+    // Add event listener to detect changes to localStorage
+    const handleStorageChange = (e) => {
+      if (e.key === "showProfilePics") {
+        console.log('Storage changed for showProfilePics, new value:', e.newValue);
+        setShouldShowPics(e.newValue === "true");
+        // Remove data fetching from here - re-render with new state should be enough
+        // if (isLoggedIn) {
+        //   fetchActiveUsers();
+        //   fetchLeaderboardData();
+        // }
+      }
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    console.log('Added storage event listener for showProfilePics');
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      console.log('Removed storage event listener for showProfilePics');
+    }
+  }, []); // Remove isLoggedIn dependency, listener should always be active
 
   useEffect(() => {
     const token = sessionStorage.getItem("token")
@@ -480,6 +508,21 @@ const HomePage = () => {
       combinedUser.avatar ||
       combinedUser.profilePicture ||
       null
+    
+    // Try to prioritize URL-like pictures
+    let pictureUrl = null;
+    const topLevelPic = combinedUser.picture || combinedUser.avatar; // Combine potential top-level names
+    const attributePic = combinedUser.attributes?.picture || combinedUser.attributes?.profilePicture;
+
+    if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+      pictureUrl = topLevelPic;
+    } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+      pictureUrl = attributePic;
+    } else if (topLevelPic) {
+      pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+    } else if (attributePic) {
+      pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+    }
 
     // Determine online status based on last activity
     const now = Date.now()
@@ -501,7 +544,7 @@ const HomePage = () => {
       name: userName,
       activity: activity,
       status: status,
-      avatar: avatar,
+      avatar: pictureUrl, // Use the prioritized picture URL
       email: email,
       isCurrentUser: isCurrentUser,
       lastActivity: lastActivityTime,
@@ -688,25 +731,30 @@ const HomePage = () => {
           }
 
           // Get user display name from attributes
-          let displayName = "Anonymous User"
-          if (user.attributes?.username) {
-            displayName = user.attributes.username
-          } else if (user.username) {
-            displayName = user.username
-          } else if (user.attributes?.firstName && user.attributes?.lastName) {
-            displayName = `${user.attributes.firstName} ${user.attributes.lastName}`
-          } else if (user.firstName && user.lastName) {
-            displayName = `${user.firstName} ${user.lastName}`
-          } else if (user.attributes?.email) {
-            displayName = user.attributes.email.split('@')[0]
-          } else if (user.email) {
-            displayName = user.email.split('@')[0]
+          let displayName = extractUserDisplayName(user)
+          
+          // --- Extract avatar/profile picture using prioritization ---
+          let pictureUrl = null;
+          const topLevelPic = user.picture || user.avatar; 
+          const attributePic = user.attributes?.picture || user.attributes?.profilePicture;
+
+          if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+            pictureUrl = topLevelPic;
+          } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+            pictureUrl = attributePic;
+          } else if (topLevelPic) {
+            pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+          } else if (attributePic) {
+            pictureUrl = attributePic; // Fallback to attribute (might be Base64)
           }
+          // --- End of avatar extraction ---
+
+          console.log(`[Leaderboard] User: ${displayName}, Avatar URL: ${pictureUrl}`); // DEBUG LOG
 
           return {
             id: user.id,
             name: displayName,
-            avatar: user.attributes?.profilePicture || user.avatar,
+            avatar: pictureUrl, // Use the prioritized picture URL
             totalStudyTime,
             studySessions,
           }
@@ -738,7 +786,6 @@ const HomePage = () => {
       setLoadingLeaderboard(false)
     }
   }
-
   const fetchUserStats = async () => {
     setLoadingUserStats(true)
     const token = sessionStorage.getItem("token")
@@ -847,12 +894,30 @@ const HomePage = () => {
 
           // Get user display name 
           let displayName = extractUserDisplayName(user)
+          
+          // --- Extract avatar/profile picture using prioritization ---
+          let pictureUrl = null;
+          const topLevelPic = user.picture || user.avatar;
+          const attributePic = user.attributes?.picture || user.attributes?.profilePicture;
+
+          if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
+            pictureUrl = topLevelPic;
+          } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
+            pictureUrl = attributePic;
+          } else if (topLevelPic) {
+            pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+          } else if (attributePic) {
+            pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+          }
+          // --- End of avatar extraction ---
+
+          console.log(`[UserStats] User: ${displayName}, Avatar URL: ${pictureUrl}`); // DEBUG LOG
 
           // Return user stats
           return {
             id: userId,
             name: displayName,
-            avatar: user.attributes?.profilePicture || user.avatar,
+            avatar: pictureUrl, // Use the prioritized picture URL
             longestSession,
             sessionCount,
             todaySessionCount
@@ -1141,7 +1206,7 @@ const HomePage = () => {
         fetchLeaderboardData()
         fetchUserStats()
       }
-    }, 90000)
+    }, 300000) // Changed from 90000ms to 300000ms (5 minutes)
 
     // Cleanup on unmount
     return () => clearInterval(intervalId)
@@ -1995,7 +2060,6 @@ const HomePage = () => {
                           {/* Ensure smaller gap for mobile */}
                           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
                             <Avatar
-                              src={user.avatar}
                               alt={user.name}
                               sx={{
                                 width: { xs: 40, md: 50 },
@@ -2011,7 +2075,24 @@ const HomePage = () => {
                                 ml: { xs: 0, md: 1 },
                               }}
                             >
-                              {user.name.charAt(0).toUpperCase()}
+                              {shouldShowPics && user.avatar ? (
+                                <img 
+                                  src={user.avatar} 
+                                  alt={user.name.charAt(0).toUpperCase()}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                  onError={(e) => {
+                                    e.target.onerror = null; // prevent infinite loops
+                                    e.target.style.display = 'none'; // hide broken image
+                                    // Optionally show initial again
+                                    const avatarElement = e.target.closest('.MuiAvatar-root');
+                                    if (avatarElement) {
+                                      avatarElement.innerHTML = user.name.charAt(0).toUpperCase();
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                user.name.charAt(0).toUpperCase()
+                              )}
                             </Avatar>
 
                             {/* Apply negative margin on mobile */}
@@ -2298,7 +2379,6 @@ const HomePage = () => {
                           {/* Remove gap for mobile */}
                           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
                             <Avatar
-                              src={stat.avatar}
                               alt={stat.name}
                               sx={{
                                 width: { xs: 40, md: 50 },
@@ -2314,7 +2394,23 @@ const HomePage = () => {
                                 ml: { xs: 0, md: 1 },
                               }}
                             >
-                              {stat.name?.charAt(0).toUpperCase() || "?"}
+                              {shouldShowPics && stat.avatar ? (
+                                <img 
+                                  src={stat.avatar} 
+                                  alt={stat.name?.charAt(0).toUpperCase() || "?"}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                  onError={(e) => {
+                                    e.target.onerror = null; // prevent infinite loops
+                                    e.target.style.display = 'none'; // hide broken image
+                                    const avatarElement = e.target.closest('.MuiAvatar-root');
+                                    if (avatarElement) {
+                                      avatarElement.innerHTML = stat.name?.charAt(0).toUpperCase() || "?";
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                stat.name?.charAt(0).toUpperCase() || "?"
+                              )}
                             </Avatar>
 
                             {/* Apply negative margin on mobile */}
@@ -2573,7 +2669,6 @@ const HomePage = () => {
                   >
                     <Box sx={{ position: "relative" }}>
                       <Avatar
-                        src={user.avatar}
                         alt={user.name}
                         sx={{
                           width: { xs: 40, sm: 50, md: 60 },
@@ -2585,7 +2680,23 @@ const HomePage = () => {
                           fontSize: { xs: "1.2rem", md: "1.5rem" },
                         }}
                       >
-                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                        {shouldShowPics && user.avatar ? (
+                          <img 
+                            src={user.avatar} 
+                            alt={user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // prevent infinite loops
+                              e.target.style.display = 'none'; // hide broken image
+                              const avatarElement = e.target.closest('.MuiAvatar-root');
+                              if (avatarElement) {
+                                avatarElement.innerHTML = user.name ? user.name.charAt(0).toUpperCase() : "U";
+                              }
+                            }}
+                          />
+                        ) : (
+                          user.name ? user.name.charAt(0).toUpperCase() : "U"
+                        )}
                       </Avatar>
                       <Box
                         sx={{
@@ -2679,3 +2790,4 @@ const HomePage = () => {
 }
 
 export default HomePage
+
