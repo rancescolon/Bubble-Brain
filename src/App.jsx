@@ -32,6 +32,7 @@ import CommunityView from "./Component/CommunityView"
 import Upload from "./Component/Upload"
 import StudySetView from "./Component/StudySetView"
 import socketService from './services/socketService'
+import Feed from './pages/Feed'
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 // Import default background and other backgrounds you want to use
@@ -497,6 +498,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                   </ProtectedRoute>
                 }
               />
+              <Route path="/feed" element={<Feed />} />
             </Routes>
           </div>
         </header>

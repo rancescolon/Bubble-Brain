@@ -30,6 +30,8 @@ import logo from "../assets/Frame.png"
 import DrBubbles from "./DrBubbles"
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
 import { BackgroundContext } from "../App"
+import CreatePost from "./CreatePost"
+import PostFeed from "./PostFeed"
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -100,6 +102,12 @@ const HomePage = () => {
   const communitiesRef = useRef(null)
   const coursesRef = useRef(null)
   const usersRef = useRef(null)
+
+  const [refreshFeed, setRefreshFeed] = useState(false);
+
+  // const handlePostCreated = () => {
+  //   setRefreshFeed(prev => !prev);
+  // };
 
   useEffect(() => {
     const token = sessionStorage.getItem("token")
@@ -1438,7 +1446,7 @@ const HomePage = () => {
         <Container 
           maxWidth="lg" 
           sx={{ 
-            px: { xs: 2, sm: 2, md: 3 }, // Increase xs padding to 16px
+            px: { xs: 2, sm: 2, md: 3 },
             width: '100%',
             maxWidth: { xs: '100%', sm: 'lg' },
             overflow: 'hidden',
@@ -1451,6 +1459,37 @@ const HomePage = () => {
             }
           }}
         >
+          {/* Add CreatePost component at the top with more visible styling */}
+          {/* <Box 
+            sx={{ 
+              mb: 4,
+              width: "100%",
+              maxWidth: "800px",
+              mx: "auto",
+              [theme.breakpoints.down('sm')]: {
+                p: 0,
+                mb: 3,
+              }
+            }}
+          >
+            <CreatePost onPostCreated={handlePostCreated} />
+          </Box>
+
+          {/* Add PostFeed component */}
+          {/* <Box 
+            sx={{ 
+              width: "100%",
+              maxWidth: "800px",
+              mx: "auto",
+              mb: 4,
+              [theme.breakpoints.down('sm')]: {
+                p: 0,
+              }
+            }}
+          >
+            <PostFeed key={refreshFeed} />
+          </Box> */} */
+
           <Box
             sx={{
               bgcolor: "#FFFFFF",
@@ -1467,14 +1506,12 @@ const HomePage = () => {
                 margin: '24px 0',
                 width: '100%',
                 borderRadius: 0,
-                paddingTop: '16px', // Keep vertical padding if needed
-                paddingBottom: '16px', // Keep vertical padding if needed
-                // Remove horizontal padding override here
+                paddingTop: '16px',
+                paddingBottom: '16px',
                 overflowX: 'hidden',
-                ml: 0, // Ensure no extra margin
-                mr: 0, // Ensure no extra margin
+                ml: 0,
+                mr: 0,
               }
-
             }}
           >
             <Typography
