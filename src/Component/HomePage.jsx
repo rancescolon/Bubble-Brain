@@ -176,7 +176,7 @@ const HomePage = () => {
           const communities = result[0].map((group) => ({
             id: group.id,
             name: group.name || "Community",
-            description: group.description || "No description available",
+            description: group.attributes?.description || "No description available",
             members: group.members?.length || 0,
             image: group.thumbnailURL || getRandomImage(),
             authorId: group.ownerID,
