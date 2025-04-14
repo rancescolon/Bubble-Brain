@@ -183,16 +183,20 @@ const Communities = () => {
       const groupsData = await groupsRes.json()
       const membershipsData = await membershipsRes.json()
   
+      console.log("Groups API Response:", groupsData)
+      console.log("First Group Data:", groupsData[0]?.[0])
+  
       const memberships = membershipsData[0] || []
       const joinedGroupIds = memberships.map((m) => m.groupID)
   
       const newCommunities = groupsData[0]?.map((group) => {
+        console.log("Processing Group:", group)
         const isJoined = joinedGroupIds.includes(group.id)
         const isOwner = group.ownerID === userId
         return {
           id: group.id,
           name: group.name,
-          description: group.description || "No description available",
+          description: group.attributes?.description || "No description available",
           authorId: group.ownerID,
           members: [],
           isJoined,
@@ -275,7 +279,9 @@ const Communities = () => {
 
     const communityData = {
       name: communityName,
-      description: communityDescription,
+      attributes: {
+        description: communityDescription
+      },
       ownerID: user.id,
     }
 
@@ -298,8 +304,7 @@ const Communities = () => {
           const newCommunity = {
             id: result.id,
             name: result.name,
-            description: result.description,
-
+            description: result.description || communityDescription,
             members: [{ id: user.id, name: "You", isAdmin: true }],
             flashcards: [],
             messages: [],
