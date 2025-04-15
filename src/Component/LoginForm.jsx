@@ -61,6 +61,11 @@ const LoginForm = ({ setLoggedIn }) => {
                 console.log("Login result:", result)
                 sessionStorage.setItem("token", result.token)
                 sessionStorage.setItem("user", result.userID)
+                sessionStorage.setItem("loginTimestamp", Date.now().toString())
+                
+                // Ensure we clear any non-specific skin data
+                localStorage.removeItem('lastEquippedSkinId')
+                
                 setLoginResult(result)
 
                 // Check if this is the first login

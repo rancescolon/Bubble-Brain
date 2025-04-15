@@ -32,6 +32,7 @@ import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, HelpCircle } from "l
 import { BackgroundContext } from "../App"
 import CreatePost from "./CreatePost"
 import PostFeed from "./PostFeed"
+import { useShop } from "../Context/ShopContext"
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -78,6 +79,32 @@ const HomePage = () => {
   const [loadingCommunities, setLoadingCommunities] = useState(true)
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
+
+  // Import shop context and refreshUserData function
+  const { refreshUserData, userId } = useShop();
+  const hasRefreshedDataRef = useRef(false);
+
+  // Add effect to refresh skin data on initial load
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    
+    // Only run once when component mounts and we have a logged-in user
+    if (token && userId && !hasRefreshedDataRef.current) {
+      console.log("[HomePage] First load after login, refreshing skin data");
+      
+      // Set ref to prevent multiple refreshes
+      hasRefreshedDataRef.current = true;
+      
+      // Force refresh shop data (same as what happens in the Shop page)
+      refreshUserData().then(success => {
+        if (success) {
+          console.log("[HomePage] Successfully refreshed skin data on login");
+        } else {
+          console.warn("[HomePage] Failed to refresh skin data on login");
+        }
+      });
+    }
+  }, [refreshUserData, userId]);
 
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
@@ -1549,7 +1576,7 @@ const HomePage = () => {
             }}
           >
             <PostFeed key={refreshFeed} />
-          </Box> */} */
+          </Box> */} 
 
           <Box
             sx={{

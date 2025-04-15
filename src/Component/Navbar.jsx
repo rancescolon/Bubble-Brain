@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette} from "lucide-react"
-
+import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette, ShoppingCart} from "lucide-react"
+import { useShop } from "../Context/ShopContext"
 
 import {
   Box,
@@ -52,6 +52,51 @@ const NavBar = () => {
   const [isExpanded, setIsExpanded] = useState(!isMobile)
   const location = useLocation()
   const currentPath = location.pathname
+  const { getEquippedSkin, equippedSkinId, userId, defaultSkin } = useShop()
+  
+  const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
+  
+  // Enhanced effect to handle skin persistence across navigation
+  useEffect(() => {
+    // Make the key user-specific
+    const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : 'lastEquippedSkinId';
+    
+    // Clear any stored skin data if userId is null (logged out)
+    if (!userId) {
+      setCurrentSkin(defaultSkin);
+      console.log("[Navbar] No user logged in, using default skin");
+      return;
+    }
+    
+    // First, try to get the equipped skin from the ShopContext
+    const contextSkin = getEquippedSkin();
+    
+    // If we have a skin ID in context that isn't default, use and store it
+    if (equippedSkinId && equippedSkinId !== defaultSkin.id) {
+      setCurrentSkin(contextSkin);
+      localStorage.setItem(localStorageKey, equippedSkinId);
+      console.log("[Navbar] Using equipped skin from context:", equippedSkinId);
+      return;
+    }
+    
+    // If the context doesn't have a non-default skin, try to get from localStorage
+    const savedSkinId = localStorage.getItem(localStorageKey);
+    
+    if (savedSkinId && savedSkinId !== defaultSkin.id) {
+      // If we have a saved skin ID, use it to retrieve the skin data
+      const fallbackSkin = getEquippedSkin();
+      
+      if (fallbackSkin && fallbackSkin.id !== defaultSkin.id) {
+        setCurrentSkin(fallbackSkin);
+        console.log("[Navbar] Restored skin from localStorage:", savedSkinId);
+        return;
+      }
+    }
+    
+    // Default fallback - use whatever the context provides
+    setCurrentSkin(getEquippedSkin());
+    console.log("[Navbar] Using default skin from context");
+  }, [getEquippedSkin, equippedSkinId, userId, defaultSkin]);
 
   // Update expanded state when screen size changes
   useEffect(() => {
@@ -70,6 +115,7 @@ const NavBar = () => {
     { icon: User, label: "Profile", path: "/profile" },
     { icon: Palette, label: "Style Guide", path: "/style-guide" },
     { icon: Settings, label: "Feed", path: "/feed" },
+    { icon: ShoppingCart, label: "Shop", path: "/shop" },
   ]
 
   return (
@@ -120,7 +166,7 @@ const NavBar = () => {
           >
             <Box
               component="img"
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame-V163AsalyIRqbHW6Fe7OWFHHuwoL99.png"
+              src={currentSkin.logo}
               alt="Bubble Brain Logo"
               sx={{
                 width: "100%",

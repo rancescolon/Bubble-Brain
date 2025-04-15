@@ -1,0 +1,1370 @@
+"use client"
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useShop, availableSkins, rarityLevels as importedRarityLevels } from '../Context/ShopContext';
+import { BackgroundContext } from '../App';
+import bubbleBuckImage from '../assets/bubblebuck.png'; // Import buck image
+import actualBuyButtonImage from '../assets/actualbuybutton.png'; // Add this import
+import actualOwnedButtonImage from '../assets/actualownedbutton.png'; // Add this import
+import finalEquippedButtonImage from '../assets/finalequippedbutton.png'; // Add this import
+import updatedEquipButtonImage from '../assets/updatedequipbutton.png'; // Import the new Equip action button image
+import sittingFishermanImage from '../assets/fallingevilfisherman1.png'; // Import the sitting fisherman - Corrected case
+import bubbleBorderBoxImage from '../assets/bubbleborderbox.png'; // Import the new background box image
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Grid,
+  CircularProgress,
+  Paper,
+  Divider,
+  Chip,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+  Stack,
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Tooltip
+} from '@mui/material';
+import { ShoppingCart, CheckCircle, HelpCircle, PlusCircle, MinusCircle, RefreshCw } from 'lucide-react'; // Added RefreshCw
+//The code for the Shop page was assisted with the help of ChatGPT
+// Helper to format time (from HomePage.jsx)
+const formatTime = (seconds) => {
+    if (seconds === undefined || seconds === null) return "0h 0m";
+    const totalMinutes = Math.floor(seconds / 60);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours}h ${minutes}m`;
+};
+
+const Shop = () => {
+  const { 
+    bubbleBucks, 
+    purchasedSkins, 
+    equippedSkinId, 
+    buySkin, 
+    equipSkin, 
+    getEquippedSkin,
+    defaultSkin,
+    addBubbleBucks,
+    isLoading: isShopLoading,
+    updateBackendUserData, 
+    userId,
+    refreshUserData,
+    setPurchasedSkins
+  } = useShop();
+
+  const { currentBackground } = useContext(BackgroundContext);
+
+  const [totalStudyTimeSeconds, setTotalStudyTimeSeconds] = useState(0);
+  const [loadingStudyTime, setLoadingStudyTime] = useState(true);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [sortBy, setSortBy] = useState('rarityAsc'); 
+  const [isMachineShaking, setIsMachineShaking] = useState(false); // Keep for fisherman
+  const [lastFishermanClickTime, setLastFishermanClickTime] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const hasRefreshedRef = useRef(false);
+
+  // Fetch total study time for the current user
+  useEffect(() => {
+    const fetchStudyTime = async () => {
+      setLoadingStudyTime(true);
+      const token = sessionStorage.getItem('token');
+      const userStr = sessionStorage.getItem('user');
+
+      if (!token || !userStr) {
+        console.warn('User not logged in. Cannot fetch study time.');
+        setLoadingStudyTime(false);
+        setSnackbar({ open: true, message: 'Please log in to access the shop', severity: 'warning' });
+        return;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        // Use user.id if user is an object, otherwise assume userStr is the ID
+        const userId = typeof user === 'object' && user.id ? user.id : userStr;
+
+        const response = await fetch(
+          `${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch study time: ${response.status}`);
+        }
+
+        const studyTimeData = await response.json();
+        let totalSeconds = 0;
+        if (studyTimeData && studyTimeData[0]) {
+          totalSeconds = studyTimeData[0].reduce((total, post) => {
+            try {
+              const content = typeof post.content === 'string' ? JSON.parse(post.content) : post.content;
+              return total + (content.duration || 0);
+            } catch (e) {
+              console.warn(`Error parsing study time content for post ${post.id}:`, e);
+              return total;
+            }
+          }, 0);
+        }
+        setTotalStudyTimeSeconds(totalSeconds);
+      } catch (error) {
+        console.error("Error fetching study time:", error);
+        setSnackbar({ open: true, message: 'Failed to load study time.', severity: 'error' });
+      } finally {
+        setLoadingStudyTime(false);
+      }
+    };
+
+    // Only fetch if we have a userId
+    if (userId) {
+    fetchStudyTime();
+    } else {
+      setTotalStudyTimeSeconds(0);
+      setLoadingStudyTime(false);
+    }
+  }, [userId]); // Add userId dependency to refetch when user changes
+
+  // Load fisherman click time from localStorage when userId becomes available
+  useEffect(() => {
+    if (!userId) return; // Don't try to load if no userId
+    
+    // Create user-specific key
+    const userSpecificKey = `lastFishermanClickTime_${userId}`;
+    
+    // Load from localStorage only when userId is available
+    const savedTime = localStorage.getItem(userSpecificKey);
+    if (savedTime) {
+      setLastFishermanClickTime(parseInt(savedTime, 10));
+    } else {
+      setLastFishermanClickTime(null); // Reset if no saved time for this user
+    }
+    
+    // Cleanup function - reset state when component unmounts or userId changes
+    return () => {
+      setLastFishermanClickTime(null);
+    };
+  }, [userId]); // Only run when userId changes
+
+  // Save lastFishermanClickTime to localStorage when it changes
+  useEffect(() => {
+    if (!userId || lastFishermanClickTime === null) return; // Exit if no user ID or no time
+    
+    // Create user-specific key
+    const userSpecificKey = `lastFishermanClickTime_${userId}`;
+    
+    // Update localStorage
+    localStorage.setItem(userSpecificKey, lastFishermanClickTime.toString());
+  }, [lastFishermanClickTime, userId]); // Run when either changes
+
+  // Handle clicking the fisherman - UPDATED LOGIC
+  const handleFishermanClick = async () => { // Make async for backend update
+    // Make sure user is logged in
+    if (!userId) {
+            setSnackbar({ 
+              open: true, 
+        message: 'Please log in to use this feature.',
+        severity: 'warning' 
+      });
+      return;
+    }
+
+    const fishermanSkinId = 'fisherman1';
+    const ownsFisherman = purchasedSkins.includes(fishermanSkinId);
+    const amountToAdd = ownsFisherman ? 510 : 260; // Determine amount
+
+    // Create user-specific key for localStorage
+    const userSpecificKey = `lastFishermanClickTime_${userId}`;
+    
+    // Check cooldown directly from localStorage and state
+    const currentTime = Date.now();
+    const cooldownDuration = 600000; 
+    
+    // Get the time from localStorage first, as it's the most reliable source
+    const savedTimeStr = localStorage.getItem(userSpecificKey);
+    const savedTime = savedTimeStr ? parseInt(savedTimeStr, 10) : null;
+    
+    // Use localStorage time or state time, whichever is more recent
+    const lastClickTime = savedTime || lastFishermanClickTime;
+    const timeSinceLastClick = lastClickTime ? currentTime - lastClickTime : Infinity;
+
+    if (timeSinceLastClick < cooldownDuration) {
+      const remainingTime = cooldownDuration - timeSinceLastClick;
+      const remainingMinutes = Math.ceil(remainingTime / (60 * 1000));
+      setSnackbar({ 
+        open: true, 
+        message: `The fishing line snapped! Try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`,
+        severity: 'error' 
+      });
+      return; 
+    }
+
+    // Prevent double-click during animation
+    if (isMachineShaking) return;
+
+      setIsMachineShaking(true); 
+    setLastFishermanClickTime(currentTime); // Update state
+    localStorage.setItem(userSpecificKey, currentTime.toString()); // Update localStorage directly
+
+    // 1. Optimistic UI update
+    const optimisticSuccess = addBubbleBucks(amountToAdd);
+
+    if (optimisticSuccess) {
+       const newBucksTotal = bubbleBucks + amountToAdd; // Calculate new total for backend
+       
+       // 2. Update backend
+       const backendSuccess = await updateBackendUserData({ bubbleBucks: newBucksTotal });
+
+       if (backendSuccess) {
+          // Show success message after backend confirmation
+          setSnackbar({ open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' });
+        } else {
+          // Revert optimistic update if backend fails
+          addBubbleBucks(-amountToAdd); // Subtract the added amount
+          setLastFishermanClickTime(null); // Reset cooldown if backend failed
+          localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+          setSnackbar({ open: true, message: 'Failed to save Bubble Bucks. Try again.', severity: 'error' });
+       }
+    } else {
+       // This case should be rare (e.g., invalid amount), but handle it
+       setLastFishermanClickTime(null); // Reset cooldown if optimistic update failed
+       localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+       setSnackbar({ open: true, message: 'Error adding Bubble Bucks.', severity: 'error' });
+    }
+
+    // End animation after a delay
+    setTimeout(() => {
+      setIsMachineShaking(false); 
+    }, 1200); 
+  };
+
+  const handleBuy = async (skin) => {
+    console.log("[Shop] Before buying: bubbleBucks =", bubbleBucks, "purchasedSkins =", [...purchasedSkins]);
+    
+    // If we already own this skin, just equip it
+    if (purchasedSkins.includes(skin.id)) {
+      console.log("[Shop] Skin already owned, equipping instead of buying");
+      await equipSkin(skin.id);
+      return;
+    }
+    
+    // Check if user can afford the skin
+      if (bubbleBucks < skin.price) {
+      setSnackbar({ 
+        open: true, 
+        message: `Not enough Bubble Bucks (need ${skin.price}) to buy ${skin.name}.`, 
+        severity: 'error' 
+      });
+      return;
+    }
+    
+    // Show loading message
+    setSnackbar({ 
+      open: true, 
+      message: `Purchasing ${skin.name}...`, 
+      severity: 'info' 
+    });
+    
+    try {
+      // Step 1: Update backend FIRST with direct API call
+      const newBucks = bubbleBucks - skin.price;
+      const newPurchasedSkins = [...purchasedSkins, skin.id];
+      
+      console.log("[Shop] Updating backend with purchase:", {
+        bubbleBucks: newBucks,
+        purchasedSkins: newPurchasedSkins,
+        equippedSkinId: skin.id
+      });
+      
+      const updateSuccess = await updateBackendUserData({
+        bubbleBucks: newBucks,
+        purchasedSkins: newPurchasedSkins,
+        equippedSkinId: skin.id
+      });
+      
+      if (!updateSuccess) {
+        throw new Error("Backend update failed");
+      }
+      
+      // Step 2: Call buySkin to update local state
+      const buySuccess = await buySkin(skin.id);
+      
+      // Step 3: Refresh user data to ensure consistency
+      await refreshUserData();
+      
+      // Step 4: Verify purchase was successful
+      if (!purchasedSkins.includes(skin.id)) {
+        console.error("[Shop] Purchase verification failed - skin not in purchasedSkins after refresh");
+        
+        // One more attempt to fix it
+        await updateBackendUserData({
+          purchasedSkins: [...purchasedSkins, skin.id]
+        });
+        
+        await refreshUserData();
+      }
+      
+      // Step 5: Equip the skin
+      await equipSkin(skin.id);
+      
+      // Show success message
+      setSnackbar({ 
+        open: true, 
+        message: `Successfully purchased ${skin.name}!`, 
+        severity: 'success' 
+      });
+      
+      console.log("[Shop] Purchase completed. Current state:", {
+        bubbleBucks,
+        purchasedSkins: [...purchasedSkins],
+        equippedSkinId
+      });
+    } catch (error) {
+      console.error("[Shop] Error during purchase:", error);
+      
+      setSnackbar({ 
+        open: true, 
+        message: `Failed to purchase ${skin.name}. Please try again.`, 
+        severity: 'error' 
+      });
+    }
+  };
+
+  const handleEquip = async (skinId) => {
+    console.log("[Shop] Before equipping: skinId =", skinId, "equippedSkinId =", equippedSkinId, "purchasedSkins =", [...purchasedSkins]);
+    
+    // Default skin can always be equipped
+    if (skinId === defaultSkin.id) {
+      await equipSkin(skinId);
+      setSnackbar({ 
+        open: true, 
+        message: "Default skin equipped!", 
+        severity: 'info' 
+      });
+      return;
+    }
+    
+    // Check if we already own this skin
+    const alreadyOwned = purchasedSkins.includes(skinId);
+    
+    // If we don't own the skin, show a message
+    if (!alreadyOwned) {
+      const skin = availableSkins.find(s => s.id === skinId);
+      if (!skin) {
+        console.error(`[Shop] Skin with ID ${skinId} not found in available skins`);
+        setSnackbar({ 
+          open: true, 
+          message: "Error: Skin not found", 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      setSnackbar({ 
+        open: true, 
+        message: `You need to purchase ${skin.name} before equipping it.`, 
+        severity: 'warning' 
+      });
+      return;
+    }
+    
+    try {
+      // Call equipSkin function to update local state
+      await equipSkin(skinId);
+      
+      // Make sure this skin is in the purchased skins array
+      if (!purchasedSkins.includes(skinId)) {
+        console.log("[Shop] Adding equipped skin to purchased skins list");
+        
+        // Update backend directly
+        await updateBackendUserData({
+          purchasedSkins: [...purchasedSkins, skinId],
+          equippedSkinId: skinId
+        });
+        
+        // Refresh to ensure consistency
+        await refreshUserData();
+      }
+      
+      const currentSkin = availableSkins.find(s => s.id === skinId) || { name: "skin" };
+      setSnackbar({ 
+        open: true, 
+        message: `Equipped ${currentSkin.name}!`, 
+        severity: 'success' 
+      });
+      
+      console.log("[Shop] After equipping: equippedSkinId =", equippedSkinId, "purchasedSkins =", [...purchasedSkins]);
+    } catch (error) {
+      console.error("[Shop] Error equipping skin:", error);
+      setSnackbar({ 
+        open: true, 
+        message: "Failed to equip skin. Please try again.", 
+        severity: 'error' 
+      });
+    }
+  };
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // --- Sorting Logic ---
+  const rarityMap = importedRarityLevels || {}; // Handle potential undefined import initially
+  const getSortValue = (skin) => {
+    return rarityMap[skin.rarityId]?.sortOrder ?? -1; // Default for unknown rarity
+  };
+
+  let sortedSkins = [...availableSkins]; // Create a copy
+  if (sortBy === 'rarityAsc') {
+    sortedSkins.sort((a, b) => getSortValue(a) - getSortValue(b));
+  } else if (sortBy === 'rarityDesc') {
+    sortedSkins.sort((a, b) => getSortValue(b) - getSortValue(a));
+  } else if (sortBy === 'priceAsc') {
+    sortedSkins.sort((a, b) => a.price - b.price);
+  } else if (sortBy === 'priceDesc') {
+    sortedSkins.sort((a, b) => b.price - a.price);
+  }
+  // --- End Sorting Logic ---
+
+  const equippedSkin = getEquippedSkin();
+  const isLoading = isShopLoading; // Only need shop loading state now
+
+  // --- DEBUG LOG --- 
+  console.log("[Shop.jsx] Purchased Skins:", purchasedSkins);
+  console.log("[Shop.jsx] Owns Fisherman?", purchasedSkins.includes('fisherman1'));
+  console.log("[Shop] Current userId:", userId);
+  console.log("[Shop] Equipped skin ID:", equippedSkinId);
+  console.log("[Shop] Equipped skin found in available skins:", !!availableSkins.find(s => s.id === equippedSkinId));
+  console.log("[Shop] Is equipped skin in purchased list:", purchasedSkins.includes(equippedSkinId));
+  console.log("[Shop] Current skin from getEquippedSkin():", getEquippedSkin());
+  // --- END DEBUG LOG ---
+
+  // Enhance the useEffect for handling purchased skins to make it more reliable between navigations
+  useEffect(() => {
+    // Don't do anything if not logged in
+    if (!userId) return;
+    
+    // Don't clear data when user navigates away and returns - use the mostReliableData function
+    const findMostReliableData = () => {
+      // Create keys for different storage locations
+      const SKINS_CACHE_KEY = `lastKnownPurchasedSkins_${userId}`;
+      const SESSION_SKINS_KEY = `sessionPurchasedSkins_${userId}`;
+      
+      try {
+        // 1. Current state data (if exists)
+        const currentStateData = purchasedSkins.length > 0 ? [...purchasedSkins] : null;
+        
+        // 2. Session storage data (survives page navigation)
+        let sessionData = null;
+        try {
+          const sessionStr = sessionStorage.getItem(SESSION_SKINS_KEY);
+          if (sessionStr) {
+            const parsed = JSON.parse(sessionStr);
+            sessionData = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+          }
+        } catch (e) {
+          console.error("[Shop] Error parsing session storage skins", e);
+        }
+        
+        // 3. Local storage data (survives browser restart)
+        let localData = null;
+        try {
+          const localStr = localStorage.getItem(SKINS_CACHE_KEY);
+          if (localStr) {
+            const parsed = JSON.parse(localStr);
+            localData = Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+          }
+        } catch (e) {
+          console.error("[Shop] Error parsing local storage skins", e);
+        }
+        
+        // Log what we found in each source
+        console.log("[Shop] Available skin data sources:", {
+          currentState: currentStateData?.length || 0,
+          sessionStorage: sessionData?.length || 0,
+          localStorage: localData?.length || 0
+        });
+        
+        // Use the source with the most skins
+        const currentCount = currentStateData?.length || 0;
+        const sessionCount = sessionData?.length || 0;
+        const localCount = localData?.length || 0;
+        
+        // If all sources have some data, use the one with the most items
+        if (currentCount > 0 || sessionCount > 0 || localCount > 0) {
+          if (currentCount >= sessionCount && currentCount >= localCount) {
+            return currentStateData;
+          } else if (sessionCount >= currentCount && sessionCount >= localCount) {
+            return sessionData;
+          } else {
+            return localData;
+          }
+        }
+        
+        // No valid data found in any source
+        return null;
+      } catch (e) {
+        console.error("[Shop] Error finding most reliable data", e);
+        return purchasedSkins.length > 0 ? [...purchasedSkins] : null;
+      }
+    };
+    
+    // Check if we need to restore skin data after navigation
+    if (isShopLoading === false) { // Only run when loading is complete
+      const bestSkinData = findMostReliableData();
+      
+      // If we have data in storage but not in state, we need to restore
+      if (bestSkinData && bestSkinData.length > 0) {
+        // If current state is empty or has fewer skins, restore from storage
+        if (purchasedSkins.length < bestSkinData.length) {
+          console.log("[Shop] After navigation: restoring skins from storage", {
+            current: purchasedSkins.length,
+            storage: bestSkinData.length
+          });
+          
+          // First update state
+          setPurchasedSkins(bestSkinData);
+          
+          // Then update backend to ensure data consistency
+          updateBackendUserData({
+            purchasedSkins: bestSkinData,
+            // Include current equipped skin to ensure it's not lost
+            equippedSkinId: equippedSkinId !== defaultSkin.id ? equippedSkinId : undefined
+          }).then(success => {
+            if (success) {
+              console.log("[Shop] Successfully restored skins after navigation");
+              refreshUserData(); // Refresh to ensure everything is in sync
+            } else {
+              console.error("[Shop] Failed to restore skins after navigation");
+            }
+          });
+        } else {
+          // Current state looks good, just save it for next navigation
+          console.log("[Shop] Current skin data looks good, caching for future navigation");
+        }
+        
+        // Always update both storage locations with best data
+        if (bestSkinData.length > 0) {
+          const dataStr = JSON.stringify(bestSkinData);
+          localStorage.setItem(`lastKnownPurchasedSkins_${userId}`, dataStr);
+          sessionStorage.setItem(`sessionPurchasedSkins_${userId}`, dataStr);
+        }
+      }
+    }
+  }, [userId, isShopLoading, purchasedSkins, equippedSkinId, defaultSkin.id]);
+  
+  // Add an event listener for page visibility changes to handle tab switching
+  useEffect(() => {
+    if (!userId) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("[Shop] Tab became visible again, checking data consistency");
+        
+        // Don't trigger if we're already refreshing
+        if (!isRefreshing) {
+          // Simple check - if we have equipped skin but no purchased skins, refresh
+          if (equippedSkinId !== defaultSkin.id && purchasedSkins.length === 0) {
+            console.log("[Shop] Data inconsistency detected on visibility change, refreshing");
+            handleRefreshData();
+          }
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [userId, isRefreshing, purchasedSkins.length, equippedSkinId, defaultSkin.id]);
+
+  // Function to manually refresh shop data
+  const handleRefreshData = async () => {
+    // Prevent double-clicking refresh while already refreshing
+    if (isRefreshing) {
+      console.log("[Shop] Already refreshing, ignoring duplicate request");
+      return;
+    }
+    
+    // Check if the required data and functions exist
+    if (!userId || !refreshUserData) {
+      setSnackbar({
+        open: true,
+        message: "Cannot refresh shop data. Try logging in again.",
+        severity: "error"
+      });
+      return;
+    }
+
+    setIsRefreshing(true);
+    setSnackbar({
+      open: true,
+      message: "Refreshing shop data...",
+      severity: "info"
+    });
+    
+    // Save current state BEFORE the refresh
+    const currentPurchasedSkins = [...purchasedSkins];
+    const currentEquippedSkin = equippedSkinId;
+    const currentBubbleBucks = bubbleBucks;
+    
+    console.log("[Shop] Current state before refresh:", {
+      bubbleBucks: currentBubbleBucks,
+      purchasedSkins: currentPurchasedSkins,
+      equippedSkinId: currentEquippedSkin
+    });
+    
+    try {
+      // First, force an update to ensure our data is stored correctly
+      // This fixes issues where refreshUserData might not have our latest state
+      if (currentPurchasedSkins.length > 0) {
+        console.log("[Shop] Pre-refresh: Forcing purchased skins to be saved");
+        await updateBackendUserData({
+          purchasedSkins: currentPurchasedSkins,
+          equippedSkinId: currentEquippedSkin
+        });
+      }
+      
+      // Now refresh user data from backend - with timeout safety
+      const refreshPromise = refreshUserData();
+      
+      // Add a timeout to ensure we don't get stuck
+      const timeoutPromise = new Promise((resolve) => {
+        setTimeout(() => resolve('timeout'), 10000); // 10 second timeout
+      });
+      
+      // Use Promise.race to handle potential infinite refreshes
+      const result = await Promise.race([refreshPromise, timeoutPromise]);
+      
+      if (result === 'timeout') {
+        console.error("[Shop] Refresh operation timed out after 10 seconds");
+        throw new Error("Refresh operation timed out");
+      }
+      
+      console.log("[Shop] After refresh: purchasedSkins =", purchasedSkins, "equippedSkinId =", equippedSkinId);
+      
+      // Calculate exactly which skins are missing after refresh
+      const missingSkins = currentPurchasedSkins.filter(id => !purchasedSkins.includes(id));
+      
+      // If we've lost ANY skins, including equipped skin, restore everything
+      if (missingSkins.length > 0 || 
+         (currentEquippedSkin && !purchasedSkins.includes(currentEquippedSkin) && currentEquippedSkin !== defaultSkin.id)) {
+        
+        console.log("[Shop] Data was lost during refresh! Missing skins:", missingSkins);
+        console.log("[Shop] Equipped skin preserved?", purchasedSkins.includes(currentEquippedSkin));
+        
+        // Combine current and previous purchases without duplicates
+        const combinedSkins = [...new Set([...purchasedSkins, ...currentPurchasedSkins])];
+        
+        console.log("[Shop] Restoring ALL data. Combined skins:", combinedSkins);
+        
+        // Critical: Force update to restore ALL our data
+        const updateSuccess = await updateBackendUserData({
+          purchasedSkins: combinedSkins,
+          equippedSkinId: currentEquippedSkin
+        });
+        
+        if (updateSuccess) {
+          console.log("[Shop] Successfully restored all data");
+          // Refresh again to get our restored data
+          await refreshUserData();
+          
+          // Final verification
+          const stillMissingSkins = currentPurchasedSkins.filter(id => !purchasedSkins.includes(id));
+          if (stillMissingSkins.length > 0) {
+            console.error("[Shop] CRITICAL: Still missing skins after restore:", stillMissingSkins);
+            setSnackbar({
+              open: true,
+              message: "Some items may not have been properly restored. Try refreshing again.",
+              severity: "warning"
+            });
+            return;
+          }
+        } else {
+          console.error("[Shop] Failed to restore data!");
+          setSnackbar({
+            open: true,
+            message: "Failed to restore your purchased items. Please try again.",
+            severity: "error"
+          });
+          return;
+        }
+      }
+      
+      // Restore bubble bucks if they decreased
+      if (currentBubbleBucks > bubbleBucks) {
+        console.log("[Shop] Bubble bucks decreased from", currentBubbleBucks, "to", bubbleBucks);
+        await updateBackendUserData({
+          bubbleBucks: currentBubbleBucks
+        });
+        // One more refresh to get the correct bubble bucks
+        await refreshUserData();
+      }
+      
+      // Final verification - ensure we didn't lose any skins
+      const finalMissingSkins = currentPurchasedSkins.filter(id => !purchasedSkins.includes(id));
+      if (finalMissingSkins.length > 0) {
+        console.error("[Shop] CRITICAL: Still missing skins after all recovery attempts:", finalMissingSkins);
+        setSnackbar({
+          open: true,
+          message: "Some items couldn't be restored. Please contact support.",
+          severity: "error"
+        });
+        return;
+      }
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: "Shop refreshed successfully!",
+        severity: "success"
+      });
+      
+      console.log("[Shop] Final state after refresh:", {
+        bubbleBucks,
+        purchasedSkins: [...purchasedSkins],
+        equippedSkinId
+      });
+    } catch (error) {
+      console.error("[Shop] Error refreshing shop data:", error);
+      
+      setSnackbar({
+        open: true,
+        message: "Failed to refresh shop data. Please try again.",
+        severity: "error"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Add a one-time effect to ensure equipped skin is in purchased list
+  useEffect(() => {
+    // Skip if not logged in or no equipped skin
+    if (!userId || !equippedSkinId || equippedSkinId === defaultSkin.id) return;
+    
+    // Skip if already in purchased skins
+    if (purchasedSkins.includes(equippedSkinId)) return;
+    
+    const syncEquippedSkin = async () => {
+      console.log("[Shop] Equipped skin not in purchased list on load! Adding it...");
+      
+      try {
+        // Add equipped skin to purchased list
+        const updatedSkins = [...purchasedSkins, equippedSkinId];
+        
+        await updateBackendUserData({
+          purchasedSkins: updatedSkins
+        });
+        
+        // Refresh data to make sure it's saved
+        await refreshUserData();
+        
+        console.log("[Shop] Equipped skin added to purchased list:", equippedSkinId);
+      } catch (error) {
+        console.error("[Shop] Error syncing equipped skin:", error);
+      }
+    };
+    
+    syncEquippedSkin();
+  }, [userId, equippedSkinId, purchasedSkins]);
+
+  // Add a one-time effect to save and restore bubble bucks between sessions
+  useEffect(() => {
+    if (!userId) return;
+    
+    const STORAGE_KEY = `lastKnownBubbleBucks_${userId}`;
+    
+    // First, check if we just logged in and have 0 bubble bucks
+    if (bubbleBucks === 0) {
+      // Try to get the last known bubble bucks from localStorage
+      const lastKnownBucksStr = localStorage.getItem(STORAGE_KEY);
+      const lastKnownBucks = lastKnownBucksStr ? parseInt(lastKnownBucksStr, 10) : 0;
+      
+      // If we have a non-zero value in localStorage, use it to restore
+      if (lastKnownBucks > 0) {
+        console.log("[Shop] Detected 0 bubble bucks after login. Restoring from cache:", lastKnownBucks);
+        
+        // Update backend
+        updateBackendUserData({
+          bubbleBucks: lastKnownBucks
+        }).then(success => {
+          if (success) {
+            console.log("[Shop] Successfully restored bubble bucks from cache");
+            refreshUserData();
+          } else {
+            console.error("[Shop] Failed to restore bubble bucks from cache");
+          }
+        });
+      }
+    } 
+    else if (bubbleBucks > 0) {
+      // Store current bubble bucks for future sessions
+      console.log("[Shop] Saving current bubble bucks to cache:", bubbleBucks);
+      localStorage.setItem(STORAGE_KEY, bubbleBucks.toString());
+    }
+    
+  }, [userId, bubbleBucks]);
+
+  // Add a safe one-time load effect with a strict mounting check
+  useEffect(() => {
+    // Use a local variable to ensure this only runs once per mount
+    let isMounted = true;
+    
+    const loadInitialData = async () => {
+      // Skip if no user data is available
+      if (!userId || !refreshUserData) return;
+      
+      console.log("[Shop] Initial data load started");
+      
+      try {
+        // Only call refresh if component is still mounted
+        if (isMounted) {
+          setIsRefreshing(true);
+          
+          // First, check if we have cached skin data to verify against
+          const SKINS_CACHE_KEY = `lastKnownPurchasedSkins_${userId}`;
+          let cachedSkins = [];
+          
+          try {
+            const cachedSkinsStr = localStorage.getItem(SKINS_CACHE_KEY);
+            if (cachedSkinsStr) {
+              const parsed = JSON.parse(cachedSkinsStr);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                cachedSkins = parsed;
+                console.log("[Shop] Found cached skins for verification:", cachedSkins.length);
+              }
+            }
+          } catch (e) {
+            console.error("[Shop] Error parsing cached skins:", e);
+          }
+          
+          // Now refresh user data from backend
+          await refreshUserData();
+          
+          console.log("[Shop] Initial load complete, current skins:", purchasedSkins.length);
+          
+          // If we have cached skins but none loaded, restore the cached skins
+          if (cachedSkins.length > 0 && purchasedSkins.length === 0) {
+            console.log("[Shop] No skins loaded from backend, restoring from cache");
+            
+            // Update state optimistically
+            setPurchasedSkins(cachedSkins);
+            
+            // Update backend to ensure data is saved
+            const updateSuccess = await updateBackendUserData({
+              purchasedSkins: cachedSkins
+            });
+            
+            if (updateSuccess) {
+              console.log("[Shop] Successfully restored skins from cache");
+              
+              // One final refresh to ensure state is consistent
+              await refreshUserData();
+            } else {
+              console.error("[Shop] Failed to restore skins from cache");
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[Shop] Error loading initial data:", error);
+      } finally {
+        if (isMounted) {
+          setIsRefreshing(false);
+        }
+      }
+    };
+    
+    // Load data once on mount
+    loadInitialData();
+    
+    // Clean up function
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array ensures this runs only on mount
+
+  return (
+    <Box
+      sx={{
+        flexGrow: 1,
+        minHeight: "calc(100vh - 64px)",
+        backgroundImage: `url(${currentBackground.image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: 'fixed',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="lg">
+        {/* Wrap content in a main white Paper */}
+        <Paper 
+          elevation={4} 
+          sx={{
+            // Adjusted padding to increase top space
+            pt: { xs: 4, sm: 5, md: 6 }, // Increased top padding
+            px: { xs: 2, sm: 3, md: 4 }, // Kept original horizontal padding
+            pb: { xs: 2, sm: 3, md: 4 }, // Kept original bottom padding
+            borderRadius: '16px', 
+            bgcolor: 'white', 
+            overflow: 'hidden' 
+          }}
+        >
+          {/* Add relative positioning to the title container */}
+          <Box sx={{ position: 'relative', textAlign: 'center', mb: 4 }}>
+            {/* Positioned Fisherman Image */}
+            <Box
+              component="img"
+              src={sittingFishermanImage}
+              alt="Click for Bucks!"
+              onClick={handleFishermanClick} 
+              sx={{
+                position: 'absolute',
+                top: { xs: '135px', md: '62px' }, 
+                left: { xs: 'calc(50% + 11px)', md: 'calc(50% + 113px)' }, 
+                width: '70px',
+                height: 'auto',
+                zIndex: 2, 
+                pointerEvents: 'auto',
+                cursor: 'pointer',    
+                filter: 'none',       
+                transition: 'transform 0.2s ease-in-out, filter 0.3s ease-in-out',
+                '&:hover': {
+                  // Apply red glow universally on hover
+                  filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', // CHANGED: Apply universally
+                  // Apply scaling transform on hover for everyone
+                  transform: 'scale(1.05)', 
+                }
+              }}
+            />
+            <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
+              Bubble Shop
+            </Typography>
+            
+            {/* Refresh button */}
+            <IconButton 
+              onClick={handleRefreshData}
+              disabled={isRefreshing || isLoading}
+              sx={{
+                position: 'absolute',
+                top: { xs: '8px', md: '12px' },
+                right: { xs: '8px', md: '12px' },
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.95)',
+                },
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+              }}
+              aria-label="Refresh shop data"
+            >
+              <RefreshCw size={24} className={isRefreshing ? 'spin' : ''} />
+            </IconButton>
+          </Box>
+
+          {/* --- Re-add Main Loading Indicator --- */}
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 5 }}>
+              <CircularProgress />
+              <Typography sx={{ ml: 2, fontFamily: 'SourGummy, sans-serif' }}>Loading Shop...</Typography>
+            </Box>
+          ) : (
+            <> {/* Render content only when not loading */} 
+              {/* User Stats Section - MODIFIED */} 
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                mb: 4, 
+                mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
+                borderRadius: '16px', 
+                bgcolor: 'rgba(244, 253, 255, 0.6)', 
+                backdropFilter: 'blur(2px)' 
+              }}>
+                <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
+                  {/* Stats Display */}
+                  <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
+                    <Typography variant="h5" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mb: 2 }}>
+                        Your Stats
+                    </Typography>
+                    {/* Bubble Bucks Display with Tooltip */}
+                    <Tooltip title="Earn Bubble Bucks from studying!" arrow>
+                      <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
+                      <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
+                      <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
+                        <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
+                        <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
+                      </Box>
+                    </Box>
+                    </Tooltip>
+                    
+                    {/* Add study time to bubble bucks conversion subtitle */}
+                    <Typography variant="body2" sx={{ 
+                      fontFamily: 'SourGummy, sans-serif', 
+                      color: 'text.secondary', 
+                      mt: -1, 
+                      mb: 2,
+                      textAlign: 'center' 
+                    }}>
+                      1 minute of study time = 1 Bubble Buck
+                    </Typography>
+                    
+                    {/* Show refresh message if bubble bucks are 0 */}
+                    {bubbleBucks === 0 && purchasedSkins.length === 0 && (
+                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+                        <RefreshCw size={18} style={{ marginRight: '8px' }} />
+                        <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
+                          If your data isn't showing, click the refresh button in the top right
+                    </Typography>
+                      </Box>
+                    )}
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              {/* Available Skins Section */}
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
+                <Typography variant="h4" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, color: '#1D1D20' }}>
+                  Skins Store
+                </Typography>
+                {/* Sorting Dropdown */}
+                <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
+                  <InputLabel id="sort-by-label" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Sort By</InputLabel>
+                  <Select
+                    labelId="sort-by-label"
+                    id="sort-by-select"
+                    value={sortBy}
+                    label="Sort By"
+                    onChange={(e) => setSortBy(e.target.value)}
+                    sx={{ fontFamily: 'SourGummy, sans-serif' }}
+                  >
+                    <MenuItem value="default" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Default</MenuItem>
+                    <MenuItem value="rarityAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: Low to High</MenuItem>
+                    <MenuItem value="rarityDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: High to Low</MenuItem>
+                    <MenuItem value="priceAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: Low to High</MenuItem>
+                    <MenuItem value="priceDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: High to Low</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Grid container spacing={3}>
+                {sortedSkins.map((skin) => {
+                  const isOwned = purchasedSkins.includes(skin.id);
+                  const isEquipped = equippedSkinId === skin.id;
+                  // Use context bubbleBucks for affordability check
+                  const canAfford = bubbleBucks >= skin.price;
+                  const rarity = rarityMap[skin.rarityId]; // Get rarity details
+                  const isMythic = skin.rarityId === 'mythic'; // Check if mythic
+
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={skin.id}>
+                      <Card sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          borderRadius: '16px', 
+                          boxShadow: 3, // Base shadow for all cards
+                          bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          border: '2px solid transparent', // Reverted to default transparent border
+                        }}>
+                        <CardMedia
+                          component="img"
+                          sx={{ 
+                              height: 180, 
+                              objectFit: 'contain', 
+                              pt: 2, 
+                              backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
+                          }}
+                          image={skin.image} 
+                          alt={skin.name}
+                          onError={(e) => { // Basic error handling for missing images
+                            e.target.onerror = null; 
+                            e.target.style.display='none'; 
+                            // Optionally show a placeholder text or icon
+                            const placeholder = e.target.parentNode.querySelector('.image-placeholder');
+                            if(placeholder) placeholder.style.display='block';
+                          }}
+                        />
+                        {/* Placeholder for missing image */}
+                        <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
+                           <HelpCircle size={48} style={{marginTop: '30px'}}/>
+                           <Typography variant="caption">Image not found</Typography>
+                        </Box>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
+                            {skin.name}
+                          </Typography>
+                          {rarity && (
+                            <Typography variant="body2" sx={{
+                              fontFamily: 'SourGummy, sans-serif',
+                              fontWeight: 'bold',
+                              color: rarity.textColor || '#000000',
+                              mb: 1,
+                              // Removed textShadow
+                              textShadow: 'none' 
+                            }}>
+                              {rarity.name}
+                            </Typography>
+                          )}
+                          <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
+                            <img 
+                              src={bubbleBuckImage} 
+                              alt="" 
+                              style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
+                            />
+                            <Typography 
+                              variant="h6" // Slightly larger variant
+                              sx={{ 
+                                fontFamily: 'SourGummy, sans-serif', 
+                                fontWeight: 600, // Bolder 
+                                color: '#000000' // Theme black color
+                              }}
+                            >
+                              {skin.price}
+                            </Typography>
+                          </Box>
+
+                          {/* Button/Status Display (Moved Here) */}
+                          <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
+                            {isEquipped ? (
+                              <Box
+                                component="img"
+                                src={finalEquippedButtonImage}
+                                alt="Equipped"
+                                sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
+                              />
+                            ) : isOwned ? (
+                              <Box
+                                component="img"
+                                src={actualOwnedButtonImage}
+                                alt="Owned"
+                                sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
+                              />
+                            ) : (
+                              // Buy Button
+                              <Box
+                                component="img"
+                                src={actualBuyButtonImage}
+                                alt="Buy"
+                                onClick={() => handleBuy(skin)}
+                                sx={{
+                                  width: 'auto',
+                                  height: '100%',
+                                  maxHeight: '45px', // Matched to Owned button height
+                                  cursor: canAfford ? 'pointer' : 'not-allowed',
+                                  opacity: canAfford ? 1 : 0.6,
+                                  display: 'block',
+                                  transition: 'transform 0.1s ease',
+                                  '&:hover': {
+                                    transform: canAfford ? 'scale(1.05)' : 'none',
+                                  }
+                                }}
+                              />
+                            )}
+                          </Box>
+                          {/* Not enough bucks message */}
+                          {!isOwned && !canAfford && (
+                            <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
+                              Need {skin.price} Bucks!
+                            </Typography>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid> { /* Closing Available Skins Grid */ }
+
+              {/* ADDED Owned Skins Section */}
+              <Typography variant="h4" gutterBottom sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mt: 6, mb: 2, color: '#1D1D20' }}>
+                Your Wardrobe
+              </Typography>
+              <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
+                {/* Debug info */}
+                {purchasedSkins.length === 0 && (
+                  <Typography sx={{ textAlign: 'center', color: 'text.secondary', mb: 2 }}>
+                    Buy some skins from the store to see them here!
+                  </Typography>
+                )}
+                
+                <Grid container spacing={2}> 
+                  {/* Include default skin and purchased skins only */}
+                  {[
+                    defaultSkin,
+                    // Always include the equipped skin if it's not the default and not already in the list
+                    ...(equippedSkinId !== defaultSkin.id && !purchasedSkins.includes(equippedSkinId) && availableSkins.find(s => s.id === equippedSkinId) 
+                      ? [availableSkins.find(s => s.id === equippedSkinId)] 
+                      : []),
+                    // Filter purchased skins that aren't the default (already included)
+                    ...availableSkins.filter(skin => 
+                      purchasedSkins.includes(skin.id) && 
+                      skin.id !== defaultSkin.id
+                    )
+                  ].filter(Boolean).map((skin) => {
+                    // Always treat currently equipped skin as purchased to avoid display issues
+                    const isCurrentlyEquipped = equippedSkinId === skin.id;
+                    const isPurchasedOrEquipped = purchasedSkins.includes(skin.id) || skin.id === defaultSkin.id || isCurrentlyEquipped;
+                    
+                    return (
+                      <Grid item xs={6} sm={4} md={3} lg={2} key={`owned-${skin.id}`}>
+                        <Card 
+                          sx={{ 
+                            height: '100%', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            borderRadius: '12px', 
+                            boxShadow: isCurrentlyEquipped ? '0 0 15px rgba(29, 110, 241, 0.7)' : 2, 
+                            border: isCurrentlyEquipped ? '2px solid #1D6EF1' : '2px solid transparent',
+                            overflow: 'hidden', 
+                            bgcolor: 'rgba(255, 255, 255, 0.95)'
+                          }}
+                        >
+                          <CardMedia
+                            component="img"
+                            sx={{ height: 100, objectFit: 'contain', pt: 1, backgroundColor: '#eee' }}
+                            image={skin.image} 
+                            alt={skin.name}
+                            onError={(e) => { 
+                              e.target.onerror = null; 
+                              e.target.style.display='none'; 
+                              const placeholder = e.target.parentNode.querySelector('.image-placeholder-owned');
+                              if(placeholder) placeholder.style.display='block';
+                            }}
+                          />
+                          <Box className="image-placeholder-owned" sx={{ display: 'none', height: 100, pt: 1, backgroundColor: '#eee', textAlign: 'center', color: '#999'}}>
+                            <HelpCircle size={32} style={{marginTop: '15px'}}/>
+                            <Typography variant="caption">Image missing</Typography>
+                          </Box>
+                          <CardContent sx={{ flexGrow: 1, p: 1, textAlign: 'center', display: 'flex', flexDirection: 'column' }}> 
+                            <Typography gutterBottom variant="body2" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, lineHeight: 1.2 }}>
+                              {skin.name}
+                            </Typography>
+                            
+                            {/* 
+                              Never show "Buy to keep" message - equipped skins are auto-purchased
+                              by our fixed handleEquip function
+                            */}
+                            {false && !purchasedSkins.includes(skin.id) && isCurrentlyEquipped && skin.id !== defaultSkin.id && (
+                              <Typography variant="caption" sx={{ color: 'orange', mb: 1, fontFamily: 'SourGummy, sans-serif' }}>
+                                Currently equipped! Buy to keep
+                              </Typography>
+                            )}
+                            
+                            {/* Button/Status Display - Add negative mt */}
+                            <Box sx={{ mt: -0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> 
+                              {isCurrentlyEquipped ? (
+                                <Box
+                                  component="img"
+                                  src={finalEquippedButtonImage}
+                                  alt="Equipped"
+                                  sx={{
+                                    width: 'auto',
+                                    height: '100px',
+                                    display: 'block',
+                                    mx: 'auto'
+                                  }}
+                                />
+                              ) : (
+                                <Box
+                                  component="img"
+                                  src={updatedEquipButtonImage}
+                                  alt="Equip"
+                                  onClick={() => handleEquip(skin.id)}
+                                  sx={{
+                                    width: 'auto',
+                                    height: '70px',
+                                    cursor: 'pointer',
+                                    display: 'block',
+                                    mx: 'auto',
+                                    transition: 'transform 0.1s ease',
+                                    '&:hover': {
+                                      transform: 'scale(1.05)',
+                                    }
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+                
+                {/* No skins message */}
+                {(purchasedSkins.length === 0 && !isLoading) && (
+                  <Typography sx={{textAlign: 'center', fontFamily: 'SourGummy, sans-serif', color: 'text.secondary', mt: 2}}>
+                    Buy some skins from the store to see them here!
+                  </Typography>
+                )}
+              </Paper> { /* Closing Wardrobe Paper */ }
+
+            </>
+          )}
+          {/* --- End Content Wrapper --- */}
+
+          {/* Snackbar for feedback */}
+          <Snackbar 
+            open={snackbar.open} 
+            autoHideDuration={4000} 
+            onClose={handleCloseSnackbar} 
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+
+          {/* Keyframes for animation */}
+          <style>{`
+            @keyframes shake {
+              10%, 90% {
+                transform: translate3d(-1px, 0, 0);
+              }
+              20%, 80% {
+                transform: translate3d(2px, 0, 0);
+              }
+              30%, 50%, 70% {
+                transform: translate3d(-3px, 0, 0);
+              }
+              40%, 60% {
+                transform: translate3d(3px, 0, 0);
+              }
+            }
+          `}</style>
+
+          {/* Keyframes for refresh animation */}
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .spin {
+              animation: spin 1s linear infinite;
+            }
+          `}</style>
+        </Paper> {/* Close main content Paper */} 
+      </Container> 
+    </Box> // Close outer Box
+  );
+};
+
+export default Shop;
