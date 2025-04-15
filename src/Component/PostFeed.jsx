@@ -723,60 +723,57 @@ const PostFeed = () => {
             }}
           >
             {/* Post Header */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              p: 2,
-              borderBottom: content.mediaUrls && content.mediaUrls.length > 0 ? 'none' : '1px solid #efefef'
-            }}>
-              <Avatar 
-                src={post.attributes?.authorAvatar}
-                sx={{ width: 32, height: 32, mr: 1.5 }}
-              >
-                {post.authorUsername?.[0] || 'U'}
-              </Avatar>
-              <Typography 
-                variant="subtitle2"
-                sx={{ 
-                  fontWeight: 600,
-                  fontSize: '14px',
-                }}
-              >
-                {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
-              </Typography>
-            </Box>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            p: 2,
+            borderBottom: content.image ? 'none' : '1px solid #efefef'
+          }}>
+            <Avatar 
+              src={post.attributes?.authorAvatar}
+              sx={{ width: 32, height: 32, mr: 1.5 }}
+            >
+              {post.authorUsername?.[0] || 'U'}
+            </Avatar>
+            <Typography 
+              variant="subtitle2"
+              sx={{ 
+                fontWeight: 600,
+                fontSize: '14px',
+              }}
+            >
+              {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
+            </Typography>
+          </Box>
 
-            {/* Post Media */}
-            {content.mediaUrls && content.mediaUrls.length > 0 && (
-              <Box sx={{ width: '100%' }}>
-                {content.mediaUrls.map((url, index) => (
-                  <Box key={index} sx={{ width: '100%' }}>
-                    {url.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                      <CardMedia
-                        component="img"
-                        image={url}
-                        alt={`Post media ${index + 1}`}
-                        sx={{ 
-                          width: '100%',
-                          maxHeight: 600,
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <CardMedia
-                        component="video"
-                        src={url}
-                        controls
-                        sx={{ 
-                          width: '100%',
-                          maxHeight: 600
-                        }}
-                      />
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            )}
+          {/* Add Image Display Section Here */}
+          {content.image && (
+            <Box 
+              sx={{ 
+                width: '100%',
+                height: { xs: '300px', sm: '400px' }, // Fixed height for consistency
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+                bgcolor: '#fafafa',
+                borderTop: '1px solid #efefef',
+                borderBottom: '1px solid #efefef'
+              }}
+            >
+              <img 
+                src={content.image} 
+                alt="Post" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover', // Changed from 'contain' to 'cover'
+                  objectPosition: 'center'
+                }}
+              />
+            </Box>
+          )}
+
 
             {/* Post Actions */}
             <Box sx={{ px: 2, pt: 1.5, display: 'flex', gap: 1 }}>
