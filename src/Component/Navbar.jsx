@@ -52,14 +52,51 @@ const NavBar = () => {
   const [isExpanded, setIsExpanded] = useState(!isMobile)
   const location = useLocation()
   const currentPath = location.pathname
-  const { getEquippedSkin, equippedSkinId, userId } = useShop()
+  const { getEquippedSkin, equippedSkinId, userId, defaultSkin } = useShop()
   
   const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
   
+  // Enhanced effect to handle skin persistence across navigation
   useEffect(() => {
-    setCurrentSkin(getEquippedSkin())
-    console.log("[Navbar] User or equipped skin changed, updating navbar skin")
-  }, [getEquippedSkin, equippedSkinId, userId])
+    // Make the key user-specific
+    const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : 'lastEquippedSkinId';
+    
+    // Clear any stored skin data if userId is null (logged out)
+    if (!userId) {
+      setCurrentSkin(defaultSkin);
+      console.log("[Navbar] No user logged in, using default skin");
+      return;
+    }
+    
+    // First, try to get the equipped skin from the ShopContext
+    const contextSkin = getEquippedSkin();
+    
+    // If we have a skin ID in context that isn't default, use and store it
+    if (equippedSkinId && equippedSkinId !== defaultSkin.id) {
+      setCurrentSkin(contextSkin);
+      localStorage.setItem(localStorageKey, equippedSkinId);
+      console.log("[Navbar] Using equipped skin from context:", equippedSkinId);
+      return;
+    }
+    
+    // If the context doesn't have a non-default skin, try to get from localStorage
+    const savedSkinId = localStorage.getItem(localStorageKey);
+    
+    if (savedSkinId && savedSkinId !== defaultSkin.id) {
+      // If we have a saved skin ID, use it to retrieve the skin data
+      const fallbackSkin = getEquippedSkin();
+      
+      if (fallbackSkin && fallbackSkin.id !== defaultSkin.id) {
+        setCurrentSkin(fallbackSkin);
+        console.log("[Navbar] Restored skin from localStorage:", savedSkinId);
+        return;
+      }
+    }
+    
+    // Default fallback - use whatever the context provides
+    setCurrentSkin(getEquippedSkin());
+    console.log("[Navbar] Using default skin from context");
+  }, [getEquippedSkin, equippedSkinId, userId, defaultSkin]);
 
   // Update expanded state when screen size changes
   useEffect(() => {

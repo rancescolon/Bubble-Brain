@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import {
     Box,
@@ -16,6 +16,7 @@ import {
 } from "@mui/material"
 import { Check } from "lucide-react"
 import background from "../assets/image3.png"
+import { useShop } from "../Context/ShopContext"
 
 // Using the same categories from the tag selector
 const CATEGORIES = [
@@ -54,6 +55,34 @@ const CategorySelector = () => {
     const [success, setSuccess] = useState(false)
     const navigate = useNavigate()
     const maxCategories = 5
+    
+    // Get shop data refresh function
+    const { refreshUserData, userId } = useShop()
+    const hasRefreshedRef = useRef(false)
+    
+    // Add effect to refresh skin data
+    useEffect(() => {
+        // This ensures the skin data is refreshed when the category selection component mounts
+        const refreshSkinData = async () => {
+            if (!hasRefreshedRef.current && userId) {
+                console.log("[CategorySelection] Refreshing skin data on initial load");
+                hasRefreshedRef.current = true;
+                
+                try {
+                    const success = await refreshUserData();
+                    if (success) {
+                        console.log("[CategorySelection] Successfully refreshed skin data");
+                    } else {
+                        console.warn("[CategorySelection] Failed to refresh skin data");
+                    }
+                } catch (err) {
+                    console.error("[CategorySelection] Error refreshing skin data:", err);
+                }
+            }
+        };
+        
+        refreshSkinData();
+    }, [refreshUserData, userId]);
 
     useEffect(() => {
         // Check if user is logged in
@@ -203,6 +232,15 @@ const CategorySelector = () => {
             await Promise.all(badgePromises)
 
             setSuccess(true)
+            
+            // Refresh skin data one more time before redirecting to ensure it's properly loaded
+            try {
+                console.log("[CategorySelection] Final skin data refresh before redirect");
+                await refreshUserData();
+            } catch (err) {
+                console.warn("[CategorySelection] Error in final skin refresh:", err);
+                // Continue with redirect even if refresh fails
+            }
 
             // Redirect to home page after a short delay
             setTimeout(() => {
@@ -216,7 +254,16 @@ const CategorySelector = () => {
         }
     }
 
-    const handleSkip = () => {
+    const handleSkip = async () => {
+        // Refresh skin data before navigating to home
+        try {
+            console.log("[CategorySelection] Refreshing skin data before skipping to homepage");
+            await refreshUserData();
+        } catch (err) {
+            console.warn("[CategorySelection] Error refreshing skin data during skip:", err);
+            // Continue with redirect even if refresh fails
+        }
+        
         // Redirect to home page
         navigate("/")
     }

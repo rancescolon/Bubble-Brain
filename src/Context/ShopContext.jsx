@@ -1,6 +1,6 @@
 // ShopContext.jsx - Provides state and functions for the shop system
 // Manages bubbleBucks, purchased skins, equipped skins, and shop interactions
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 // Import skin images
 import scarfImage from '../assets/brainwithscarf1.png';
 import kingImage from '../assets/bubblebrainking1.png';
@@ -235,21 +235,43 @@ export const ShopProvider = ({ children }) => {
 
   // Effect to fetch user-specific shop data when userId or token changes
   useEffect(() => {
-    // Reset state if user logs out or token/ID becomes invalid
-      if (!userId || !token) {
+    // Track the last user ID we've loaded data for
+    const lastUserId = sessionStorage.getItem("lastLoadedUserID");
+    const loginTimestamp = sessionStorage.getItem("loginTimestamp");
+    
+    // If this is a different user than before, reset everything completely
+    if (lastUserId !== userId) {
+      console.log(`[ShopContext] User changed from ${lastUserId || 'none'} to ${userId || 'none'}`);
+      
+      // Store current user ID for next comparison
+      if (userId) {
+        sessionStorage.setItem("lastLoadedUserID", userId);
+      } else {
+        sessionStorage.removeItem("lastLoadedUserID");
+      }
+      
+      // Reset state when user changes
       setBubbleBucks(0);
       setPurchasedSkins([]);
       setEquippedSkinId(defaultSkin.id);
-      setIsLoading(false);
-      console.log("[ShopContext] User logged out or ID/token invalid, resetting state.");
-      return;
+      
+      // If no user is logged in, stop here
+      if (!userId || !token) {
+        setIsLoading(false);
+        console.log("[ShopContext] User logged out or ID/token invalid, resetting state.");
+        return;
+      }
     }
-
+    
     // Only set loading - don't clear data between refreshes
     setIsLoading(true);
     console.log("[ShopContext] userId/token changed, about to fetch shop data...");
 
     const fetchShopData = async () => {
+      // Reset the equipped skin immediately when fetching data for a new user
+      // This ensures we don't show the previous user's skin while loading
+      setEquippedSkinId(defaultSkin.id);
+      
       console.log(`[ShopContext] Fetching shop data for userId: ${userId}`);
       try {
         // First, check localStorage for cached data to use as fallback
@@ -269,6 +291,13 @@ export const ShopProvider = ({ children }) => {
           }
         } catch (e) {
           console.error("[ShopContext] Error parsing cached skins:", e);
+        }
+        
+        // Check for cached equipped skin ID - user specific
+        const lastEquippedSkinIdKey = `lastEquippedSkinId_${userId}`;
+        const cachedEquippedSkinId = localStorage.getItem(lastEquippedSkinIdKey);
+        if (cachedEquippedSkinId && cachedEquippedSkinId !== defaultSkin.id) {
+          console.log("[ShopContext] Found cached equipped skin ID:", cachedEquippedSkinId);
         }
         
         // Fetch user data including bubbleBucks
@@ -312,12 +341,43 @@ export const ShopProvider = ({ children }) => {
           finalSkins = [...new Set([...fetchedSkins, ...cachedSkins])];
         }
         
-        const fetchedEquippedSkin = attributes.equippedSkinId || defaultSkin.id;
+        // Always save our latest user skin data with the correct user ID
+        localStorage.setItem(lastKnownSkinsKey, JSON.stringify(finalSkins));
+        
+        // Get equipped skin with fallback to cached value or default
+        let fetchedEquippedSkin = attributes.equippedSkinId || null;
+        let finalEquippedSkin = fetchedEquippedSkin;
+        
+        // If the server returned no equipped skin ID but we have one in local storage, use that
+        if ((!fetchedEquippedSkin || fetchedEquippedSkin === defaultSkin.id) && 
+            cachedEquippedSkinId && cachedEquippedSkinId !== defaultSkin.id) {
+          console.log(`[ShopContext] Server returned no equipped skin, using cached: ${cachedEquippedSkinId}`);
+          finalEquippedSkin = cachedEquippedSkinId;
+          
+          // Verify the cached skin exists in our available skins
+          const skinExists = availableSkins.some(skin => skin.id === cachedEquippedSkinId);
+          if (!skinExists) {
+            console.warn(`[ShopContext] Cached skin ID ${cachedEquippedSkinId} not found in available skins`);
+            finalEquippedSkin = defaultSkin.id;
+          }
+        }
+        
+        // If equipped skin is not in purchased skins, add it (unless it's the default)
+        if (finalEquippedSkin && finalEquippedSkin !== defaultSkin.id && !finalSkins.includes(finalEquippedSkin)) {
+          console.log(`[ShopContext] Adding equipped skin ${finalEquippedSkin} to purchased skins`);
+          finalSkins.push(finalEquippedSkin);
+        }
+        
+        // Default to default skin if still no equipped skin
+        if (!finalEquippedSkin) {
+          finalEquippedSkin = defaultSkin.id;
+        }
         
         // Check if we need to update the backend
         const needsBackendUpdate = (
           (fetchedBubbleBucks === 0 && cachedBubbleBucks > 0) || 
-          (cachedSkins.length > fetchedSkins.length)
+          (cachedSkins.length > fetchedSkins.length) ||
+          (cachedEquippedSkinId && cachedEquippedSkinId !== fetchedEquippedSkin)
         );
         
         if (needsBackendUpdate) {
@@ -326,7 +386,7 @@ export const ShopProvider = ({ children }) => {
           updateBackendUserData({
             bubbleBucks: finalBubbleBucks,
             purchasedSkins: finalSkins,
-            equippedSkinId: fetchedEquippedSkin // Keep equipped skin as is
+            equippedSkinId: finalEquippedSkin
           }).then(success => {
             if (success) {
               console.log("[ShopContext] Successfully restored data from cache");
@@ -339,28 +399,25 @@ export const ShopProvider = ({ children }) => {
         // Update state with our final data
         setBubbleBucks(finalBubbleBucks); 
         setPurchasedSkins(finalSkins);
-        setEquippedSkinId(fetchedEquippedSkin);
+        setEquippedSkinId(finalEquippedSkin);
+        
+        // Always update localStorage with current data - user specific
+        localStorage.setItem(lastEquippedSkinIdKey, finalEquippedSkin);
 
         // Cache current data for future sessions
         if (finalBubbleBucks > 0) {
           localStorage.setItem(lastKnownBucksKey, finalBubbleBucks.toString());
         }
         
-        // Always cache non-empty skin arrays
-        if (finalSkins.length > 0) {
-          localStorage.setItem(lastKnownSkinsKey, JSON.stringify(finalSkins));
-          console.log(`[ShopContext] Cached ${finalSkins.length} skins for recovery`);
-        }
-
         console.log("[ShopContext] State updated from fetch:", {
           bucks: finalBubbleBucks,
           skins: finalSkins,
-          equipped: fetchedEquippedSkin,
+          equipped: finalEquippedSkin,
         });
       } catch (error) {
         console.error("Error during fetchShopData execution:", error);
         
-        // On error, try to recover from cache
+        // On error, try to recover from cache with user-specific keys
         const lastKnownBucksKey = `lastKnownBubbleBucks_${userId}`;
         const lastKnownBucksStr = localStorage.getItem(lastKnownBucksKey);
         const cachedBubbleBucks = lastKnownBucksStr ? parseInt(lastKnownBucksStr, 10) : null;
@@ -378,6 +435,9 @@ export const ShopProvider = ({ children }) => {
           console.error("[ShopContext] Error parsing cached skins during recovery:", e);
         }
         
+        // Get cached equipped skin ID - user specific
+        const cachedEquippedSkinId = localStorage.getItem(`lastEquippedSkinId_${userId}`);
+        
         // Only update state from cache if we have data
         if (cachedBubbleBucks !== null) {
           console.log("[ShopContext] Restoring bubble bucks from cache after fetch error:", cachedBubbleBucks);
@@ -387,6 +447,11 @@ export const ShopProvider = ({ children }) => {
         if (cachedSkins !== null && cachedSkins.length > 0) {
           console.log("[ShopContext] Restoring skins from cache after fetch error:", cachedSkins);
           setPurchasedSkins(cachedSkins);
+        }
+        
+        if (cachedEquippedSkinId && cachedEquippedSkinId !== defaultSkin.id) {
+          console.log("[ShopContext] Restoring equipped skin from cache after fetch error:", cachedEquippedSkinId);
+          setEquippedSkinId(cachedEquippedSkinId);
         }
       } finally {
         setIsLoading(false);
@@ -648,6 +713,11 @@ export const ShopProvider = ({ children }) => {
       const oldEquippedSkinId = equippedSkinId;
       // Optimistic update
       setEquippedSkinId(skinId);
+      
+      // Save to localStorage to persist across navigation - using user-specific key
+      const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : 'lastEquippedSkinId';
+      localStorage.setItem(localStorageKey, skinId);
+      
       console.log("[ShopContext] Optimistically updated state for equipSkin", { 
         newSkinId: skinId,
         purchasedSkins: [...purchasedSkins],
@@ -660,6 +730,7 @@ export const ShopProvider = ({ children }) => {
       if (!success) {
         // Revert optimistic update if backend update fails
         setEquippedSkinId(oldEquippedSkinId);
+        localStorage.setItem(localStorageKey, oldEquippedSkinId);
         console.error('[ShopContext] Failed to save equipped skin to backend. Reverting state.');
       } else {
         console.log(`[ShopContext] Successfully equipped and saved skin ID: ${skinId}`);
@@ -693,6 +764,19 @@ export const ShopProvider = ({ children }) => {
     return availableSkins.find(s => s.id === currentEquipped) || defaultSkin;
   };
 
+  // Function to clear all user-specific data (called during logout)
+  const clearUserData = () => {
+    console.log("[ShopContext] Clearing user-specific data");
+    
+    // Reset state to defaults
+    setBubbleBucks(0);
+    setPurchasedSkins([]);
+    setEquippedSkinId(defaultSkin.id);
+    
+    // We don't clear localStorage here - that's user-specific and should persist
+    // between sessions for the same user
+  };
+
   // Context value with all state and functions
   const value = {
     bubbleBucks,
@@ -711,6 +795,7 @@ export const ShopProvider = ({ children }) => {
     userId,
     token,
     refreshUserData,
+    clearUserData, // Add the new function to the context
   };
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;

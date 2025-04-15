@@ -386,10 +386,27 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
       }
     }
     
-    // If we have a userId, clear the fisherman cooldown
+    // If we have a userId, clear the user-specific localStorage keys
     if (userId) {
+      // Clear fisherman cooldown
       const fishermanCooldownKey = `lastFishermanClickTime_${userId}`;
       localStorage.removeItem(fishermanCooldownKey);
+      
+      // We don't clear user-specific skin data, as it should persist between logins
+      // but let's clear the non-specific key to avoid using wrong skin
+      localStorage.removeItem('lastEquippedSkinId');
+    }
+    
+    // Try to access ShopContext and clear data
+    try {
+      // Import and use the ShopContext directly
+      const { clearUserData } = require('../Context/ShopContext').useShop();
+      if (typeof clearUserData === 'function') {
+        clearUserData();
+        console.log("Shop data cleared during logout");
+      }
+    } catch (err) {
+      console.warn("Could not clear shop data:", err);
     }
     
     // Clear session storage as before
@@ -579,8 +596,12 @@ function App() {
         userIdKey = userStr; // Fallback if not JSON but potentially an ID
       }
   }
+  
+  // Add timestamp to force re-render when re-logging in as the same user
+  const timestamp = sessionStorage.getItem("loginTimestamp") || Date.now().toString();
+  
   // Use a fallback like 'logged_out' if userIdKey is null/undefined to ensure key changes
-  const shopProviderKey = userIdKey !== null && userIdKey !== undefined ? String(userIdKey) : 'logged_out';
+  const shopProviderKey = userIdKey !== null && userIdKey !== undefined ? `${String(userIdKey)}_${timestamp}` : 'logged_out';
 
   return (
     <BackgroundContext.Provider value={{ backgroundOptions, currentBackground, changeBackground }}>

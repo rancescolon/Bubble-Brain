@@ -8,12 +8,48 @@ import { X } from "lucide-react"
 import { useShop } from "../Context/ShopContext"
 
 const DrBubbles = ({ onClose }) => {
-  const { getEquippedSkin } = useShop()
+  const { getEquippedSkin, equippedSkinId, defaultSkin, userId } = useShop()
   const [step, setStep] = useState(0)
   const [position, setPosition] = useState({ x: 15, y: 40 })
   const [isVisible, setIsVisible] = useState(true)
+  const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+
+  // Add an effect to handle skin updates and persistence
+  useEffect(() => {
+    // Make the key user-specific
+    const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : 'lastEquippedSkinId';
+    
+    // Clear any stored skin data if userId is null (logged out)
+    if (!userId) {
+      setCurrentSkin(defaultSkin);
+      console.log("[DrBubbles] No user logged in, using default skin");
+      return;
+    }
+    
+    // First, try to get the equipped skin from the context
+    const contextSkin = getEquippedSkin();
+    
+    // If we have a valid non-default skin in context, use it
+    if (equippedSkinId && equippedSkinId !== defaultSkin.id) {
+      setCurrentSkin(contextSkin);
+      return;
+    }
+    
+    // Otherwise, check localStorage for a saved skin ID
+    const savedSkinId = localStorage.getItem(localStorageKey);
+    
+    if (savedSkinId && savedSkinId !== defaultSkin.id) {
+      // If we found a saved skin ID, use it
+      const storedSkin = contextSkin.id !== defaultSkin.id ? contextSkin : defaultSkin;
+      setCurrentSkin(storedSkin);
+      return;
+    }
+    
+    // Fallback to whatever we get from context
+    setCurrentSkin(contextSkin);
+  }, [getEquippedSkin, equippedSkinId, defaultSkin, userId]);
 
   useEffect(() => {
     if (isMobile) {
@@ -156,7 +192,7 @@ const DrBubbles = ({ onClose }) => {
             >
               <Box
                 component="img"
-                src={getEquippedSkin().image}
+                src={currentSkin.image}
                 alt="Dr. Bubbles"
                 sx={{
                   width: "100%",
