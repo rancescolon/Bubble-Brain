@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette} from "lucide-react"
-
+import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette, ShoppingCart} from "lucide-react"
+import { useShop } from "../Context/ShopContext"
 
 import {
   Box,
@@ -52,6 +52,14 @@ const NavBar = () => {
   const [isExpanded, setIsExpanded] = useState(!isMobile)
   const location = useLocation()
   const currentPath = location.pathname
+  const { getEquippedSkin, equippedSkinId, userId } = useShop()
+  
+  const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
+  
+  useEffect(() => {
+    setCurrentSkin(getEquippedSkin())
+    console.log("[Navbar] User or equipped skin changed, updating navbar skin")
+  }, [getEquippedSkin, equippedSkinId, userId])
 
   // Update expanded state when screen size changes
   useEffect(() => {
@@ -70,6 +78,7 @@ const NavBar = () => {
     { icon: User, label: "Profile", path: "/profile" },
     { icon: Palette, label: "Style Guide", path: "/style-guide" },
     { icon: Settings, label: "Feed", path: "/feed" },
+    { icon: ShoppingCart, label: "Shop", path: "/shop" },
   ]
 
   return (
@@ -120,7 +129,7 @@ const NavBar = () => {
           >
             <Box
               component="img"
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame-V163AsalyIRqbHW6Fe7OWFHHuwoL99.png"
+              src={currentSkin.logo}
               alt="Bubble Brain Logo"
               sx={{
                 width: "100%",

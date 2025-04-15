@@ -5,8 +5,10 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Box, Typography, Button, useMediaQuery, IconButton } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
 import { X } from "lucide-react"
+import { useShop } from "../Context/ShopContext"
 
 const DrBubbles = ({ onClose }) => {
+  const { getEquippedSkin } = useShop()
   const [step, setStep] = useState(0)
   const [position, setPosition] = useState({ x: 15, y: 40 })
   const [isVisible, setIsVisible] = useState(true)
@@ -154,7 +156,7 @@ const DrBubbles = ({ onClose }) => {
             >
               <Box
                 component="img"
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame-sxeNjAKs5YePSv0ET618soWjWdT1wY.png"
+                src={getEquippedSkin().image}
                 alt="Dr. Bubbles"
                 sx={{
                   width: "100%",

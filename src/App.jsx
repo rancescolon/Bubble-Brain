@@ -33,6 +33,8 @@ import Upload from "./Component/Upload"
 import StudySetView from "./Component/StudySetView"
 import socketService from './services/socketService'
 import Feed from './pages/Feed'
+import Shop from './Component/Shop'
+import { ShopProvider } from './Context/ShopContext'
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 // Import default background and other backgrounds you want to use
@@ -370,6 +372,27 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
 
   const logout = (e) => {
     e.preventDefault()
+    
+    // Get the user ID before removing from sessionStorage 
+    const userStr = sessionStorage.getItem("user");
+    let userId = null;
+    
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userId = (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
+      } catch (e) {
+        userId = userStr; // Fallback if not JSON
+      }
+    }
+    
+    // If we have a userId, clear the fisherman cooldown
+    if (userId) {
+      const fishermanCooldownKey = `lastFishermanClickTime_${userId}`;
+      localStorage.removeItem(fishermanCooldownKey);
+    }
+    
+    // Clear session storage as before
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("activeRoomID")
@@ -499,6 +522,14 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                 }
               />
               <Route path="/feed" element={<Feed />} />
+              <Route 
+                path="/shop" 
+                element={
+                  <ProtectedRoute>
+                    <Shop />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </div>
         </header>
@@ -536,6 +567,21 @@ function App() {
     localStorage.setItem('selectedBackground', backgroundOption.id);
   };
 
+  // Get user ID from sessionStorage to use as key
+  // This should re-render App when login/logout happens, assuming login/logout triggers a state change in App or a parent
+  const userStr = sessionStorage.getItem("user");
+  let userIdKey = null;
+  if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        userIdKey = (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
+      } catch (e) {
+        userIdKey = userStr; // Fallback if not JSON but potentially an ID
+      }
+  }
+  // Use a fallback like 'logged_out' if userIdKey is null/undefined to ensure key changes
+  const shopProviderKey = userIdKey !== null && userIdKey !== undefined ? String(userIdKey) : 'logged_out';
+
   return (
     <BackgroundContext.Provider value={{ backgroundOptions, currentBackground, changeBackground }}>
       <ThemeProvider theme={theme}>
@@ -554,11 +600,13 @@ function App() {
           }}
         >
           <Router basename={process.env.PUBLIC_URL}>
-            <AppContent 
-              backgroundOptions={backgroundOptions}
-              currentBackground={currentBackground}
-              changeBackground={changeBackground}
-            />
+            <ShopProvider key={shopProviderKey}>
+              <AppContent 
+                backgroundOptions={backgroundOptions}
+                currentBackground={currentBackground}
+                changeBackground={changeBackground}
+              />
+            </ShopProvider>
           </Router>
         </Box>
       </ThemeProvider>
