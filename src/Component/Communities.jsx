@@ -1007,7 +1007,7 @@ const Communities = () => {
                   <div className="lg:w-3/4">
                     <div className="bg-[#F4FDFF]/90 rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
                       <h1 className="text-3xl md:text-4xl font-extrabold text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
-                        My Communities
+                        Communities
                       </h1>
                       <p className="text-[#1D1D20] text-base md:text-lg mb-4 md:mb-6" style={fontStyle}>
                         Join existing communities or create your own to share study materials and collaborate with others.

@@ -1710,40 +1710,42 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
 
                 {/* Saved Templates View */}
                 {mobileView === "saved" && (
-                    <Card sx={{ height: "calc(100% - 120px)", overflow: "auto" }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                          {templates.length > 0 ? (
-                              templates.map((template) => (
-                                  <Button
-                                      key={template.id}
-                                      variant="outlined"
-                                      onClick={() => handlePreviewTemplate(template)}
-                                      sx={{
-                                        justifyContent: "flex-start",
-                                        textTransform: "none",
-                                        ...fontStyle,
-                                        color: "#1D1D20",
-                                        width: "100%",
-                                        py: 1,
-                                        px: 2,
-                                        "&:hover": {
-                                          bgcolor: "rgba(29, 110, 241, 0.1)",
-                                        },
-                                      }}
-                                  >
-                                    <BookOpen size={16} style={{ marginRight: 8 }} />
-                                    {template.name}
-                                  </Button>
-                              ))
-                          ) : (
-                              <Box sx={{ p: 2, textAlign: "center", color: "#666" }}>
-                                <Typography sx={{ ...fontStyle }}>No saved templates yet</Typography>
-                              </Box>
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
+                  <Card sx={{ height: "calc(100% - 120px)", overflow: "auto" }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                        {templates.length > 0 ? (
+                          templates.map((template) => (
+                            <Button
+                              key={template.id}
+                              variant="outlined"
+                              onClick={() => handleUseTemplate(template)} // Selects and closes
+                              sx={{
+                                justifyContent: "flex-start",
+                                textTransform: "none",
+                                ...fontStyle,
+                                color: "#1D1D20",
+                                width: "100%",
+                                py: 1.5,
+                                px: 2,
+                                borderColor: "#1D6EF1",
+                                "&:hover": {
+                                  bgcolor: "rgba(29, 110, 241, 0.1)",
+                                  borderColor: "#1557B0",
+                                },
+                              }}
+                            >
+                              <BookOpen size={16} style={{ marginRight: 8 }} />
+                              {template.name}
+                            </Button>
+                          ))
+                        ) : (
+                          <Box sx={{ p: 2, textAlign: "center", color: "#666" }}>
+                            <Typography sx={{ ...fontStyle }}>No saved templates yet</Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
                 )}
               </>
           )}

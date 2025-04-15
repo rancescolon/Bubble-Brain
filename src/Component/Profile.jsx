@@ -646,21 +646,32 @@ export default function Profile({ setLoggedIn }) {
   const fetchUserCommunities = async () => {
     try {
       const token = sessionStorage.getItem("token")
-      if (!token) return
-      const response = await fetch(`${API_BASE_URL}/groups`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!response.ok) throw new Error("Failed to fetch communities")
-      const data = await response.json()
-      const user = JSON.parse(sessionStorage.getItem("user"))
-      if (user) {
-        const userCommunities = data[0].filter((group) => group.ownerID === user.id)
-        setMyCommunities(userCommunities)
-      }
+      const userStr = sessionStorage.getItem("user")
+      if (!token || !userStr) return
+  
+      const userId = typeof userStr === "string" && !isNaN(userStr) ? parseInt(userStr) : JSON.parse(userStr).id
+  
+      const [groupsRes, membershipsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/groups`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/group-members?userID=${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+  
+      if (!groupsRes.ok || !membershipsRes.ok) throw new Error("Failed to fetch communities")
+  
+      const allGroups = await groupsRes.json()
+      const memberships = await membershipsRes.json()
+  
+      const joinedGroupIds = (memberships[0] || []).map((m) => m.groupID)
+      const myCommunities = (allGroups[0] || []).filter(
+        (group) => group.ownerID === userId || joinedGroupIds.includes(group.id)
+      )
+  
+      setMyCommunities(myCommunities)
     } catch (error) {
-      console.error("Error fetching communities:", error)
+      console.error("Error fetching joined communities:", error)
     }
   }
+  
 
   const handleDeleteAccount = async () => {
     try {
@@ -810,6 +821,7 @@ export default function Profile({ setLoggedIn }) {
           maxHeight: { xs: "100vh", sm: "90vh" },
           overflowY: "auto",
           px: { xs: 1, sm: 2 },
+          pl: { xs: '50px', sm: 0 },
         }}
       >
         <Stack spacing={2}>
@@ -1248,90 +1260,100 @@ export default function Profile({ setLoggedIn }) {
                 sx={{
                   bgcolor: "white",
                   boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                  height: { xs: "auto", md: "calc(50% - 8px)" },
+                  width: "100%",
                 }}
               >
-                <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+                <CardContent sx={{ p: 2 }}>
                   <Typography
                     variant="h6"
                     sx={{
                       color: "#1D1D20",
-                      mb: 1.5,
-                      fontWeight: "bold",
-                      fontSize: { xs: "1rem", sm: "1.1rem" },
-                      textAlign: { xs: "center", sm: "left" },
+                      fontWeight: 800,
+                      fontSize: "1.1rem",
+                      mb: 2,
+                      textAlign: "center",
                     }}
                   >
-                    Your Communities
+                    My Communities
                   </Typography>
-                  <Box
-                    sx={{
-                      maxHeight: { xs: "150px", sm: "180px" },
-                      overflowY: "auto",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: 1,
-                      p: 1,
-                    }}
-                  >
-                    {myCommunities.length > 0 ? (
+                  
+                  {myCommunities.length > 0 ? (
+                      <Box
+                      sx={{
+                        maxHeight: "300px",
+                        overflowY: "auto",
+                        pr: 1,
+                        pb: 4, // 👈 Add bottom padding
+                      }}
+                      >
+                    
                       <Stack spacing={1}>
                         {myCommunities.map((community) => (
                           <Box
                             key={community.id}
                             sx={{
-                              bgcolor: "#C5EDFD",
-                              p: { xs: 1, sm: 1.25 },
-                              borderRadius: 1,
-                              cursor: "pointer",
+                              backgroundColor: "#F9FAFB",
+                              border: "1px solid #E0E0E0",
+                              borderRadius: "8px",
+                              padding: "8px 12px",
                               display: "flex",
                               alignItems: "center",
-                              "&:hover": {
-                                bgcolor: "#97C7F1",
-                              },
+                              justifyContent: "space-between",
+                              height: "60px", // 👈 Compact height
                             }}
-                            onClick={() => navigate(`/community/view/${community.id}`)}
                           >
-                            <Box
-                              sx={{
-                                bgcolor: "#1D6EF1",
-                                borderRadius: "50%",
-                                width: { xs: 24, sm: 28 },
-                                height: { xs: 24, sm: 28 },
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                color: "white",
-                                mr: { xs: 0.75, sm: 1.25 },
-                              }}
-                            >
-                              {community.name.charAt(0).toUpperCase()}
+                            <Box sx={{ flex: 1, overflow: "hidden" }}>
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight={600}
+                                sx={{
+                                  fontSize: "0.95rem",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {community.name}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  fontSize: "0.75rem",
+                                }}
+                              >
+                                {community.attributes?.description || "No description"}
+                              </Typography>
                             </Box>
-                            <Typography
+                            <Button
+                              variant="contained"
+                              size="small"
                               sx={{
-                                color: "#1D1D20",
-                                fontWeight: 500,
-                                fontSize: { xs: "0.875rem", sm: "1rem" },
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                title: community.name,
+                                fontSize: "0.7rem",
+                                padding: "4px 10px",
+                                ml: 2,
+                                backgroundColor: "#1D6EF1",
+                                minWidth: "unset",
                               }}
+                              onClick={() => navigate(`/community/view/${community.id}`)}
                             >
-                              {community.name.length > 15
-                                ? `${community.name.substring(0, 15)}...`
-                                : community.name}
-                            </Typography>
+                              View
+                            </Button>
                           </Box>
                         ))}
                       </Stack>
-                    ) : (
-                      <Box sx={{ bgcolor: "#F9FAFB", p: 1.5, borderRadius: 1, textAlign: "center" }}>
-                        <Typography sx={{ color: "#6B7280" }}>No communities yet</Typography>
-                      </Box>
-                    )}
-                  </Box>
+                    </Box>
+                  ) : (
+                    <Typography align="center" color="text.secondary" fontSize="0.9rem">
+                      You’re not part of any communities yet.
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
+
             </Stack>
 
             {/* Right Column - Study Statistics */}
