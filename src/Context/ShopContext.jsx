@@ -236,7 +236,7 @@ export const ShopProvider = ({ children }) => {
   // Effect to fetch user-specific shop data when userId or token changes
   useEffect(() => {
     // Reset state if user logs out or token/ID becomes invalid
-    if (!userId || !token) {
+      if (!userId || !token) {
       setBubbleBucks(0);
       setPurchasedSkins([]);
       setEquippedSkinId(defaultSkin.id);
@@ -275,7 +275,7 @@ export const ShopProvider = ({ children }) => {
         const response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}?_=${Date.now()}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (!response.ok) {
            let errorData = null;
            try { errorData = await response.json(); } catch(e) { /* ignore */ }

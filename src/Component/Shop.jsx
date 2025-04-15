@@ -51,10 +51,10 @@ const formatTime = (seconds) => {
 
 const Shop = () => {
   const { 
-    bubbleBucks,
+    bubbleBucks, 
     purchasedSkins, 
     equippedSkinId, 
-    buySkin,
+    buySkin, 
     equipSkin, 
     getEquippedSkin,
     defaultSkin,
@@ -133,7 +133,7 @@ const Shop = () => {
 
     // Only fetch if we have a userId
     if (userId) {
-      fetchStudyTime();
+    fetchStudyTime();
     } else {
       setTotalStudyTimeSeconds(0);
       setLoadingStudyTime(false);
@@ -176,8 +176,8 @@ const Shop = () => {
   const handleFishermanClick = async () => { // Make async for backend update
     // Make sure user is logged in
     if (!userId) {
-      setSnackbar({ 
-        open: true, 
+            setSnackbar({ 
+              open: true, 
         message: 'Please log in to use this feature.',
         severity: 'warning' 
       });
@@ -217,7 +217,7 @@ const Shop = () => {
     // Prevent double-click during animation
     if (isMachineShaking) return;
 
-    setIsMachineShaking(true); 
+      setIsMachineShaking(true); 
     setLastFishermanClickTime(currentTime); // Update state
     localStorage.setItem(userSpecificKey, currentTime.toString()); // Update localStorage directly
 
@@ -233,7 +233,7 @@ const Shop = () => {
        if (backendSuccess) {
           // Show success message after backend confirmation
           setSnackbar({ open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' });
-       } else {
+        } else {
           // Revert optimistic update if backend fails
           addBubbleBucks(-amountToAdd); // Subtract the added amount
           setLastFishermanClickTime(null); // Reset cooldown if backend failed
@@ -264,7 +264,7 @@ const Shop = () => {
     }
     
     // Check if user can afford the skin
-    if (bubbleBucks < skin.price) {
+      if (bubbleBucks < skin.price) {
       setSnackbar({ 
         open: true, 
         message: `Not enough Bubble Bucks (need ${skin.price}) to buy ${skin.name}.`, 
@@ -991,7 +991,14 @@ const Shop = () => {
           ) : (
             <> {/* Render content only when not loading */} 
               {/* User Stats Section - MODIFIED */} 
-              <Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.6)', backdropFilter: 'blur(2px)' }}>
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                mb: 4, 
+                mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
+                borderRadius: '16px', 
+                bgcolor: 'rgba(244, 253, 255, 0.6)', 
+                backdropFilter: 'blur(2px)' 
+              }}>
                 <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
                   {/* Stats Display */}
                   <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
@@ -1001,12 +1008,12 @@ const Shop = () => {
                     {/* Bubble Bucks Display with Tooltip */}
                     <Tooltip title="Earn Bubble Bucks from studying!" arrow>
                       <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
-                        <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
-                        <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
-                          <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
-                          <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
-                        </Box>
+                      <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
+                      <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
+                        <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
+                        <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
                       </Box>
+                    </Box>
                     </Tooltip>
                     
                     {/* Add study time to bubble bucks conversion subtitle */}
@@ -1026,7 +1033,7 @@ const Shop = () => {
                         <RefreshCw size={18} style={{ marginRight: '8px' }} />
                         <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
                           If your data isn't showing, click the refresh button in the top right
-                        </Typography>
+                    </Typography>
                       </Box>
                     )}
                   </Grid>
