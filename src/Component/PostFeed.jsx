@@ -29,6 +29,8 @@ const PostFeed = () => {
   const [comments, setComments] = useState({});
   const [newComments, setNewComments] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
+  const [feedView, setFeedView] = useState('public');
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const getCurrentUserInfo = async () => {
     try {
@@ -212,25 +214,27 @@ const PostFeed = () => {
       if (!token) {
         throw new Error("Please log in to view posts");
       }
-
       const response = await fetch(`${API_BASE_URL}/posts?type=social_post&attributes.type=social_post`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
       if (!response.ok) {
         throw new Error("Failed to fetch posts");
       }
-
       const data = await response.json();
       if (data && data[0]) {
-        // Filter posts to include only those made with the specific feature
+        // Filter posts based on feedView
         const filteredPosts = data[0].filter(post => {
           if (typeof post.content === 'string') {
             try {
               const content = JSON.parse(post.content);
-              return content.audience === 'public'; // Adjust this condition based on your needs
+              if (feedView === 'public') {
+                return content.audience === 'public';
+              } else if (feedView === 'private' && currentUserId) {
+                return content.audience === 'private' && String(post.authorID) === String(currentUserId);
+              }
+              return false;
             } catch (e) {
               // Skip posts with invalid content
               return false;
@@ -238,16 +242,13 @@ const PostFeed = () => {
           }
           return false; // Skip posts with non-string content
         });
-
         const userIds = [...new Set(filteredPosts.map(post => post.authorID))];
         const userCache = await fetchUserData(userIds);
-
         const socialPosts = filteredPosts.map(post => ({
           ...post,
-          authorEmail: userCache[post.authorID].email,
-          authorUsername: userCache[post.authorID].username,
+          authorEmail: userCache[post.authorID]?.email || '',
+          authorUsername: userCache[post.authorID]?.username || '',
         }));
-
         const sortedPosts = socialPosts.sort((a, b) => 
           new Date(b.created) - new Date(a.created)
         );
@@ -349,8 +350,10 @@ const PostFeed = () => {
   useEffect(() => {
     const initializeComponent = async () => {
       // First get user info to ensure we have the user ID
-      await getCurrentUserInfo();
-      
+      const userInfo = await getCurrentUserInfo();
+      if (userInfo && userInfo.id) {
+        setCurrentUserId(userInfo.id);
+      }
       // Then fetch posts, reactions, and comments
       await Promise.all([
         fetchPosts(),
@@ -358,9 +361,13 @@ const PostFeed = () => {
         fetchComments()
       ]);
     };
-    
     initializeComponent();
   }, []);
+
+  // Refetch posts when feedView changes
+  useEffect(() => {
+    fetchPosts();
+  }, [feedView, currentUserId]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -703,6 +710,22 @@ const PostFeed = () => {
 
   return (
     <Box sx={{ mt: 4, maxWidth: 600, mx: 'auto' }}>
+      {/* Feed View Toggle */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        <Button
+          variant={feedView === 'public' ? 'contained' : 'outlined'}
+          onClick={() => setFeedView('public')}
+          sx={{ mr: 1 }}
+        >
+          Public Feed
+        </Button>
+        <Button
+          variant={feedView === 'private' ? 'contained' : 'outlined'}
+          onClick={() => setFeedView('private')}
+        >
+          My Private Posts
+        </Button>
+      </Box>
       {posts.map((post) => {
         let content;
         try {
@@ -723,255 +746,255 @@ const PostFeed = () => {
             }}
           >
             {/* Post Header */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            p: 2,
-            borderBottom: content.image ? 'none' : '1px solid #efefef'
-          }}>
-            <Avatar 
-              src={post.attributes?.authorAvatar}
-              sx={{ width: 32, height: 32, mr: 1.5 }}
-            >
-              {post.authorUsername?.[0] || 'U'}
-            </Avatar>
-            <Typography 
-              variant="subtitle2"
-              sx={{ 
-                fontWeight: 600,
-                fontSize: '14px',
-              }}
-            >
-              {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
-            </Typography>
-          </Box>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              p: 2,
+              borderBottom: content.image ? 'none' : '1px solid #efefef'
+            }}>
+              <Avatar 
+                src={post.attributes?.authorAvatar}
+                sx={{ width: 32, height: 32, mr: 1.5 }}
+              >
+                {post.authorUsername?.[0] || 'U'}
+              </Avatar>
+              <Typography 
+                variant="subtitle2"
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '14px',
+                }}
+              >
+                {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
+              </Typography>
+            </Box>
 
-          {/* Add Image Display Section Here */}
-          {content.image && (
-            <Box 
-              sx={{ 
-                width: '100%',
-                height: { xs: '300px', sm: '400px' }, // Fixed height for consistency
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                overflow: 'hidden',
-                bgcolor: '#fafafa',
-                borderTop: '1px solid #efefef',
-                borderBottom: '1px solid #efefef'
-              }}
-            >
-              <img 
-                src={content.image} 
-                alt="Post" 
-                style={{
+            {/* Add Image Display Section Here */}
+            {content.image && (
+              <Box 
+                sx={{ 
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'cover', // Changed from 'contain' to 'cover'
-                  objectPosition: 'center'
+                  height: { xs: '300px', sm: '400px' }, // Fixed height for consistency
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                  bgcolor: '#fafafa',
+                  borderTop: '1px solid #efefef',
+                  borderBottom: '1px solid #efefef'
                 }}
-              />
-            </Box>
-          )}
-
-
-            {/* Post Actions */}
-            <Box sx={{ px: 2, pt: 1.5, display: 'flex', gap: 1 }}>
-              <IconButton 
-                size="small"
-                onClick={() => handleLikeToggle(post.id)}
-                sx={{ p: 0.5 }}
               >
-                {likedPosts[post.id] ? (
-                  <Favorite fontSize="medium" sx={{ color: '#ED4956' }} />
-                ) : (
-                  <FavoriteBorder fontSize="medium" />
+                <img 
+                  src={content.image} 
+                  alt="Post" 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover', // Changed from 'contain' to 'cover'
+                    objectPosition: 'center'
+                  }}
+                />
+              </Box>
+            )}
+
+
+              {/* Post Actions */}
+              <Box sx={{ px: 2, pt: 1.5, display: 'flex', gap: 1 }}>
+                <IconButton 
+                  size="small"
+                  onClick={() => handleLikeToggle(post.id)}
+                  sx={{ p: 0.5 }}
+                >
+                  {likedPosts[post.id] ? (
+                    <Favorite fontSize="medium" sx={{ color: '#ED4956' }} />
+                  ) : (
+                    <FavoriteBorder fontSize="medium" />
+                  )}
+                </IconButton>
+                <IconButton 
+                  size="small"
+                  onClick={() => {
+                    // Focus on the comment input
+                    const commentBox = document.getElementById(`comment-input-${post.id}`);
+                    if (commentBox) {
+                      commentBox.focus();
+                    }
+                  }}
+                  sx={{ p: 0.5 }}
+                >
+                  <ChatBubbleOutline fontSize="medium" />
+                </IconButton>
+                <IconButton 
+                  size="small"
+                  sx={{ p: 0.5 }}
+                >
+                  <Send fontSize="medium" />
+                </IconButton>
+              </Box>
+
+              {/* Post Content */}
+              <Box sx={{ px: 2, pt: 1, pb: 2 }}>
+                {/* Like count display */}
+                {likeCounts[post.id] > 0 && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      mb: 1
+                    }}
+                  >
+                    {likeCounts[post.id] === 1 
+                      ? "1 like" 
+                      : `${likeCounts[post.id]} likes`}
+                  </Typography>
                 )}
-              </IconButton>
-              <IconButton 
-                size="small"
-                onClick={() => {
-                  // Focus on the comment input
-                  const commentBox = document.getElementById(`comment-input-${post.id}`);
-                  if (commentBox) {
-                    commentBox.focus();
-                  }
-                }}
-                sx={{ p: 0.5 }}
-              >
-                <ChatBubbleOutline fontSize="medium" />
-              </IconButton>
-              <IconButton 
-                size="small"
-                sx={{ p: 0.5 }}
-              >
-                <Send fontSize="medium" />
-              </IconButton>
-            </Box>
-
-            {/* Post Content */}
-            <Box sx={{ px: 2, pt: 1, pb: 2 }}>
-              {/* Like count display */}
-              {likeCounts[post.id] > 0 && (
+                
+                {/* Caption with username */}
+                <Box sx={{ display: 'flex', mb: 0.5 }}>
+                  <Typography 
+                    component="span" 
+                    variant="body2"
+                    sx={{ 
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      mr: 1
+                    }}
+                  >
+                    {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
+                  </Typography>
+                  <Typography 
+                    component="span" 
+                    variant="body2"
+                    sx={{ 
+                      fontSize: '14px',
+                    }}
+                  >
+                    {content.text}
+                  </Typography>
+                </Box>
+                
+                {/* Comments section */}
+                {comments[post.id] && comments[post.id].length > 0 && (
+                  <Box sx={{ mt: 1, mb: 1 }}>
+                    {/* Show all comments if expanded, otherwise show first 2 */}
+                    {(expandedComments[post.id] ? comments[post.id] : comments[post.id].slice(0, 2)).map((comment) => (
+                      <Box key={comment.id} sx={{ display: 'flex', mb: 1 }}>
+                        <Typography 
+                          component="span" 
+                          variant="body2"
+                          sx={{ 
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            mr: 1
+                          }}
+                        >
+                          {comment.authorUsername || comment.authorEmail?.split("@")[0] || 'Anonymous User'}
+                        </Typography>
+                        <Typography 
+                          component="span" 
+                          variant="body2"
+                          sx={{ 
+                            fontSize: '14px',
+                          }}
+                        >
+                          {comment.text}
+                        </Typography>
+                      </Box>
+                    ))}
+                    
+                    {/* Show expand/collapse button if there are more than 2 comments */}
+                    {comments[post.id].length > 2 && (
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          fontSize: '14px',
+                          mb: 1,
+                          cursor: 'pointer',
+                          '&:hover': {
+                            color: 'primary.main'
+                          }
+                        }}
+                        onClick={() => {
+                          setExpandedComments(prev => ({
+                            ...prev,
+                            [post.id]: !prev[post.id]
+                          }));
+                        }}
+                      >
+                        {expandedComments[post.id] 
+                          ? "Show less" 
+                          : `View all ${comments[post.id].length} comments`}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+                
+                {/* Post Time */}
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
+                  color="text.secondary"
                   sx={{ 
-                    fontWeight: 600,
-                    fontSize: '14px',
+                    fontSize: '10px',
+                    textTransform: 'uppercase',
+                    display: 'block',
                     mb: 1
                   }}
                 >
-                  {likeCounts[post.id] === 1 
-                    ? "1 like" 
-                    : `${likeCounts[post.id]} likes`}
+                  {formatDate(post.created)}
                 </Typography>
-              )}
-              
-              {/* Caption with username */}
-              <Box sx={{ display: 'flex', mb: 0.5 }}>
-                <Typography 
-                  component="span" 
-                  variant="body2"
+                
+                {/* Add comment form */}
+                <Box 
+                  component="form" 
                   sx={{ 
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    mr: 1
+                    display: 'flex', 
+                    alignItems: 'center',
+                    mt: 1,
+                    borderTop: '1px solid #efefef',
+                    pt: 1
                   }}
+                  onSubmit={(e) => handleCommentSubmit(post.id, e)}
                 >
-                  {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
-                </Typography>
-                <Typography 
-                  component="span" 
-                  variant="body2"
-                  sx={{ 
-                    fontSize: '14px',
-                  }}
-                >
-                  {content.text}
-                </Typography>
-              </Box>
-              
-              {/* Comments section */}
-              {comments[post.id] && comments[post.id].length > 0 && (
-                <Box sx={{ mt: 1, mb: 1 }}>
-                  {/* Show all comments if expanded, otherwise show first 2 */}
-                  {(expandedComments[post.id] ? comments[post.id] : comments[post.id].slice(0, 2)).map((comment) => (
-                    <Box key={comment.id} sx={{ display: 'flex', mb: 1 }}>
-                      <Typography 
-                        component="span" 
-                        variant="body2"
-                        sx={{ 
-                          fontWeight: 600,
-                          fontSize: '14px',
-                          mr: 1
-                        }}
-                      >
-                        {comment.authorUsername || comment.authorEmail?.split("@")[0] || 'Anonymous User'}
-                      </Typography>
-                      <Typography 
-                        component="span" 
-                        variant="body2"
-                        sx={{ 
-                          fontSize: '14px',
-                        }}
-                      >
-                        {comment.text}
-                      </Typography>
-                    </Box>
-                  ))}
-                  
-                  {/* Show expand/collapse button if there are more than 2 comments */}
-                  {comments[post.id].length > 2 && (
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '14px',
-                        mb: 1,
-                        cursor: 'pointer',
-                        '&:hover': {
-                          color: 'primary.main'
-                        }
-                      }}
-                      onClick={() => {
-                        setExpandedComments(prev => ({
-                          ...prev,
-                          [post.id]: !prev[post.id]
-                        }));
-                      }}
-                    >
-                      {expandedComments[post.id] 
-                        ? "Show less" 
-                        : `View all ${comments[post.id].length} comments`}
-                    </Typography>
-                  )}
-                </Box>
-              )}
-              
-              {/* Post Time */}
-              <Typography 
-                variant="caption" 
-                color="text.secondary"
-                sx={{ 
-                  fontSize: '10px',
-                  textTransform: 'uppercase',
-                  display: 'block',
-                  mb: 1
-                }}
-              >
-                {formatDate(post.created)}
-              </Typography>
-              
-              {/* Add comment form */}
-              <Box 
-                component="form" 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  mt: 1,
-                  borderTop: '1px solid #efefef',
-                  pt: 1
-                }}
-                onSubmit={(e) => handleCommentSubmit(post.id, e)}
-              >
-                <TextField
-                  id={`comment-input-${post.id}`}
-                  placeholder="Add a comment..."
-                  variant="standard"
-                  fullWidth
-                  value={newComments[post.id] || ''}
-                  onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                  InputProps={{
-                    disableUnderline: true,
-                  }}
-                  sx={{ 
-                    fontSize: '14px',
-                    '& .MuiInputBase-input': {
+                  <TextField
+                    id={`comment-input-${post.id}`}
+                    placeholder="Add a comment..."
+                    variant="standard"
+                    fullWidth
+                    value={newComments[post.id] || ''}
+                    onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                    InputProps={{
+                      disableUnderline: true,
+                    }}
+                    sx={{ 
                       fontSize: '14px',
-                    }
-                  }}
-                />
-                <Button
-                  disabled={!newComments[post.id] || newComments[post.id].trim() === ''}
-                  onClick={() => handleCommentSubmit(post.id)}
-                  sx={{ 
-                    color: '#0095f6',
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    minWidth: 'auto',
-                    '&.Mui-disabled': {
-                      color: '#0095f666',
-                    }
-                  }}
-                >
-                  Post
-                </Button>
+                      '& .MuiInputBase-input': {
+                        fontSize: '14px',
+                      }
+                    }}
+                  />
+                  <Button
+                    disabled={!newComments[post.id] || newComments[post.id].trim() === ''}
+                    onClick={() => handleCommentSubmit(post.id)}
+                    sx={{ 
+                      color: '#0095f6',
+                      textTransform: 'none',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      minWidth: 'auto',
+                      '&.Mui-disabled': {
+                        color: '#0095f666',
+                      }
+                    }}
+                  >
+                    Post
+                  </Button>
+                </Box>
               </Box>
-            </Box>
-          </Paper>
-        );
-      })}
+            </Paper>
+          );
+        })}
     </Box>
   );
 };
