@@ -36,7 +36,6 @@ import {
   OutlinedInput,
   InputLabel,
   Chip,
-  Avatar, // Import Avatar
 } from "@mui/material"
 import TagSelector from "./tag-selector"
 
@@ -74,10 +73,17 @@ export default function CommunityView() {
   const [userPreferences, setUserPreferences] = useState([])
   const [sortedStudySets, setSortedStudySets] = useState([])
   const [userCategories, setUserCategories] = useState([])
-  const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
+  const [shouldShowPics, setShouldShowPics] = useState(true) // Add state for pic visibility
   const [studySetPage, setStudySetPage] = useState(0)
   const [hasMoreStudySets, setHasMoreStudySets] = useState(true)
   const PAGE_SIZE = 10
+  const [customPopup, setCustomPopup] = useState({
+    show: false,
+    message: "",
+    type: "success",
+    postId: null,
+    communityId: null,
+  })
 
   // Add school categories for tag selection
   const school_categories = {
@@ -475,22 +481,22 @@ export default function CommunityView() {
   useEffect(() => {
     fetchCommunityDetails()
     fetchUserCategories()
-    // --- Add effect to read visibility setting --- 
-    const storedSetting = localStorage.getItem("showProfilePics");
-    setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
+    // --- Add effect to read visibility setting ---
+    const storedSetting = localStorage.getItem("showProfilePics")
+    setShouldShowPics(storedSetting === null ? true : storedSetting === "true")
 
     // Add listener for storage changes
     const handleStorageChange = (event) => {
       if (event.key === "showProfilePics") {
-        setShouldShowPics(event.newValue === null ? true : event.newValue === "true");
+        setShouldShowPics(event.newValue === null ? true : event.newValue === "true")
       }
-    };
-    window.addEventListener('storage', handleStorageChange);
+    }
+    window.addEventListener("storage", handleStorageChange)
 
     // Cleanup listener
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
+      window.removeEventListener("storage", handleStorageChange)
+    }
     // --- End of added effect ---
   }, [id])
 
@@ -700,18 +706,21 @@ export default function CommunityView() {
                     const userData = await userResponse.json()
 
                     // --- Extract avatar/profile picture using prioritization ---
-                    let pictureUrl = null;
-                    const topLevelPic = userData.picture || userData.avatar;
-                    const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture;
+                    let pictureUrl = null
+                    const topLevelPic = userData.picture || userData.avatar
+                    const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture
 
-                    if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
-                      pictureUrl = topLevelPic;
-                    } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
-                      pictureUrl = attributePic;
+                    if (topLevelPic && (String(topLevelPic).startsWith("http") || String(topLevelPic).startsWith("/"))) {
+                      pictureUrl = topLevelPic
+                    } else if (
+                        attributePic &&
+                        (String(attributePic).startsWith("http") || String(attributePic).startsWith("/"))
+                    ) {
+                      pictureUrl = attributePic
                     } else if (topLevelPic) {
-                      pictureUrl = topLevelPic; // Fallback to top-level (might be Base64)
+                      pictureUrl = topLevelPic // Fallback to top-level (might be Base64)
                     } else if (attributePic) {
-                      pictureUrl = attributePic; // Fallback to attribute (might be Base64)
+                      pictureUrl = attributePic // Fallback to attribute (might be Base64)
                     }
                     // --- End of avatar extraction ---
 
@@ -897,308 +906,316 @@ export default function CommunityView() {
     // First check if the user is a member of this community
     const checkMembership = async () => {
       try {
-        if (!userId) return false;
+        if (!userId) return false
 
-        const membershipResponse = await fetch(`${API_BASE_URL}/group-members?groupID=${currentCommunityId}&userID=${userId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          }
-        });
+        const membershipResponse = await fetch(
+            `${API_BASE_URL}/group-members?groupID=${currentCommunityId}&userID=${userId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            },
+        )
 
         if (!membershipResponse.ok) {
-          console.warn("Failed to check membership status");
-          return false;
+          console.warn("Failed to check membership status")
+          return false
         }
 
-        const membershipData = await membershipResponse.json();
-        return membershipData && membershipData[0] && membershipData[0].length > 0;
+        const membershipData = await membershipResponse.json()
+        return membershipData && membershipData[0] && membershipData[0].length > 0
       } catch (error) {
-        console.error("Error checking membership:", error);
-        return false;
+        console.error("Error checking membership:", error)
+        return false
       }
-    };
+    }
 
     // Try to fetch study sets specifically for this community
-    checkMembership().then(isMember => {
-    fetch(`${API_BASE_URL}/posts?type=study_set`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-          .then(async (result) => { // Make this async to await author details
-          if (result && result[0] && result[0].length > 0) {
-            // First, filter to only include study sets for this community
-              const communityStudySetsPosts = result[0].filter((post) => {
-              // Try to parse the content to check for communityId
-              let contentObj = null
-              try {
-                if (post.content && typeof post.content === "string") {
-                  contentObj = JSON.parse(post.content)
-                }
-              } catch (e) {
-                console.warn("Could not parse content for post", post.id)
-              }
-
-              // Check if communityId is in the content
-              if (contentObj && contentObj.communityId === currentCommunityId) {
-                return true
-              }
-
-              // Check if the post has our custom attribute that indicates the community
-              if (post.attributes && post.attributes.communityId === currentCommunityId) {
-                return true
-              }
-
-              // Check if parentID matches the community ID
-              if (post.parentID && String(post.parentID) === currentCommunityId) {
-                return true
-              }
-
-                // Also check the groupID as string comparison
-              const postGroupId = String(post.groupID || "")
-              const belongsViaGroupId = postGroupId === currentCommunityId
-
-              return (
-                  belongsViaGroupId ||
-                  (contentObj && contentObj.communityId === currentCommunityId) ||
-                  (post.attributes && post.attributes.communityId === currentCommunityId) ||
-                  (post.parentID && String(post.parentID) === currentCommunityId)
-              )
-            })
+    checkMembership().then((isMember) => {
+      fetch(`${API_BASE_URL}/posts?type=study_set`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+          .then((res) => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`)
+            }
+            return res.json()
+          })
+          .then(async (result) => {
+            // Make this async to await author details
+            if (result && result[0] && result[0].length > 0) {
+              // First, filter to only include study sets for this community
+              const communityStudySetsPosts = result[0]
                   .filter((post) => {
-                    // Check if the study set is members-only and filter accordingly
-                    let contentObj = null;
+                    // Try to parse the content to check for communityId
+                    let contentObj = null
                     try {
                       if (post.content && typeof post.content === "string") {
-                        contentObj = JSON.parse(post.content);
+                        contentObj = JSON.parse(post.content)
                       }
                     } catch (e) {
-                      console.warn("Could not parse content for post", post.id);
+                      console.warn("Could not parse content for post", post.id)
+                    }
+
+                    // Check if communityId is in the content
+                    if (contentObj && contentObj.communityId === currentCommunityId) {
+                      return true
+                    }
+
+                    // Check if the post has our custom attribute that indicates the community
+                    if (post.attributes && post.attributes.communityId === currentCommunityId) {
+                      return true
+                    }
+
+                    // Check if parentID matches the community ID
+                    if (post.parentID && String(post.parentID) === currentCommunityId) {
+                      return true
+                    }
+
+                    // Also check the groupID as string comparison
+                    const postGroupId = String(post.groupID || "")
+                    const belongsViaGroupId = postGroupId === currentCommunityId
+
+                    return (
+                        belongsViaGroupId ||
+                        (contentObj && contentObj.communityId === currentCommunityId) ||
+                        (post.attributes && post.attributes.communityId === currentCommunityId) ||
+                        (post.parentID && String(post.parentID) === currentCommunityId)
+                    )
+                  })
+                  .filter((post) => {
+                    // Check if the study set is members-only and filter accordingly
+                    let contentObj = null
+                    try {
+                      if (post.content && typeof post.content === "string") {
+                        contentObj = JSON.parse(post.content)
+                      }
+                    } catch (e) {
+                      console.warn("Could not parse content for post", post.id)
                     }
 
                     // Check if current user is the creator of the post
-                    const isCreator = String(post.authorID) === String(userId);
+                    const isCreator = String(post.authorID) === String(userId)
 
                     // If user is the creator, always show the post
                     if (isCreator) {
-                      return true;
+                      return true
                     }
 
                     // Get access control settings
                     const postAccessType =
                         contentObj?.accessType ||
                         post.attributes?.accessType ||
-                        (contentObj?.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
+                        (contentObj?.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone")
 
-                    const selectedMembers =
-                        contentObj?.selectedMembers ||
-                        post.attributes?.selectedMembers ||
-                        [];
+                    const selectedMembers = contentObj?.selectedMembers || post.attributes?.selectedMembers || []
 
                     // If access is for everyone, show the post
                     if (postAccessType === "everyone") {
-                      return true;
+                      return true
                     }
 
                     // If access is for all members and user is a member, show the post
                     if (postAccessType === "allMembers" && isMember) {
-                      return true;
+                      return true
                     }
 
                     // If access is for specific members, check if user is in the list
                     if (postAccessType === "specificMembers") {
-                      if (selectedMembers.includes(parseInt(userId)) || selectedMembers.includes(userId)) {
-                        return true;
+                      if (selectedMembers.includes(Number.parseInt(userId)) || selectedMembers.includes(userId)) {
+                        return true
                       }
-                      return false;
+                      return false
                     }
 
                     // For backward compatibility, check the old membersOnly flag
                     const isMembersOnly =
                         (contentObj && contentObj.membersOnly === true) ||
-                        (post.attributes && post.attributes.membersOnly === true);
+                        (post.attributes && post.attributes.membersOnly === true)
 
                     // If it's members-only and user is not a member, filter it out
                     if (isMembersOnly && !isMember) {
-                      return false;
+                      return false
                     }
 
                     // Default behavior - if not members-only, show to everyone
-                    return !isMembersOnly || (isMembersOnly && isMember);
-                  });
+                    return !isMembersOnly || (isMembersOnly && isMember)
+                  })
 
               // Fetch author details for each filtered post
-              const studySetsData = await Promise.all(communityStudySetsPosts.map(async (post) => {
-                try {
-                  // Fetch author details (including picture)
-                  let authorDetails = { id: post.authorID, email: "Anonymous", picture: null }; // Default
-                  if (post.authorID) {
+              const studySetsData = await Promise.all(
+                  communityStudySetsPosts.map(async (post) => {
                     try {
-                      const userResponse = await fetch(`${API_BASE_URL}/users/${post.authorID}`, {
-                        headers: {
-                          Authorization: `Bearer ${token}`,
-                          "Content-Type": "application/json"
+                      // Fetch author details (including picture)
+                      let authorDetails = { id: post.authorID, email: "Anonymous", picture: null } // Default
+                      if (post.authorID) {
+                        try {
+                          const userResponse = await fetch(`${API_BASE_URL}/users/${post.authorID}`, {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                          })
+                          if (userResponse.ok) {
+                            const userData = await userResponse.json()
+                            // Picture prioritization logic
+                            let pictureUrl = null
+                            const topLevelPic = userData.picture || userData.avatar
+                            const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture
+                            if (
+                                topLevelPic &&
+                                (String(topLevelPic).startsWith("http") || String(topLevelPic).startsWith("/"))
+                            ) {
+                              pictureUrl = topLevelPic
+                            } else if (
+                                attributePic &&
+                                (String(attributePic).startsWith("http") || String(attributePic).startsWith("/"))
+                            ) {
+                              pictureUrl = attributePic
+                            } else if (topLevelPic) {
+                              pictureUrl = topLevelPic
+                            } else if (attributePic) {
+                              pictureUrl = attributePic
+                            }
+                            authorDetails = {
+                              id: userData.id,
+                              email: userData.email || "Unknown",
+                              picture: pictureUrl, // Use prioritized picture
+                            }
+                          } else {
+                            console.warn(`Failed to fetch author details for ID ${post.authorID}: ${userResponse.status}`)
+                          }
+                        } catch (fetchError) {
+                          console.error(`Error fetching author ${post.authorID}:`, fetchError)
                         }
-                      });
-                      if (userResponse.ok) {
-                        const userData = await userResponse.json();
-                        // Picture prioritization logic
-                        let pictureUrl = null;
-                        const topLevelPic = userData.picture || userData.avatar;
-                        const attributePic = userData.attributes?.picture || userData.attributes?.profilePicture;
-                        if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
-                            pictureUrl = topLevelPic;
-                        } else if (attributePic && (String(attributePic).startsWith('http') || String(attributePic).startsWith('/'))) {
-                            pictureUrl = attributePic;
-                        } else if (topLevelPic) {
-                            pictureUrl = topLevelPic;
-                        } else if (attributePic) {
-                            pictureUrl = attributePic;
+                      }
+
+                      // Try to parse the content as JSON, but handle invalid JSON gracefully
+                      let content = {}
+                      try {
+                        if (post.content && typeof post.content === "string") {
+                          content = JSON.parse(post.content)
+                          if (!content.name) content.name = "Untitled Study Set"
+                          if (!content.type) content.type = "flashcards"
+                          if (!Array.isArray(content.content)) content.content = []
                         }
-                        authorDetails = {
-                          id: userData.id,
-                          email: userData.email || "Unknown",
-                          picture: pictureUrl // Use prioritized picture
-                        };
-                      } else {
-                        console.warn(`Failed to fetch author details for ID ${post.authorID}: ${userResponse.status}`);
-                      }
-                    } catch (fetchError) {
-                      console.error(`Error fetching author ${post.authorID}:`, fetchError);
-                    }
-                  }
-
-                  // Try to parse the content as JSON, but handle invalid JSON gracefully
-                  let content = {}
-                  try {
-                    if (post.content && typeof post.content === "string") {
-                      content = JSON.parse(post.content)
-                      if (!content.name) content.name = "Untitled Study Set"
-                      if (!content.type) content.type = "flashcards"
-                      if (!Array.isArray(content.content)) content.content = []
-                      }
-                    } catch (parseError) {
-                      console.warn("Could not parse post content as JSON:", parseError.message)
-                      content = {
-                        name: "Untitled Study Set",
-                        type: "flashcards",
-                        content: [{ front: post.content || "Content unavailable", back: "" }],
-                      }
-                    }
-
-                  const accessType =
-                      content.accessType ||
-                      post.attributes?.accessType ||
-                      (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone");
-
-                  const selectedMembersList =
-                      content.selectedMembers ||
-                      post.attributes?.selectedMembers ||
-                      [];
-
-                    // Extract categories and tags from different possible locations
-                    let categories = []
-                    let tags = []
-
-                    // Try to get categories and tags from content
-                    if (content.categories) {
-                      categories = Array.isArray(content.categories) ? content.categories : []
-                    }
-
-                    if (content.tags) {
-                      tags = Array.isArray(content.tags) ? content.tags : []
-                    }
-
-                    // Also check post attributes for categories and tags (used by template-manager)
-                    if (post.attributes) {
-                      // If attributes has categories as a string, split it
-                      if (post.attributes.categories && typeof post.attributes.categories === "string") {
-                        const attrCategories = post.attributes.categories.split(",").filter(Boolean)
-                        // Merge with existing categories, avoiding duplicates
-                        categories = [...new Set([...categories, ...attrCategories])]
+                      } catch (parseError) {
+                        console.warn("Could not parse post content as JSON:", parseError.message)
+                        content = {
+                          name: "Untitled Study Set",
+                          type: "flashcards",
+                          content: [{ front: post.content || "Content unavailable", back: "" }],
+                        }
                       }
 
-                      // If attributes has tags as a string, split it
-                      if (post.attributes.tags && typeof post.attributes.tags === "string") {
-                        const attrTags = post.attributes.tags.split(",").filter(Boolean)
-                        // Merge with existing tags, avoiding duplicates
-                        tags = [...new Set([...tags, ...attrTags])]
+                      const accessType =
+                          content.accessType ||
+                          post.attributes?.accessType ||
+                          (content.membersOnly || post.attributes?.membersOnly ? "allMembers" : "everyone")
+
+                      const selectedMembersList = content.selectedMembers || post.attributes?.selectedMembers || []
+
+                      // Extract categories and tags from different possible locations
+                      let categories = []
+                      let tags = []
+
+                      // Try to get categories and tags from content
+                      if (content.categories) {
+                        categories = Array.isArray(content.categories) ? content.categories : []
                       }
+
+                      if (content.tags) {
+                        tags = Array.isArray(content.tags) ? content.tags : []
+                      }
+
+                      // Also check post attributes for categories and tags (used by template-manager)
+                      if (post.attributes) {
+                        // If attributes has categories as a string, split it
+                        if (post.attributes.categories && typeof post.attributes.categories === "string") {
+                          const attrCategories = post.attributes.categories.split(",").filter(Boolean)
+                          // Merge with existing categories, avoiding duplicates
+                          categories = [...new Set([...categories, ...attrCategories])]
+                        }
+
+                        // If attributes has tags as a string, split it
+                        if (post.attributes.tags && typeof post.attributes.tags === "string") {
+                          const attrTags = post.attributes.tags.split(",").filter(Boolean)
+                          // Merge with existing tags, avoiding duplicates
+                          tags = [...new Set([...tags, ...attrTags])]
+                        }
+                      }
+
+                      return {
+                        id: post.id,
+                        title: content.name || "Untitled Study Set",
+                        description: `Created by ${authorDetails.email.split("@")[0] || "Anonymous"}`,
+                        type: content.type || "flashcards",
+                        content: content.content || [],
+                        fileId: post.fileId,
+                        groupID: post.groupID,
+                        communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
+                        creator: authorDetails.id,
+                        creatorPicture: authorDetails.picture, // Add creator picture
+                        creatorEmail: authorDetails.email, // Add creator email for initial
+                        membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
+                        accessType: accessType,
+                        selectedMembers: selectedMembersList,
+                        categories: categories,
+                        tags: tags,
+                        createdAt: post.createdAt || post.created || new Date().toISOString(),
+                        matchesUserInterests: false, // We'll set this later
+                        matchCount: 0, // We'll calculate this later
+                      }
+                    } catch (error) {
+                      console.error("Error processing post:", error)
+                      return null
                     }
+                  }),
+              )
 
-                    return {
-                      id: post.id,
-                      title: content.name || "Untitled Study Set",
-                    description: `Created by ${authorDetails.email.split("@")[0] || "Anonymous"}`,
-                      type: content.type || "flashcards",
-                      content: content.content || [],
-                      fileId: post.fileId,
-                      groupID: post.groupID,
-                      communityId: content.communityId || post.attributes?.communityId || post.parentID || post.groupID,
-                    creator: authorDetails.id,
-                    creatorPicture: authorDetails.picture, // Add creator picture
-                    creatorEmail: authorDetails.email, // Add creator email for initial
-                    membersOnly: content.membersOnly || post.attributes?.membersOnly || accessType !== "everyone",
-                    accessType: accessType,
-                    selectedMembers: selectedMembersList,
-                      categories: categories,
-                      tags: tags,
-                      createdAt: post.createdAt || post.created || new Date().toISOString(),
-                      matchesUserInterests: false, // We'll set this later
-                      matchCount: 0, // We'll calculate this later
-                    }
-                  } catch (error) {
-                    console.error("Error processing post:", error)
-                    return null
-                  }
-              }));
+              // Calculate match count and flag for each study set
+              const enhancedStudySets = studySetsData.filter(Boolean).map((studySet) => {
+                // Add filter(Boolean) here
+                // Count how many categories match user interests
+                const matchCount = studySet.categories.filter((cat) => userCategories.includes(cat)).length
 
-            // Calculate match count and flag for each study set
-              const enhancedStudySets = studySetsData.filter(Boolean).map((studySet) => { // Add filter(Boolean) here
-              // Count how many categories match user interests
-              const matchCount = studySet.categories.filter((cat) => userCategories.includes(cat)).length
+                return {
+                  ...studySet,
+                  matchesUserInterests: matchCount > 0,
+                  matchCount: matchCount,
+                }
+              })
 
-              return {
-                ...studySet,
-                matchesUserInterests: matchCount > 0,
-                matchCount: matchCount,
-              }
-            })
+              // Sort study sets: first by match count (descending), then by creation date (newest first)
+              const sortedStudySets = enhancedStudySets.sort((a, b) => {
+                // First sort by match count
+                if (a.matchCount !== b.matchCount) {
+                  return b.matchCount - a.matchCount
+                }
 
-            // Sort study sets: first by match count (descending), then by creation date (newest first)
-            const sortedStudySets = enhancedStudySets.sort((a, b) => {
-              // First sort by match count
-              if (a.matchCount !== b.matchCount) {
-                return b.matchCount - a.matchCount
-              }
+                // If match counts are equal, sort by creation date (newest first)
+                return new Date(b.createdAt) - new Date(a.createdAt)
+              })
 
-              // If match counts are equal, sort by creation date (newest first)
-              return new Date(b.createdAt) - new Date(a.createdAt)
-            })
+              console.log("User categories:", userCategories)
+              console.log("Sorted study sets:", sortedStudySets)
 
-            console.log("User categories:", userCategories)
-            console.log("Sorted study sets:", sortedStudySets)
-
-            setStudySets(sortedStudySets)
-          } else {
+              setStudySets(sortedStudySets)
+            } else {
+              setStudySets([])
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching study sets:", error)
             setStudySets([])
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching study sets:", error)
-          setStudySets([])
-        })
-    });
+          })
+    })
   }
 
   const handleBack = () => {
@@ -1232,17 +1249,17 @@ export default function CommunityView() {
   const createStudySet = async () => {
     try {
       if (!studySetName.trim()) {
-        alert("Please enter a name for your study set")
+        setCustomPopup({ show: true, message: "Please enter a name for your study set", type: "error" })
         return
       }
 
       if (!selectedTemplate) {
-        alert("Please select a template")
+        setCustomPopup({ show: true, message: "Please select a template", type: "error" })
         return
       }
 
       if (!templateContent || templateContent.length === 0) {
-        alert("Please add some content to your study set")
+        setCustomPopup({ show: true, message: "Please add some content to your study set", type: "error" })
         return
       }
 
@@ -1251,7 +1268,7 @@ export default function CommunityView() {
       const currentCommunityId = id
 
       if (!token || !userId) {
-        alert("You must be logged in to add study material")
+        setCustomPopup({ show: true, message: "You must be logged in to add study material", type: "error" })
         return
       }
 
@@ -1332,10 +1349,10 @@ export default function CommunityView() {
         fetchStudySets()
       }, 1000)
 
-      alert("Study set created successfully!")
+      setCustomPopup({ show: true, message: "Study set created successfully!", type: "success" })
     } catch (error) {
       console.error("Error creating study set:", error)
-      alert(`Failed to create study set: ${error.message}`)
+      setCustomPopup({ show: true, message: `Failed to create study set: ${error.message}`, type: "error" })
     }
   }
 
@@ -1343,7 +1360,7 @@ export default function CommunityView() {
     const token = sessionStorage.getItem("token")
 
     if (!token) {
-      alert("You must be logged in to add a member")
+      setCustomPopup({ show: true, message: "You must be logged in to add a member", type: "error" })
       return
     }
 
@@ -1396,11 +1413,15 @@ export default function CommunityView() {
         .then(() => {
           // Refresh the members list
           fetchMembers()
-          alert("Member added successfully!")
+          setCustomPopup({ show: true, message: "Member added successfully!", type: "success" })
         })
         .catch((error) => {
           console.error("Error adding member:", error)
-          alert("Failed to add member. Please check the email and try again.")
+          setCustomPopup({
+            show: true,
+            message: "Failed to add member. Please check the email and try again.",
+            type: "error",
+          })
         })
   }
 
@@ -1421,33 +1442,42 @@ export default function CommunityView() {
     const userId = sessionStorage.getItem("user")
 
     if (!token || !userId) {
-      alert("You must be logged in to delete a study set")
+      setCustomPopup({ show: true, message: "You must be logged in to delete a study set", type: "error" })
       return
     }
     if (userId != creator) {
-      alert("You are not the creator of this post")
+      setCustomPopup({ show: true, message: "You are not the creator of this post", type: "error" })
       return
     }
-    fetch(`${API_BASE_URL}/posts/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+
+    setCustomPopup({
+      show: true,
+      message: "Are you sure you want to delete this post?",
+      type: "warning",
+      onConfirm: () => {
+        fetch(`${API_BASE_URL}/posts/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`)
+              }
+
+              // Remove the study set from state
+              const updatedStudySets = studySets.filter((set) => set.id !== id)
+              setStudySets(updatedStudySets)
+              setCustomPopup({ show: true, message: "Post deleted successfully", type: "success" })
+            })
+            .catch((error) => {
+              console.error("Error deleting study set:", error)
+              setCustomPopup({ show: true, message: "Failed to delete study set. Please try again.", type: "error" })
+            })
       },
     })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-
-          // Remove the study set from state
-          const updatedStudySets = studySets.filter((set) => set.id !== id)
-          setStudySets(updatedStudySets)
-        })
-        .catch((error) => {
-          console.error("Error deleting study set:", error)
-          alert("Failed to delete study set. Please try again.")
-        })
   }
 
   const handleShareStudySet = (id) => {
@@ -1531,12 +1561,8 @@ export default function CommunityView() {
     }
   }
 
-  // Show notification function
   const showNotification = (message, type = "success") => {
-    setNotification({ show: true, message, type })
-    setTimeout(() => {
-      setNotification({ show: false, message: "", type: "success" })
-    }, 3000)
+    setCustomPopup({ show: true, message, type })
   }
 
   const handleBackToCommunity = () => {
@@ -1549,8 +1575,15 @@ export default function CommunityView() {
     const token = sessionStorage.getItem("token")
     const user = sessionStorage.getItem("user") ? JSON.parse(sessionStorage.getItem("user")) : null
 
+    // Replace this alert in handleSendMessage function
+    // if (!token || !user) {
+    //   alert("You must be logged in to send a message")
+    //   return
+    // }
+
+    // With this custom popup
     if (!token || !user) {
-      alert("You must be logged in to send a message")
+      setCustomPopup({ show: true, message: "You must be logged in to send a message", type: "error" })
       return
     }
 
@@ -1592,7 +1625,11 @@ export default function CommunityView() {
         })
         .catch((error) => {
           console.error("Error sending message:", error)
-          alert("Failed to send message. Please try again.")
+          // Replace this alert in handleSendMessage function's catch block
+          // alert("Failed to send message. Please try again.")
+
+          // With this custom popup
+          setCustomPopup({ show: true, message: "Failed to send message. Please try again.", type: "error" })
 
           // Remove the optimistic message on error
           setMessages(messages.filter((msg) => msg.id !== optimisticMessage.id))
@@ -1655,35 +1692,38 @@ export default function CommunityView() {
 
   // Add handleDeleteCommunity function
   const handleDeleteCommunity = async () => {
-    if (!window.confirm("Are you sure you want to delete this community? This action cannot be undone.")) {
-      return
-    }
+    setCustomPopup({
+      show: true,
+      message: "Are you sure you want to delete this community? This action cannot be undone.",
+      type: "warning",
+      onConfirm: async () => {
+        const token = sessionStorage.getItem("token")
+        if (!token) {
+          setCustomPopup({ show: true, message: "You must be logged in to delete a community", type: "error" })
+          return
+        }
 
-    const token = sessionStorage.getItem("token")
-    if (!token) {
-      showNotification("You must be logged in to delete a community", "error")
-      return
-    }
+        try {
+          const response = await fetch(`${API_BASE_URL}/groups/${id}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          })
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/groups/${id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+          }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      showNotification("Community deleted successfully", "success")
-      navigate("/community") // Navigate back to communities list
-    } catch (error) {
-      console.error("Error deleting community:", error)
-      showNotification("Failed to delete community", "error")
-    }
+          setCustomPopup({ show: true, message: "Community deleted successfully", type: "success" })
+          navigate("/community") // Navigate back to communities list
+        } catch (error) {
+          console.error("Error deleting community:", error)
+          setCustomPopup({ show: true, message: "Failed to delete community", type: "error" })
+        }
+      },
+    })
   }
 
   // Modify the renderStudySetTags function to also include category and tag badges
@@ -1943,22 +1983,24 @@ export default function CommunityView() {
                                 >
                                   {/* --- Conditional Avatar --- */}
                                   {shouldShowPics && studySet.creatorPicture ? (
-                                    <img
-                                      src={studySet.creatorPicture}
-                                      alt={studySet.title.charAt(0)}
-                                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                      onError={(e) => {
-                                        e.target.onerror = null; // Prevent infinite loops
-                                        e.target.style.display = 'none'; // Hide broken image
-                                        // Find the parent div and replace img with initial
-                                        const avatarContainer = e.target.parentNode;
-                                        if (avatarContainer) {
-                                            avatarContainer.innerHTML = `<span class="font-semibold">${studySet.creatorEmail ? studySet.creatorEmail.charAt(0).toUpperCase() : "?"}</span>`;
-                                        }
-                                      }}
-                                    />
+                                      <img
+                                          src={studySet.creatorPicture || "/placeholder.svg"}
+                                          alt={studySet.title.charAt(0)}
+                                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                          onError={(e) => {
+                                            e.target.onerror = null // Prevent infinite loops
+                                            e.target.style.display = "none" // Hide broken image
+                                            // Find the parent div and replace img with initial
+                                            const avatarContainer = e.target.parentNode
+                                            if (avatarContainer) {
+                                              avatarContainer.innerHTML = `<span class="font-semibold">${studySet.creatorEmail ? studySet.creatorEmail.charAt(0).toUpperCase() : "?"}</span>`
+                                            }
+                                          }}
+                                      />
                                   ) : (
-                                    <span className="font-semibold">{studySet.creatorEmail ? studySet.creatorEmail.charAt(0).toUpperCase() : "?"}</span>
+                                      <span className="font-semibold">
+                              {studySet.creatorEmail ? studySet.creatorEmail.charAt(0).toUpperCase() : "?"}
+                            </span>
                                   )}
                                   {/* --- End Conditional Avatar --- */}
                                 </div>
@@ -2105,22 +2147,22 @@ export default function CommunityView() {
                               >
                                 {/* --- Conditional Member Avatar --- */}
                                 {shouldShowPics && member.picture ? (
-                                  <img
-                                    src={member.picture}
-                                    alt={member.email ? member.email[0].toUpperCase() : "?"}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    onError={(e) => {
-                                      e.target.onerror = null; // prevent infinite loops
-                                      e.target.style.display = 'none'; // hide broken image
-                                      // Find the parent div and replace img with initial
-                                      const avatarContainer = e.target.parentNode;
-                                      if (avatarContainer) {
-                                        avatarContainer.innerHTML = `<span>${member.email ? member.email[0].toUpperCase() : "?"}</span>`;
-                                      }
-                                    }}
-                                  />
+                                    <img
+                                        src={member.picture || "/placeholder.svg"}
+                                        alt={member.email ? member.email[0].toUpperCase() : "?"}
+                                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                        onError={(e) => {
+                                          e.target.onerror = null // prevent infinite loops
+                                          e.target.style.display = "none" // hide broken image
+                                          // Find the parent div and replace img with initial
+                                          const avatarContainer = e.target.parentNode
+                                          if (avatarContainer) {
+                                            avatarContainer.innerHTML = `<span>${member.email ? member.email[0].toUpperCase() : "?"}</span>`
+                                          }
+                                        }}
+                                    />
                                 ) : (
-                                <span>{member.email ? member.email[0].toUpperCase() : "?"}</span>
+                                    <span>{member.email ? member.email[0].toUpperCase() : "?"}</span>
                                 )}
                                 {/* --- End Conditional Member Avatar --- */}
                               </div>
@@ -2830,18 +2872,75 @@ export default function CommunityView() {
             </div>
         )}
 
-        {/* Notification Component */}
-        {notification.show && (
-            <div
-                className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
-                    notification.type === "success"
-                        ? "bg-green-500"
-                        : notification.type === "info"
-                            ? "bg-blue-500"
-                            : "bg-red-500"
-                } text-white z-50`}
-            >
-              {notification.message}
+        {/* Custom Popup */}
+        {customPopup.show && (
+            <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
+              <div
+                  className={`flex items-center justify-between px-4 py-2 mt-4 rounded-md shadow-md ${
+                      customPopup.type === "success"
+                          ? "bg-green-100 text-green-800"
+                          : customPopup.type === "warning"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
+                  }`}
+              >
+                <div className="flex items-center">
+                  {customPopup.type === "success" && (
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                        />
+                      </svg>
+                  )}
+                  {customPopup.type === "warning" && (
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                        />
+                      </svg>
+                  )}
+                  {customPopup.type === "error" && (
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                        />
+                      </svg>
+                  )}
+                  <span>{customPopup.message}</span>
+                </div>
+
+                <div className="flex items-center ml-4">
+                  {customPopup.type === "warning" && customPopup.onConfirm && (
+                      <button
+                          onClick={() => {
+                            customPopup.onConfirm()
+                            setCustomPopup({ ...customPopup, show: false })
+                          }}
+                          className="mr-2 px-2 py-1 text-xs bg-yellow-200 hover:bg-yellow-300 rounded-md"
+                      >
+                        Confirm
+                      </button>
+                  )}
+                  <button
+                      onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                      className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
         )}
       </div>
