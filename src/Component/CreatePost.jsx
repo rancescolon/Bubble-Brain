@@ -11,8 +11,9 @@ import {
   IconButton,
   Snackbar,
   Alert,
+  Stack,
 } from "@mui/material";
-import { PhotoCamera, VideoLibrary, Public, People, Lock } from "@mui/icons-material";
+import { PhotoCamera, VideoLibrary, Public, People, Lock, Clear } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
@@ -35,6 +36,12 @@ const CreatePost = ({ onPostCreated }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState(null);
   const [uploading, setUploading] = useState(false);
+  
+  // New state for image upload
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  
+  const fileInputRef = useRef(null);
 
   const handlePostTextChange = (event) => {
     setPostText(event.target.value);
@@ -43,10 +50,55 @@ const CreatePost = ({ onPostCreated }) => {
   const handleAudienceChange = (event) => {
     setAudience(event.target.value);
   };
+  
+  // Add image change handler
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    
+    if (file) {
+      // File size validation
+      const MAX_SIZE_KB = 100;
+      const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
+      
+      if (file.size > MAX_SIZE_BYTES) {
+        setError(`File size exceeds the ${MAX_SIZE_KB}KB limit.`);
+        return;
+      }
+      
+      // Save file for later upload
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Add helper function for base64 conversion
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+  
+  // Remove image handler
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async () => {
-    if (!postText.trim()) {
-      setError("Please add some content to your post");
+    if (!postText.trim() && !imageFile) {
+      setError("Please add some content or an image to your post");
       return;
     }
 
@@ -61,18 +113,26 @@ const CreatePost = ({ onPostCreated }) => {
     setUploading(true);
 
     try {
-      // Create the post without media
+      // Convert image to base64 if there is one
+      let base64Image = null;
+      if (imageFile) {
+        base64Image = await convertFileToBase64(imageFile);
+      }
+      
+      // Create post data with or without image
       const postData = {
         authorID: Number(userId),
         content: JSON.stringify({
           text: postText,
           audience: audience,
-          hasMedia: false
+          hasMedia: !!imageFile,
+          image: base64Image
         }),
         type: "social_post",
         attributes: {
           audience: audience,
-          mediaCount: 0,
+          mediaCount: imageFile ? 1 : 0,
+          hasImage: !!imageFile
         }
       };
 
@@ -92,6 +152,8 @@ const CreatePost = ({ onPostCreated }) => {
       // Reset form and show success message
       setPostText("");
       setAudience("public");
+      setImageFile(null);
+      setImagePreview(null);
       setShowSuccess(true);
       setError(null);
 
@@ -170,27 +232,103 @@ const CreatePost = ({ onPostCreated }) => {
           }
         }}
       />
-
-      {/* Audience Selection */}
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Audience</InputLabel>
-        <Select
-          value={audience}
-          onChange={handleAudienceChange}
-          disabled={uploading}
-          startAdornment={getAudienceIcon()}
+      
+      {/* Image Preview Area - Show only if there's an image */}
+      {imagePreview && (
+        <Box 
+          sx={{
+            position: "relative",
+            mb: 2,
+            border: "1px solid #e0e0e0",
+            borderRadius: 2,
+            p: 1,
+            bgcolor: "#F4FDFF",
+          }}
         >
-          <MenuItem value="public">Public</MenuItem>
-          <MenuItem value="connections">Connections Only</MenuItem>
-          <MenuItem value="private">Private</MenuItem>
-        </Select>
-      </FormControl>
+          <IconButton 
+            sx={{ 
+              position: "absolute", 
+              top: 8, 
+              right: 8, 
+              bgcolor: "rgba(255,255,255,0.7)",
+              "&:hover": {
+                bgcolor: "rgba(255,255,255,0.9)",
+              }
+            }}
+            onClick={handleRemoveImage}
+            size="small"
+          >
+            <Clear />
+          </IconButton>
+          <Box
+            component="img"
+            src={imagePreview}
+            alt="Preview"
+            sx={{
+              width: "100%",
+              maxHeight: "200px",
+              objectFit: "contain",
+              borderRadius: 1,
+            }}
+          />
+        </Box>
+      )}
+      
+      {/* Media Options and Audience Selection in a flexbox row */}
+      <Stack 
+        direction="row" 
+        spacing={2} 
+        sx={{ 
+          mb: 2,
+          alignItems: "center"
+        }}
+      >
+        {/* Image Upload Button */}
+        <Button
+          component="label"
+          variant="outlined"
+          startIcon={<PhotoCamera />}
+          disabled={uploading}
+          sx={{
+            borderRadius: 2,
+            color: "#1D6EF1",
+            borderColor: "#1D6EF1",
+            "&:hover": {
+              borderColor: "#1557B0",
+              bgcolor: "rgba(29, 110, 241, 0.04)",
+            },
+          }}
+        >
+          Add Photo
+          <VisuallyHiddenInput 
+            type="file" 
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            accept="image/*"
+          />
+        </Button>
+        
+        {/* Audience Selection */}
+        <FormControl sx={{ flexGrow: 1 }}>
+          <InputLabel>Audience</InputLabel>
+          <Select
+            value={audience}
+            onChange={handleAudienceChange}
+            disabled={uploading}
+            startAdornment={getAudienceIcon()}
+          >
+            <MenuItem value="public">Public</MenuItem>
+            <MenuItem value="connections">Connections Only</MenuItem>
+            <MenuItem value="private">Private</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
 
       {/* Submit Button */}
       <Button
         variant="contained"
         onClick={handleSubmit}
-        disabled={!postText.trim() || uploading}
+        disabled={(!postText.trim() && !imageFile) || uploading}
         fullWidth
         sx={{
           bgcolor: "#1D6EF1",
@@ -240,4 +378,4 @@ const CreatePost = ({ onPostCreated }) => {
   );
 };
 
-export default CreatePost; 
+export default CreatePost;

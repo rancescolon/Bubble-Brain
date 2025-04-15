@@ -176,7 +176,7 @@ const HomePage = () => {
           const communities = result[0].map((group) => ({
             id: group.id,
             name: group.name || "Community",
-            description: group.description || "No description available",
+            description: group.attributes?.description || "No description available",
             members: group.members?.length || 0,
             image: group.thumbnailURL || getRandomImage(),
             authorId: group.ownerID,
@@ -2539,7 +2539,7 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          {/* Active Users Section
+          { /*Active Users Section*/
           <Box
             sx={{
               mt: 6,
@@ -2809,7 +2809,7 @@ const HomePage = () => {
                 </Box>
               )}
             </Box>
-          </Box> */}
+          </Box> }
         </Container>
       </Box>
       <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>

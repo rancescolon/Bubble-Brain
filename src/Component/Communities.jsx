@@ -183,16 +183,20 @@ const Communities = () => {
       const groupsData = await groupsRes.json()
       const membershipsData = await membershipsRes.json()
   
+      console.log("Groups API Response:", groupsData)
+      console.log("First Group Data:", groupsData[0]?.[0])
+  
       const memberships = membershipsData[0] || []
       const joinedGroupIds = memberships.map((m) => m.groupID)
   
       const newCommunities = groupsData[0]?.map((group) => {
+        console.log("Processing Group:", group)
         const isJoined = joinedGroupIds.includes(group.id)
         const isOwner = group.ownerID === userId
         return {
           id: group.id,
           name: group.name,
-          description: group.description || "No description available",
+          description: group.attributes?.description || "No description available",
           authorId: group.ownerID,
           members: [],
           isJoined,
@@ -275,7 +279,9 @@ const Communities = () => {
 
     const communityData = {
       name: communityName,
-      description: communityDescription,
+      attributes: {
+        description: communityDescription
+      },
       ownerID: user.id,
     }
 
@@ -298,8 +304,7 @@ const Communities = () => {
           const newCommunity = {
             id: result.id,
             name: result.name,
-            description: result.description,
-
+            description: result.description || communityDescription,
             members: [{ id: user.id, name: "You", isAdmin: true }],
             flashcards: [],
             messages: [],
@@ -1002,7 +1007,7 @@ const Communities = () => {
                   <div className="lg:w-3/4">
                     <div className="bg-[#F4FDFF]/90 rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
                       <h1 className="text-3xl md:text-4xl font-extrabold text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
-                        My Communities
+                        Communities
                       </h1>
                       <p className="text-[#1D1D20] text-base md:text-lg mb-4 md:mb-6" style={fontStyle}>
                         Join existing communities or create your own to share study materials and collaborate with others.
