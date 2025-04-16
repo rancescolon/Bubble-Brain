@@ -66,6 +66,15 @@ const Upload = () => {
   const [selectedTags, setSelectedTags] = useState([])
   const isMobile = window.innerWidth <= 768
 
+  // Add a new state for custom popups
+  const [customPopup, setCustomPopup] = useState({
+    show: false,
+    message: "",
+    type: "success",
+    postId: null,
+    communityId: null,
+  })
+
   // School categories for tag selection
   const school_categories = {
     Math: [
@@ -667,24 +676,27 @@ const Upload = () => {
       setSelectedTags([])
       setCurrentStep(1)
 
-      // Show a more detailed success message
+      // Replace the setTimeout block in handleUpload with this updated code
       setTimeout(() => {
-        // If the user wants to view the study set in the community
-        if (window.confirm("Study set created successfully! Would you like to view it in the community?")) {
-          // Use the communityId from the result if available, otherwise use selectedCommunity
-          const communityToView = result.attributes?.communityId || selectedCommunity
-
-          // Use the correct URL format for both local and production environments
-          const communityViewUrl = `/community/view/${communityToView}`
-          navigate(communityViewUrl)
-        }
+        // Show success popup with a button to view the post
+        setCustomPopup({
+          show: true,
+          message: "Study set created successfully!",
+          type: "success",
+          postId: result.id,
+          communityId: result.attributes?.communityId || selectedCommunity,
+        })
       }, 500)
     } catch (err) {
       console.error("Error in handleUpload:", err)
       setError(err.message || "Failed to create study set. Please try again.")
 
-      // Show a more detailed error message
-      alert(`Error: ${err.message || "Failed to create study set. Please try again."}`)
+      // Replace the error alert in the catch block with custom popup
+      setCustomPopup({
+        show: true,
+        message: `Error: ${err.message || "Failed to create study set. Please try again."}`,
+        type: "error",
+      })
     } finally {
       setUploading(false)
     }
@@ -1217,6 +1229,92 @@ const Upload = () => {
           </Box>
         </Container>
 
+        {customPopup.show && (
+            <Box
+                sx={{
+                  position: "fixed",
+                  top: "20px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 9999,
+                  width: "90%",
+                  maxWidth: "500px",
+                  borderRadius: "4px",
+                  backgroundColor: customPopup.type === "success" ? "#d4edda" : "#f8d7da",
+                  color: customPopup.type === "success" ? "#155724" : "#721c24",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                  padding: "12px 16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {customPopup.type === "success" ? (
+                    <CheckCircle2 size={20} color="#155724" />
+                ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#721c24" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                )}
+                <Typography
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                >
+                  {customPopup.message}
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {/* Add "See post in community" button for success popups */}
+                {customPopup.type === "success" && customPopup.communityId && (
+                    <Button
+                        onClick={() => {
+                          const communityViewUrl = `/community/view/${customPopup.communityId}`
+                          navigate(communityViewUrl)
+                          setCustomPopup({ ...customPopup, show: false })
+                        }}
+                        sx={{
+                          fontFamily: "SourGummy, sans-serif",
+                          color: "#1D6EF1",
+                          textTransform: "none",
+                          fontSize: "14px",
+                          padding: "4px 8px",
+                          minWidth: "auto",
+                          "&:hover": {
+                            backgroundColor: "rgba(29, 110, 241, 0.1)",
+                          },
+                        }}
+                    >
+                      See post in community
+                    </Button>
+                )}
+
+                <Button
+                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                    sx={{
+                      minWidth: "auto",
+                      p: 0,
+                      color: customPopup.type === "success" ? "#155724" : "#721c24",
+                      "&:hover": {
+                        backgroundColor: "transparent",
+                      },
+                    }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </Button>
+              </Box>
+            </Box>
+        )}
+
         <Dialog open={showTemplateManager} onClose={() => setShowTemplateManager(false)} maxWidth="lg" fullWidth>
           <TemplateManager onSelectTemplate={handleTemplateSelect} onClose={() => setShowTemplateManager(false)} />
         </Dialog>
@@ -1229,17 +1327,6 @@ const Upload = () => {
         >
           <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
             {error}
-          </Alert>
-        </Snackbar>
-
-        <Snackbar
-            open={success}
-            autoHideDuration={6000}
-            onClose={() => setSuccess(false)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-        >
-          <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-            Study set created successfully!
           </Alert>
         </Snackbar>
       </Box>

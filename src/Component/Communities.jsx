@@ -2,7 +2,19 @@
 
 import { useState, useRef, useEffect, createContext, useContext, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
-import { Plus, Search, Share2, MessageCircle, ArrowLeft, Users, BookOpen, FileText, Heart } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Share2,
+  MessageCircle,
+  ArrowLeft,
+  Users,
+  BookOpen,
+  FileText,
+  X,
+  CheckCircle,
+  AlertTriangle,
+} from "lucide-react"
 import { BackgroundContext } from "../App"
 
 // Create a context for navigation state
@@ -57,7 +69,7 @@ const TopBar = () => {
 }
 
 const Communities = () => {
-  const { currentBackground } = useContext(BackgroundContext);
+  const { currentBackground } = useContext(BackgroundContext)
   // Add this console log to verify the API path
   console.log("API Path:", process.env.REACT_APP_API_PATH)
 
@@ -86,6 +98,12 @@ const Communities = () => {
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
   // Communities state
   const [communities, setCommunities] = useState([])
+  // Custom popup state
+  const [customPopup, setCustomPopup] = useState({
+    show: false,
+    message: "",
+    type: "success", // success or error
+  })
 
   const backgroundStyle = {
     backgroundImage: `url(${currentBackground.image})`,
@@ -98,11 +116,10 @@ const Communities = () => {
     maxWidth: "100vw",
     overflowX: "hidden",
     position: "relative",
-    '@media (max-width: 768px)': {
+    "@media (max-width: 768px)": {
       backgroundAttachment: "scroll",
-    }
+    },
   }
-  
 
   const toggleNav = () => {
     setNavOpen(!navOpen)
@@ -112,6 +129,20 @@ const Communities = () => {
   const navContextValue = {
     navOpen,
     toggleNav,
+  }
+
+  // Function to show custom popup
+  const showCustomPopup = (message, type = "success") => {
+    setCustomPopup({
+      show: true,
+      message,
+      type,
+    })
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      setCustomPopup((prev) => ({ ...prev, show: false }))
+    }, 3000)
   }
 
   // Check for preview mode
@@ -152,66 +183,71 @@ const Communities = () => {
   const fetchCommunities = async () => {
     setLoading(true)
     setError(null)
-  
+
     const token = sessionStorage.getItem("token")
-    const userId = sessionStorage.getItem("user") ? parseInt(sessionStorage.getItem("user")) : null
-  
+    const userId = sessionStorage.getItem("user") ? Number.parseInt(sessionStorage.getItem("user")) : null
+
     if (!token || !userId) {
       setError("You must be logged in to view communities")
       setLoading(false)
       return
     }
-  
+
     try {
       const headers = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       }
-  
+
       const offset = page * PAGE_SIZE
-  
+
       // Fetch groups with offset/limit (MUST be supported by your API)
       const [groupsRes, membershipsRes] = await Promise.all([
         fetch(`${process.env.REACT_APP_API_PATH}/groups?offset=${offset}&limit=${PAGE_SIZE}`, { headers }),
         fetch(`${process.env.REACT_APP_API_PATH}/group-members?userID=${userId}`, { headers }),
       ])
-  
+
       if (!groupsRes.ok || !membershipsRes.ok) {
         throw new Error("Failed to fetch groups or memberships")
       }
-  
+
       const groupsData = await groupsRes.json()
       const membershipsData = await membershipsRes.json()
-  
+
+      console.log("Groups API Response:", groupsData)
+      console.log("First Group Data:", groupsData[0]?.[0])
+
       const memberships = membershipsData[0] || []
       const joinedGroupIds = memberships.map((m) => m.groupID)
-  
-      const newCommunities = groupsData[0]?.map((group) => {
-        const isJoined = joinedGroupIds.includes(group.id)
-        const isOwner = group.ownerID === userId
-        return {
-          id: group.id,
-          name: group.name,
-          description: group.description || "No description available",
-          authorId: group.ownerID,
-          members: [],
-          isJoined,
-          isOwner,
-        }
-      }) || []
-  
+
+      const newCommunities =
+          groupsData[0]?.map((group) => {
+            console.log("Processing Group:", group)
+            const isJoined = joinedGroupIds.includes(group.id)
+            const isOwner = group.ownerID === userId
+            return {
+              id: group.id,
+              name: group.name,
+              description: group.attributes?.description || "No description available",
+              authorId: group.ownerID,
+              members: [],
+              isJoined,
+              isOwner,
+            }
+          }) || []
+
       // Append to existing state
       setCommunities((prev) => [...prev, ...newCommunities])
-  
+
       // Determine if there's more to load
       if (newCommunities.length < PAGE_SIZE) {
         setHasMore(false)
       }
-  
+
       // Update joined + owned only once (could be improved later)
       const all = [...communities, ...newCommunities]
-      setJoinedCommunities(all.filter(c => c.isJoined || c.isOwner))
-      setMyCommunities(all.filter(c => c.isOwner))
+      setJoinedCommunities(all.filter((c) => c.isJoined || c.isOwner))
+      setMyCommunities(all.filter((c) => c.isOwner))
     } catch (error) {
       console.error("Error fetching communities:", error)
       setError("Failed to load communities. Please try again later.")
@@ -256,8 +292,8 @@ const Communities = () => {
 
   // Filter communities based on search query
   const filteredCommunities = useMemo(
-    () => communities.filter(c => c.name.toLowerCase().includes(debouncedQuery.toLowerCase())),
-    [debouncedQuery, communities]
+      () => communities.filter((c) => c.name.toLowerCase().includes(debouncedQuery.toLowerCase())),
+      [debouncedQuery, communities],
   )
 
   const handleSubmit = () => {
@@ -268,14 +304,16 @@ const Communities = () => {
     const user = JSON.parse(sessionStorage.getItem("user"))
 
     if (!token || !user) {
-      alert("You must be logged in to create a community")
+      showCustomPopup("You must be logged in to create a community", "error")
       setLoading(false)
       return
     }
 
     const communityData = {
       name: communityName,
-      description: communityDescription,
+      attributes: {
+        description: communityDescription,
+      },
       ownerID: user.id,
     }
 
@@ -298,8 +336,7 @@ const Communities = () => {
           const newCommunity = {
             id: result.id,
             name: result.name,
-            description: result.description,
-
+            description: result.description || communityDescription,
             members: [{ id: user.id, name: "You", isAdmin: true }],
             flashcards: [],
             messages: [],
@@ -321,48 +358,50 @@ const Communities = () => {
           setCommunityDescription("")
           setShowModal(false)
           setLoading(false)
+
+          // Show success popup
+          showCustomPopup("Community created successfully!")
         })
         .catch((error) => {
           console.error("Error creating community:", error)
-          alert("Failed to create community. Please try again.")
+          showCustomPopup("Failed to create community. Please try again.", "error")
           setLoading(false)
         })
   }
 
-
   const handleJoinCommunity = async (communityId) => {
     const token = sessionStorage.getItem("token")
     // Get the user ID as a number
-    const userId = parseInt(sessionStorage.getItem("user"))
-  
+    const userId = Number.parseInt(sessionStorage.getItem("user"))
+
     if (!userId) {
       console.error("No user ID found in session storage")
-      alert("Session error: No user ID found. Please try logging in again.")
+      showCustomPopup("Session error: No user ID found. Please try logging in again.", "error")
       return
     }
-  
+
     if (!token || !userId) {
-      alert("You must be logged in to join a community")
+      showCustomPopup("You must be logged in to join a community", "error")
       return
     }
-  
+
     try {
       // First check if the user is already a member
       const checkResponse = await fetch(
-        `${process.env.REACT_APP_API_PATH}/group-members?groupID=${communityId}&userID=${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+          `${process.env.REACT_APP_API_PATH}/group-members?groupID=${communityId}&userID=${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        }
       )
-  
+
       const checkData = await checkResponse.json()
       if (checkData && checkData[0] && checkData[0].length > 0) {
-        alert("You are already a member of this community")
+        showCustomPopup("You are already a member of this community", "error")
         return
       }
-  
+
       // If not a member, proceed with joining
       const response = await fetch(`${process.env.REACT_APP_API_PATH}/group-members`, {
         method: "POST",
@@ -372,16 +411,16 @@ const Communities = () => {
         },
         body: JSON.stringify({
           userID: userId,
-          groupID: communityId
+          groupID: communityId,
         }),
       })
-  
+
       if (!response.ok) {
         const errorText = await response.text()
         console.error("Error response:", errorText)
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`)
       }
-  
+
       // If successful, update the UI
       const updatedCommunities = communities.map((community) => {
         if (community.id === communityId) {
@@ -390,19 +429,18 @@ const Communities = () => {
         return community
       })
       setCommunities(updatedCommunities)
-  
+
       // Add the joined community to joinedCommunities
       const joinedCommunity = communities.find((community) => community.id === communityId)
       if (joinedCommunity) {
         setJoinedCommunities([...joinedCommunities, joinedCommunity])
       }
-  
+
       // Show success message
-      alert("Successfully joined the community!")
-  
+      showCustomPopup("Successfully joined the community!")
     } catch (error) {
       console.error("Error joining community:", error)
-      alert("Failed to join community. Please try again.")
+      showCustomPopup("Failed to join community. Please try again.", "error")
     }
   }
 
@@ -432,6 +470,9 @@ const Communities = () => {
     navigator.clipboard
         .writeText(communityLink)
         .then(() => {
+          // Show success popup
+          showCustomPopup("Community link copied to clipboard!")
+
           // Reset after 2 seconds
           setTimeout(() => {
             setCopiedCommunityId(null)
@@ -439,6 +480,7 @@ const Communities = () => {
         })
         .catch((err) => {
           console.error("Could not copy text: ", err)
+          showCustomPopup("Failed to copy link. Please try again.", "error")
         })
   }
 
@@ -517,10 +559,10 @@ const Communities = () => {
 
   const handleLikeCommunity = async (communityId) => {
     const token = sessionStorage.getItem("token")
-    const userId = sessionStorage.getItem("user") ? parseInt(sessionStorage.getItem("user")) : null
+    const userId = sessionStorage.getItem("user") ? Number.parseInt(sessionStorage.getItem("user")) : null
 
     if (!token || !userId) {
-      alert("You must be logged in to like a community")
+      showCustomPopup("You must be logged in to like a community", "error")
       return
     }
 
@@ -549,9 +591,12 @@ const Communities = () => {
         return community
       })
       setCommunities(updatedCommunities)
+
+      // Show success popup
+      showCustomPopup("Community liked successfully!")
     } catch (error) {
       console.error("Error liking community:", error)
-      alert("Failed to like community. Please try again.")
+      showCustomPopup("Failed to like community. Please try again.", "error")
     }
   }
 
@@ -750,6 +795,9 @@ const Communities = () => {
       // Update the community object
       const updatedCommunity = { ...community, flashcards: updatedFlashcards }
       onUpdate(updatedCommunity)
+
+      // Show success popup
+      showCustomPopup("Study material added successfully!")
     }
 
     const handleAddMember = () => {
@@ -766,10 +814,11 @@ const Communities = () => {
       navigator.clipboard
           .writeText(flashcardLink)
           .then(() => {
-            alert("Flashcard link copied to clipboard!")
+            showCustomPopup("Flashcard link copied to clipboard!")
           })
           .catch((err) => {
             console.error("Could not copy text: ", err)
+            showCustomPopup("Failed to copy link. Please try again.", "error")
           })
     }
 
@@ -780,6 +829,9 @@ const Communities = () => {
       // Update the community object
       const updatedCommunity = { ...community, flashcards: updatedFlashcards }
       onUpdate(updatedCommunity)
+
+      // Show success popup
+      showCustomPopup("Flashcard deleted successfully!")
     }
 
     return (
@@ -908,7 +960,6 @@ const Communities = () => {
                                   {flashcard.description}
                                 </p>
                                 <div className="flex justify-between items-center">
-
                                   <div className="flex items-center space-x-2">
                                     <button
                                         className="text-[#1D6EF1] bg-[#C5EDFD] p-1 md:p-2 rounded-lg hover:bg-[#97C7F1] transition-colors"
@@ -968,6 +1019,33 @@ const Communities = () => {
         <GlobalStyle />
         <TopBar />
 
+        {/* Custom Popup */}
+        {customPopup.show && (
+            <div
+                className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-4 py-2 rounded-full shadow-lg ${
+                    customPopup.type === "success" ? "bg-green-100" : "bg-red-100"
+                }`}
+            >
+              {customPopup.type === "success" ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+              ) : (
+                  <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+              )}
+              <span
+                  style={fontStyle}
+                  className={`flex-1 ${customPopup.type === "success" ? "text-green-800" : "text-red-800"}`}
+              >
+            {customPopup.message}
+          </span>
+              <button
+                  onClick={() => setCustomPopup((prev) => ({ ...prev, show: false }))}
+                  className="ml-2 text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+        )}
+
         {isPreviewMode && (
             <div
                 className="fixed top-20 left-0 right-0 bg-yellow-400 text-black py-2 px-4 text-center z-50"
@@ -1002,7 +1080,7 @@ const Communities = () => {
                   <div className="lg:w-3/4">
                     <div className="bg-[#F4FDFF]/90 rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
                       <h1 className="text-3xl md:text-4xl font-extrabold text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
-                        My Communities
+                        Communities
                       </h1>
                       <p className="text-[#1D1D20] text-base md:text-lg mb-4 md:mb-6" style={fontStyle}>
                         Join existing communities or create your own to share study materials and collaborate with others.
@@ -1014,16 +1092,16 @@ const Communities = () => {
                         </div>
 
                         <input
-                          type="text"
-                          placeholder="Search communities by name..."
-                          maxLength={30}
-                          className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          style={fontStyle}
+                            type="text"
+                            placeholder="Search communities by name..."
+                            maxLength={30}
+                            className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={fontStyle}
                         />
                         {searchQuery.length === 30 && (
-                          <p className="text-red-500 text-sm mt-1">Maximum of 30 characters reached.</p>
+                            <p className="text-red-500 text-sm mt-1">Maximum of 30 characters reached.</p>
                         )}
                       </div>
 
@@ -1050,7 +1128,6 @@ const Communities = () => {
                             </h2>
 
                             {filteredCommunities.length > 0 ? (
-                              <>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                                   {filteredCommunities.map((community) => (
                                       <div
@@ -1101,18 +1178,6 @@ const Communities = () => {
                                       </div>
                                   ))}
                                 </div>
-                                {hasMore && !loading && (
-                                  <div className="flex justify-center mt-6">
-                                    <button
-                                      className="px-6 py-2 bg-[#1D6EF1] text-white rounded-lg hover:bg-[#97C7F1] transition"
-                                      onClick={() => setPage((p) => p + 1)}
-                                      style={fontStyle}
-                                    >
-                                      Load More
-                                    </button>
-                                  </div>
-                                )}
-                              </>
                             ) : (
                                 <div className="bg-white rounded-xl p-6 md:p-8 text-center">
                                   {communities.length === 0 ? (
@@ -1170,31 +1235,31 @@ const Communities = () => {
                       </h2>
 
                       <div className="space-y-2 md:space-y-3">
-                      {joinedCommunities.length > 0 ? (
-  joinedCommunities.map((community) => (
-    <div
-      key={community.id}
-      className="bg-[#C5EDFD] p-2 md:p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
-      onClick={() => navigate(`/community/view/${community.id}`)}
-    >
-      <div className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
-        <span style={fontStyle}>{community.name.charAt(0).toUpperCase()}</span>
-      </div>
-      <span
-        className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base"
-        style={fontStyle}
-      >
-        {community.name}
-      </span>
-    </div>
-  ))
-  ) : (
-  <div className="bg-white p-3 md:p-4 rounded-lg text-center">
-    <p className="text-[#1D1D20] text-sm md:text-base" style={fontStyle}>
-      No joined communities yet
-    </p>
-  </div>
-  )}
+                        {joinedCommunities.length > 0 ? (
+                            joinedCommunities.map((community) => (
+                                <div
+                                    key={community.id}
+                                    className="bg-[#C5EDFD] p-2 md:p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
+                                    onClick={() => navigate(`/community/view/${community.id}`)}
+                                >
+                                  <div className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
+                                    <span style={fontStyle}>{community.name.charAt(0).toUpperCase()}</span>
+                                  </div>
+                                  <span
+                                      className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base"
+                                      style={fontStyle}
+                                  >
+                            {community.name}
+                          </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="bg-white p-3 md:p-4 rounded-lg text-center">
+                              <p className="text-[#1D1D20] text-sm md:text-base" style={fontStyle}>
+                                No joined communities yet
+                              </p>
+                            </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1216,7 +1281,7 @@ const Communities = () => {
                     <label className="block text-[#1D1D20] mb-1 md:mb-2 text-base md:text-lg" style={fontStyle}>
                       Community Name
                     </label>
-                      <input
+                    <input
                         type="text"
                         maxLength={20}
                         placeholder="Enter a name for your community"
