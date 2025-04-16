@@ -133,12 +133,71 @@ const Shop = () => {
 
     // Only fetch if we have a userId
     if (userId) {
-    fetchStudyTime();
+      fetchStudyTime();
     } else {
       setTotalStudyTimeSeconds(0);
       setLoadingStudyTime(false);
     }
   }, [userId]); // Add userId dependency to refetch when user changes
+
+  // New useEffect to sync bubble bucks with study time
+  useEffect(() => {
+    // Skip if still loading or no user ID
+    if (loadingStudyTime || !userId || !totalStudyTimeSeconds) return;
+    
+    // Create user-specific localStorage key for tracking last synced time
+    const LAST_SYNCED_KEY = `lastSyncedStudyTime_${userId}`;
+    
+    // Get last synced study time from localStorage (in seconds)
+    const lastSyncedTimeStr = localStorage.getItem(LAST_SYNCED_KEY);
+    const lastSyncedTime = lastSyncedTimeStr ? parseInt(lastSyncedTimeStr, 10) : 0;
+    
+    // Calculate new study time since last sync (in seconds)
+    const newStudyTimeSeconds = Math.max(0, totalStudyTimeSeconds - lastSyncedTime);
+    
+    // Convert new study seconds to minutes (rounded down)
+    const newStudyMinutes = Math.floor(newStudyTimeSeconds / 60);
+    
+    console.log("[Shop] Study time sync:", {
+      totalStudySeconds: totalStudyTimeSeconds,
+      lastSyncedTime: lastSyncedTime,
+      newStudySeconds: newStudyTimeSeconds,
+      newStudyMinutes: newStudyMinutes,
+      currentBubbleBucks: bubbleBucks
+    });
+    
+    // Only update if there are new study minutes to add
+    if (newStudyMinutes > 0) {
+      console.log(`[Shop] Adding ${newStudyMinutes} bubble bucks for new study time`);
+      
+      // Calculate new total
+      const newTotal = bubbleBucks + newStudyMinutes;
+      
+      // Update backend directly
+      updateBackendUserData({
+        bubbleBucks: newTotal
+      }).then(success => {
+        if (success) {
+          // Update local state
+          console.log("[Shop] Successfully added bubble bucks for new study time");
+          addBubbleBucks(newStudyMinutes);
+          
+          // Update the last synced time in localStorage
+          localStorage.setItem(LAST_SYNCED_KEY, totalStudyTimeSeconds.toString());
+        } else {
+          console.error("[Shop] Failed to update bubble bucks");
+          setSnackbar({
+            open: true,
+            message: "Failed to update Bubble Bucks. Try refreshing the page.",
+            severity: "error"
+          });
+        }
+      });
+    } else {
+      // No new minutes, but still update last synced time to current total
+      localStorage.setItem(LAST_SYNCED_KEY, totalStudyTimeSeconds.toString());
+    }
+  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks]);
 
   // Load fisherman click time from localStorage when userId becomes available
   useEffect(() => {

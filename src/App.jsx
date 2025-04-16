@@ -392,8 +392,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
       const fishermanCooldownKey = `lastFishermanClickTime_${userId}`;
       localStorage.removeItem(fishermanCooldownKey);
       
-      // We don't clear user-specific skin data, as it should persist between logins
-      // but let's clear the non-specific key to avoid using wrong skin
+     
       localStorage.removeItem('lastEquippedSkinId');
     }
     
