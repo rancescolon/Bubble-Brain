@@ -2,7 +2,18 @@
 
 import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { Home, MessageSquare, Upload, Users, Settings, User, ChevronLeft, ChevronRight,Palette, ShoppingCart} from "lucide-react"
+import {
+  Home,
+  MessageSquare,
+  Upload,
+  Users,
+  User,
+  ChevronLeft,
+  ChevronRight,
+  Palette,
+  ShoppingCart,
+  Camera,
+} from "lucide-react"
 import { useShop } from "../Context/ShopContext"
 
 import {
@@ -53,50 +64,50 @@ const NavBar = () => {
   const location = useLocation()
   const currentPath = location.pathname
   const { getEquippedSkin, equippedSkinId, userId, defaultSkin } = useShop()
-  
+
   const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
-  
+
   // Enhanced effect to handle skin persistence across navigation
   useEffect(() => {
     // Make the key user-specific
-    const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : 'lastEquippedSkinId';
-    
+    const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : "lastEquippedSkinId"
+
     // Clear any stored skin data if userId is null (logged out)
     if (!userId) {
-      setCurrentSkin(defaultSkin);
-      console.log("[Navbar] No user logged in, using default skin");
-      return;
+      setCurrentSkin(defaultSkin)
+      console.log("[Navbar] No user logged in, using default skin")
+      return
     }
-    
+
     // First, try to get the equipped skin from the ShopContext
-    const contextSkin = getEquippedSkin();
-    
+    const contextSkin = getEquippedSkin()
+
     // If we have a skin ID in context that isn't default, use and store it
     if (equippedSkinId && equippedSkinId !== defaultSkin.id) {
-      setCurrentSkin(contextSkin);
-      localStorage.setItem(localStorageKey, equippedSkinId);
-      console.log("[Navbar] Using equipped skin from context:", equippedSkinId);
-      return;
+      setCurrentSkin(contextSkin)
+      localStorage.setItem(localStorageKey, equippedSkinId)
+      console.log("[Navbar] Using equipped skin from context:", equippedSkinId)
+      return
     }
-    
+
     // If the context doesn't have a non-default skin, try to get from localStorage
-    const savedSkinId = localStorage.getItem(localStorageKey);
-    
+    const savedSkinId = localStorage.getItem(localStorageKey)
+
     if (savedSkinId && savedSkinId !== defaultSkin.id) {
       // If we have a saved skin ID, use it to retrieve the skin data
-      const fallbackSkin = getEquippedSkin();
-      
+      const fallbackSkin = getEquippedSkin()
+
       if (fallbackSkin && fallbackSkin.id !== defaultSkin.id) {
-        setCurrentSkin(fallbackSkin);
-        console.log("[Navbar] Restored skin from localStorage:", savedSkinId);
-        return;
+        setCurrentSkin(fallbackSkin)
+        console.log("[Navbar] Restored skin from localStorage:", savedSkinId)
+        return
       }
     }
-    
+
     // Default fallback - use whatever the context provides
-    setCurrentSkin(getEquippedSkin());
-    console.log("[Navbar] Using default skin from context");
-  }, [getEquippedSkin, equippedSkinId, userId, defaultSkin]);
+    setCurrentSkin(getEquippedSkin())
+    console.log("[Navbar] Using default skin from context")
+  }, [getEquippedSkin, equippedSkinId, userId, defaultSkin])
 
   // Update expanded state when screen size changes
   useEffect(() => {
@@ -108,20 +119,20 @@ const NavBar = () => {
   }
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: MessageSquare, label: "Friends", path: "/friends" },
-    { icon: Upload, label: "Upload", path: "/upload" },
-    { icon: Users, label: "Community", path: "/community" },
-    { icon: User, label: "Profile", path: "/profile" },
-    { icon: Palette, label: "Style Guide", path: "/style-guide" },
-    { icon: Settings, label: "Feed", path: "/feed" },
-    { icon: ShoppingCart, label: "Shop", path: "/shop" },
+    { icon: Home, label: "Home", path: "/", external: false },
+    { icon: MessageSquare, label: "Friends", path: "/friends", external: false },
+    { icon: Upload, label: "Upload", path: "/upload", external: false },
+    { icon: Users, label: "Community", path: "/community", external: false },
+    { icon: User, label: "Profile", path: "/profile", external: false },
+    { icon: Palette, label: "Style Guide", path: "/style-guide", external: false },
+    { icon: Camera, label: "Feed", path: "/feed", external: false },
+    { icon: ShoppingCart, label: "Shop", path: "/shop", external: false },
   ]
 
   return (
     <StyledDrawer variant="permanent" open={isExpanded}>
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
           <Box
             onClick={toggleSidebar}
             sx={{
@@ -208,8 +219,10 @@ const NavBar = () => {
             return (
               <ListItem key={item.path} disablePadding sx={{ display: "flex" }}>
                 <ListItemButton
-                  component={Link}
-                  to={item.path}
+                  component={item.external ? "a" : Link}
+                  href={item.external ? `https://webdev.cse.buffalo.edu/hci/teams/droptable${item.path}` : undefined}
+                  to={!item.external ? item.path : undefined}
+                  target={item.external ? "_blank" : undefined}
                   selected={isActive}
                   sx={{
                     minHeight: 48,
