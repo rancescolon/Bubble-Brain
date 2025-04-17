@@ -199,7 +199,7 @@ const NavBar = () => {
                 textOverflow: "ellipsis",
               }}
             >
-              Bubble Brain
+              Bubble <br/>Brain
             </Typography>
           )}
         </Box>
