@@ -741,6 +741,39 @@ const PostFeed = () => {
     }
   };
 
+  const deleteComment = async (commentId, postId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please log in to delete comments");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/posts/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete comment");
+      }
+
+      // Remove the comment from the local state
+      setComments(prev => {
+        const updated = { ...prev };
+        if (updated[postId]) {
+          updated[postId] = updated[postId].filter(comment => comment.id !== commentId);
+        }
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -958,15 +991,30 @@ const PostFeed = () => {
                         >
                           {comment.authorUsername || comment.authorEmail?.split("@")[0] || 'Anonymous User'}
                         </Typography>
-                        <Typography 
-                          component="span" 
-                          variant="body2"
-                          sx={{ 
-                            fontSize: '14px',
-                          }}
-                        >
-                          {comment.text}
-                        </Typography>
+                        <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
+                          <Typography 
+                            component="span" 
+                            variant="body2"
+                            sx={{ 
+                              fontSize: '14px',
+                            }}
+                          >
+                            {comment.text}
+                          </Typography>
+                          {String(comment.authorId) === String(currentUserId) && (
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this comment?')) {
+                                  deleteComment(comment.id, post.id);
+                                }
+                              }}
+                              sx={{ ml: 'auto', p: 0.5, color: 'error.main' }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
                       </Box>
                     ))}
                     
