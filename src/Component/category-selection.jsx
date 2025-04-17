@@ -55,34 +55,34 @@ const CategorySelector = () => {
     const [success, setSuccess] = useState(false)
     const navigate = useNavigate()
     const maxCategories = 5
-    
+
     // Get shop data refresh function
     const { refreshUserData, userId } = useShop()
     const hasRefreshedRef = useRef(false)
-    
+
     // Add effect to refresh skin data
     useEffect(() => {
         // This ensures the skin data is refreshed when the category selection component mounts
         const refreshSkinData = async () => {
             if (!hasRefreshedRef.current && userId) {
-                console.log("[CategorySelection] Refreshing skin data on initial load");
-                hasRefreshedRef.current = true;
-                
+                console.log("[CategorySelection] Refreshing skin data on initial load")
+                hasRefreshedRef.current = true
+
                 try {
-                    const success = await refreshUserData();
+                    const success = await refreshUserData()
                     if (success) {
-                        console.log("[CategorySelection] Successfully refreshed skin data");
+                        console.log("[CategorySelection] Successfully refreshed skin data")
                     } else {
-                        console.warn("[CategorySelection] Failed to refresh skin data");
+                        console.warn("[CategorySelection] Failed to refresh skin data")
                     }
                 } catch (err) {
-                    console.error("[CategorySelection] Error refreshing skin data:", err);
+                    console.error("[CategorySelection] Error refreshing skin data:", err)
                 }
             }
-        };
-        
-        refreshSkinData();
-    }, [refreshUserData, userId]);
+        }
+
+        refreshSkinData()
+    }, [refreshUserData, userId])
 
     useEffect(() => {
         // Check if user is logged in
@@ -90,7 +90,8 @@ const CategorySelector = () => {
         const userId = sessionStorage.getItem("user")
 
         if (!token || !userId) {
-            navigate("/login")
+            console.log("[CategorySelection] Refreshing skin data on initial load")
+            // navigate("/login")
             return
         }
 
@@ -232,19 +233,23 @@ const CategorySelector = () => {
             await Promise.all(badgePromises)
 
             setSuccess(true)
-            
+
             // Refresh skin data one more time before redirecting to ensure it's properly loaded
             try {
-                console.log("[CategorySelection] Final skin data refresh before redirect");
-                await refreshUserData();
+                console.log("[CategorySelection] Final skin data refresh before redirect")
+                await refreshUserData()
             } catch (err) {
-                console.warn("[CategorySelection] Error in final skin refresh:", err);
+                console.warn("[CategorySelection] Error in final skin refresh:", err)
                 // Continue with redirect even if refresh fails
             }
 
-            // Redirect to home page after a short delay
+            // Redirect to home page after a short delay and force page refresh
             setTimeout(() => {
+                console.log("[CategorySelection] Redirecting to home page after saving categories")
+                // First navigate to home
                 navigate("/")
+                // Then force a page refresh
+                window.location.reload(true)
             }, 1500)
         } catch (error) {
             console.error("Error saving categories:", error)
@@ -257,15 +262,16 @@ const CategorySelector = () => {
     const handleSkip = async () => {
         // Refresh skin data before navigating to home
         try {
-            console.log("[CategorySelection] Refreshing skin data before skipping to homepage");
-            await refreshUserData();
+            console.log("[CategorySelection] Refreshing skin data before skipping to homepage")
+            await refreshUserData()
         } catch (err) {
-            console.warn("[CategorySelection] Error refreshing skin data during skip:", err);
+            console.warn("[CategorySelection] Error refreshing skin data during skip:", err)
             // Continue with redirect even if refresh fails
         }
-        
-        // Redirect to home page
+
+        // Redirect to home page and force page refresh
         navigate("/")
+        window.location.reload(true)
     }
 
     if (isLoading) {
@@ -499,4 +505,3 @@ const CategorySelector = () => {
 }
 
 export default CategorySelector
-
