@@ -80,9 +80,14 @@ const DrBubbles = ({ onClose }) => {
       position: { x: 15, y: 170 },
     },
     {
+      element: "nav-upload",
+      message: "Upload your own study sets and share with others!",
+      position: { x: 15, y: 225 },
+    },
+    {
       element: "nav-community",
       message: "Join exciting communities and view study sets!",
-      position: { x: 15, y: 230 },
+      position: { x: 15, y: 280 },
     },
     {
       element: "nav-profile",

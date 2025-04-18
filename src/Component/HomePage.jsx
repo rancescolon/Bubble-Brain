@@ -205,7 +205,7 @@ const HomePage = () => {
             name: group.name || "Community",
             description: group.attributes?.description || "No description available",
             members: group.members?.length || 0,
-            image: group.thumbnailURL || getRandomImage(),
+            image: group.thumbnailURL || require('../assets/bubblestudytable1.png'),
             authorId: group.ownerID,
           }))
           setLatestCommunities(communities)
