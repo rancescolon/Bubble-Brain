@@ -2,20 +2,18 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 
 // Import your background images
 import defaultBackground from '../assets/image3.png';
-import background1 from '../assets/fish1.png';
-import background2 from '../assets/fish2.png';
-import background3 from '../assets/fish3.png';
+import background1 from '../assets/City-life.jpg';
+import background2 from '../assets/Home.png';
+import background3 from '../assets/war.png';
 import background4 from '../assets/coolfish.png';
-import background5 from '../assets/coolfish.png';
 
 // Define background options
 export const backgroundOptions = [
   { id: 'default', image: defaultBackground, name: 'Default' },
-  { id: 'bg1', image: background1, name: 'Blue Gradient' },
-  { id: 'bg2', image: background2, name: 'Purple Waves' },
-  { id: 'bg3', image: background3, name: 'Green Nature' },
-  { id: 'bg4', image: background4, name: 'Orange Sunset' },
-  { id: 'bg5', image: background5, name: 'Aesthetic' },
+  { id: 'bg1', image: background1, name: 'City Life' },
+  { id: 'bg2', image: background2, name: 'Home' },
+  { id: 'bg3', image: background3, name: 'War' },
+  { id: 'bg4', image: background4, name: 'Realism' },
 ];
 
 // Create the context

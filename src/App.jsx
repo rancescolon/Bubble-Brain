@@ -40,10 +40,10 @@ import { ShopProvider } from './Context/ShopContext'
 // Import default background and other backgrounds you want to use
 import defaultBackground from "./assets/image3.png" // Your existing background
 // Import your additional backgrounds - make sure to create these files
-import background1 from "./assets/fish1.png" // Create this file
-import background2 from "./assets/fish1.png" // Create this file
-import background3 from "./assets/fish2.png" // Create this file
-import background4 from "./assets/fish3.png"
+import background1 from "./assets/City-life.jpg" // Create this file
+import background2 from "./assets/Home.jpg" // Create this file
+import background3 from "./assets/war.png" // Create this file
+import background4 from "./assets/coolfish.png"
 import CategorySelection from "./Component/category-selection"; // Create this file
 
 // Create Background Context
@@ -565,10 +565,10 @@ function App() {
   // Background state
   const [backgroundOptions] = useState([
     { id: 'default', image: defaultBackground, name: 'Default' },
-    { id: 'bg1', image: background1, name: 'Blue Gradient' },
-    { id: 'bg2', image: background2, name: 'Purple Waves' },
-    { id: 'bg3', image: background3, name: 'Green Nature' },
-    { id: 'bg4', image: background4, name: 'Orange Sunset' },
+    { id: 'bg1', image: background1, name: 'City Life' },
+    { id: 'bg2', image: background2, name: 'Home' },
+    { id: 'bg3', image: background3, name: 'War' },
+    { id: 'bg4', image: background4, name: 'Realism' },
   ]);
   
   const [currentBackground, setCurrentBackground] = useState(() => {
