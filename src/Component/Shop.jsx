@@ -1000,8 +1000,9 @@ const Shop = () => {
               onClick={handleFishermanClick} 
               sx={{
                 position: 'absolute',
-                top: { xs: '135px', md: '62px' }, 
-                left: { xs: 'calc(50% + 11px)', md: 'calc(50% + 113px)' }, 
+                // Default styles for different width breakpoints
+                top: { xs: '135px', sm: '62px', md: '62px' }, 
+                left: { xs: 'calc(50% + 11px)', sm: 'calc(50% + 113px)', md: 'calc(50% + 113px)' }, 
                 width: '70px',
                 height: 'auto',
                 zIndex: 2, 
@@ -1014,7 +1015,13 @@ const Shop = () => {
                   filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', // CHANGED: Apply universally
                   // Apply scaling transform on hover for everyone
                   transform: 'scale(1.05)', 
-                }
+                },
+                // Media query specifically for devices with aspect ratio = 3/4 (like Surface Duo portrait)
+                '@media (aspect-ratio: 3/4)': {
+                  // Only apply these overrides if the aspect ratio matches exactly
+                  top: '60px',          // Adjusted top for Surface Duo
+                  left: 'calc(50% + 113px)', // Adjusted left for Surface Duo
+                },
               }}
             />
             <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
@@ -1257,12 +1264,7 @@ const Shop = () => {
                 Your Wardrobe
               </Typography>
               <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
-                {/* Debug info */}
-                {purchasedSkins.length === 0 && (
-                  <Typography sx={{ textAlign: 'center', color: 'text.secondary', mb: 2 }}>
-                    Buy some skins from the store to see them here!
-                  </Typography>
-                )}
+                
                 
                 <Grid container spacing={2}> 
                   {/* Include default skin and purchased skins only */}
