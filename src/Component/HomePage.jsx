@@ -119,7 +119,7 @@ const HomePage = () => {
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
 
   // Adjust initial Y position for mobile
-  const initialX = isMobile ? 40 : 50;
+  const initialX = isMobile ? 100 : 50;
   const initialY = isMobile ? -75 : 5; 
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
@@ -1441,6 +1441,8 @@ const HomePage = () => {
               onClick={() => setShowGuide(true)}
               sx={{
                 position: "fixed",
+                left: { xs: '80px', sm: 'auto' }, // ✅ Push it right of drawer on mobile
+                zIndex: 1400, // ✅ Must be higher than the nav (usually 1200)
                 width: "60px",
                 height: "60px",
                 borderRadius: "50%",
@@ -1449,7 +1451,6 @@ const HomePage = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                zIndex: 900,
                 boxShadow: "0 4px 8px rgba(0,0,0,0.25)",
                 border: "3px solid white",
                 transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -1457,7 +1458,6 @@ const HomePage = () => {
                   boxShadow: "0 6px 12px rgba(0,0,0,0.3)",
                   background: "linear-gradient(135deg, #00C3FF 60%, #00A8E8)",
                 },
-                // Add a subtle shine effect
                 "&::before": {
                   content: '""',
                   position: "absolute",
@@ -2571,13 +2571,13 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          { /*Active Users Section*/
-          <Box
+          { /*Active Users Section*/ 
+          /*<Box
             sx={{
               mt: 6,
               mb: 6,
               bgcolor: "#FFFFFF",
-              py: { xs: 3, md: 4 },
+              py: { xs: 3, md: 4 }, 
               px: { xs: 1, md: 2 }, // Ensure outer padding is 8px (1) on xs
               overflow: 'visible', // Keep overflow visible
               borderRadius: 2,
@@ -2701,7 +2701,12 @@ const HomePage = () => {
               }}
             >
               {loadingUsers ? (
-                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                <Box sx={{ display: "flex",
+                  overflowX: "auto", // allow scroll instead of pushing page
+                  gap: 2,
+                  paddingX: 1,
+                  scrollbarWidth: "none", // optional: hide scrollbar
+                  "&::-webkit-scrollbar": { display: "none" },}}>
                   <CircularProgress sx={{ color: "#1D6EF1" }} />
                 </Box>
               ) : activeUsers && activeUsers.length > 0 ? (
@@ -2841,7 +2846,7 @@ const HomePage = () => {
                 </Box>
               )}
             </Box>
-          </Box> }
+          </Box> */}
         </Container>
       </Box>
       <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
