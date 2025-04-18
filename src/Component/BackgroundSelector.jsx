@@ -128,7 +128,7 @@ const BackgroundSelector = ({
             }}
           >
             <Grid container spacing={1}>
-              {backgroundOptions.slice(0, 4).map((bg) => (
+              {backgroundOptions.slice(0, 5).map((bg) => (
                 <Grid item xs={6} key={bg.id}>
                   <Tooltip title={bg.name}>
                     <BackgroundThumbnail
@@ -170,7 +170,7 @@ const BackgroundSelector = ({
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             {backgroundOptions.map((bg) => (
-              <Grid item xs={6} sm={4} key={bg.id}>
+              <Grid item xs={6} sm={5} key={bg.id}>
                 <BackgroundThumbnail
                   selected={currentBackgroundId === bg.id}
                   onClick={() => handleBackgroundChange(bg)}

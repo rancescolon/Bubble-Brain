@@ -120,7 +120,7 @@ const HomePage = () => {
 
   // Adjust initial Y position for mobile
   const initialX = isMobile ? 40 : 50;
-  const initialY = isMobile ? -75 : 5; 
+  const initialY = isMobile ? window.innerHeight * 0.4 : 5; 
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
@@ -1347,28 +1347,31 @@ const HomePage = () => {
   return (
     <>
       <Box
-        sx={{
-          flexGrow: 1,
-          bgcolor: "#1D1D20",
-          minHeight: "100vh",
-          backgroundImage: `url(${currentBackground.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: 1.0,
-          width: "100%",
-          maxWidth: "100vw",
-          overflowX: "hidden",
-          position: "relative",
-          [theme.breakpoints.down('sm')]: {
-            maxWidth: '100%',
-            margin: 0,
-            padding: 0,
-            width: '100vw',
-            overflowX: 'hidden',
-          }
-        }}
-      >
+      sx={{
+        flexGrow: 1,
+        bgcolor: "#1D1D20",
+        minHeight: "100vh",
+        backgroundImage: `url(${currentBackground.image})`,
+        paddingTop: { xs: '72px', sm: '0' },
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        opacity: 1.0,
+        width: "100%",
+        maxWidth: "100vw",
+        overflowX: "hidden",
+        position: "relative",
+        paddingTop: { xs: '64px', sm: '0' }, // 👈 Add this
+        [theme.breakpoints.down('sm')]: {
+          maxWidth: '100%',
+          margin: 0,
+          padding: 0,
+          width: '100vw',
+          overflowX: 'hidden',
+        }
+      }}
+>
+
         <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
           <Toolbar sx={{ visibility: "hidden" }}>
             <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>

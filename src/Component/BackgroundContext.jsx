@@ -5,7 +5,8 @@ import defaultBackground from '../assets/image3.png';
 import background1 from '../assets/fish1.png';
 import background2 from '../assets/fish2.png';
 import background3 from '../assets/fish3.png';
-import background4 from '../assets/fish2.png';
+import background4 from '../assets/coolfish.jpg';
+import background5 from '../assets/coolfish.jpg';
 
 // Define background options
 export const backgroundOptions = [
@@ -14,6 +15,7 @@ export const backgroundOptions = [
   { id: 'bg2', image: background2, name: 'Purple Waves' },
   { id: 'bg3', image: background3, name: 'Green Nature' },
   { id: 'bg4', image: background4, name: 'Orange Sunset' },
+  { id: 'bg5', image: background5, name: 'Aesthetic' },
 ];
 
 // Create the context
