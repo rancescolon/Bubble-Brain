@@ -214,15 +214,11 @@ const Communities = () => {
       const groupsData = await groupsRes.json()
       const membershipsData = await membershipsRes.json()
 
-      console.log("Groups API Response:", groupsData)
-      console.log("First Group Data:", groupsData[0]?.[0])
-
       const memberships = membershipsData[0] || []
       const joinedGroupIds = memberships.map((m) => m.groupID)
 
       const newCommunities =
           groupsData[0]?.map((group) => {
-            console.log("Processing Group:", group)
             const isJoined = joinedGroupIds.includes(group.id)
             const isOwner = group.ownerID === userId
             return {
@@ -236,18 +232,52 @@ const Communities = () => {
             }
           }) || []
 
-      // Append to existing state
-      setCommunities((prev) => [...prev, ...newCommunities])
+      // Update communities state, ensuring no duplicates
+      setCommunities(prevCommunities => {
+        // Create a map of existing communities by ID
+        const existingCommunities = new Map(prevCommunities.map(c => [c.id, c]))
+        
+        // Add new communities, skipping duplicates
+        newCommunities.forEach(newCommunity => {
+          if (!existingCommunities.has(newCommunity.id)) {
+            existingCommunities.set(newCommunity.id, newCommunity)
+          }
+        })
+        
+        // Convert back to array
+        return Array.from(existingCommunities.values())
+      })
+
+      // Update joined communities
+      setJoinedCommunities(prevJoinedCommunities => {
+        const existingJoined = new Map(prevJoinedCommunities.map(c => [c.id, c]))
+        newCommunities
+          .filter(c => c.isJoined || c.isOwner)
+          .forEach(community => {
+            if (!existingJoined.has(community.id)) {
+              existingJoined.set(community.id, community)
+            }
+          })
+        return Array.from(existingJoined.values())
+      })
+
+      // Update my communities
+      setMyCommunities(prevMyCommunities => {
+        const existingMyCommunities = new Map(prevMyCommunities.map(c => [c.id, c]))
+        newCommunities
+          .filter(c => c.isOwner)
+          .forEach(community => {
+            if (!existingMyCommunities.has(community.id)) {
+              existingMyCommunities.set(community.id, community)
+            }
+          })
+        return Array.from(existingMyCommunities.values())
+      })
 
       // Determine if there's more to load
       if (newCommunities.length < PAGE_SIZE) {
         setHasMore(false)
       }
-
-      // Update joined + owned only once (could be improved later)
-      const all = [...communities, ...newCommunities]
-      setJoinedCommunities(all.filter((c) => c.isJoined || c.isOwner))
-      setMyCommunities(all.filter((c) => c.isOwner))
     } catch (error) {
       console.error("Error fetching communities:", error)
       setError("Failed to load communities. Please try again later.")
@@ -341,17 +371,39 @@ const Communities = () => {
             flashcards: [],
             messages: [],
             authorId: result.ownerID,
+            isJoined: true,
+            isOwner: true
           }
 
-          // Add to communities list
-          setCommunities([...communities, newCommunity])
+          // Update communities state
+          setCommunities(prevCommunities => {
+            // Check if community already exists to prevent duplicates
+            if (prevCommunities.some(c => c.id === newCommunity.id)) {
+              return prevCommunities;
+            }
+            return [...prevCommunities, newCommunity];
+          });
 
-          // Add to my communities
-          setMyCommunities([...myCommunities, newCommunity])
+          // Update my communities state
+          setMyCommunities(prevMyCommunities => {
+            // Check if community already exists to prevent duplicates
+            if (prevMyCommunities.some(c => c.id === newCommunity.id)) {
+              return prevMyCommunities;
+            }
+            return [...prevMyCommunities, newCommunity];
+          });
 
-          // Show detail page for the new community
-          setCurrentCommunity(newCommunity)
-          setShowCommunityDetail(true)
+          // Update joined communities state
+          setJoinedCommunities(prevJoinedCommunities => {
+            // Check if community already exists to prevent duplicates
+            if (prevJoinedCommunities.some(c => c.id === newCommunity.id)) {
+              return prevJoinedCommunities;
+            }
+            return [...prevJoinedCommunities, newCommunity];
+          });
+
+          // Navigate to the community view page
+          navigate(`/community/view/${result.id}`)
 
           // Reset form
           setCommunityName("")

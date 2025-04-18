@@ -17,8 +17,7 @@ const Friends = () => {
   const [newFriendEmail, setNewFriendEmail] = useState("")
   const [notification, setNotification] = useState({ show: false, message: "", type: "success" })
   const [allUsers, setAllUsers] = useState([])
-  const [userSearchQuery, setUserSearchQuery] = useState("")
-  const [showAllUsers, setShowAllUsers] = useState(false)
+  const [searchMode, setSearchMode] = useState("friends") // "friends" or "new"
   const [selectedOption, setSelectedOption] = useState(1) // 1 for Option 1 (with blocking), 2 for Option 2 (without blocking)
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
   const navigate = useNavigate()
@@ -662,47 +661,34 @@ const Friends = () => {
               <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder="Search friends..."
-                  className="w-full p-3 pl-10 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1]"
+                  placeholder={searchMode === "friends" ? "Search friends..." : "Search users..."}
+                  className="w-full p-4 pl-12 rounded-xl border-2 border-[#97C7F1] bg-white text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent shadow-sm transition-all duration-200"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={fontStyle}
                 />
-                <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#1D6EF1]" size={20} />
               </div>
               <button
-                className="bg-[#1D6EF1] hover:bg-[#97C7F1] text-white px-6 py-3 rounded-lg flex items-center justify-center transition-colors"
-                onClick={() => setShowAllUsers(!showAllUsers)}
+                className="bg-[#1D6EF1] hover:bg-[#97C7F1] text-white px-6 py-3 rounded-xl flex items-center justify-center transition-colors shadow-sm hover:shadow-md"
+                onClick={() => setSearchMode(searchMode === "friends" ? "new" : "friends")}
                 style={fontStyle}
               >
                 <UserPlus className="mr-2" size={20} />
-                {showAllUsers ? "Hide Users" : "Find Users"}
+                {searchMode === "friends" ? "Find New Friends" : "Search Friends"}
               </button>
             </div>
 
             {/* All Users Section */}
-            {showAllUsers && (
-              <div className="mt-6 bg-white rounded-lg p-4 shadow-lg">
-                <div className="mb-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Search users..."
-                      className="w-full p-3 pl-10 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1]"
-                      value={userSearchQuery}
-                      onChange={(e) => setUserSearchQuery(e.target.value)}
-                      style={fontStyle}
-                    />
-                    <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
-                  </div>
-                </div>
+            {searchMode === "new" && (
+              <div className="mt-6 bg-white rounded-xl p-4 shadow-lg">
                 <div className="space-y-3 max-h-60 overflow-y-auto overflow-x-hidden">
                   {allUsers
                     .filter((user) => {
                       try {
                         const userName = (user.attributes?.name || "").toLowerCase()
                         const userEmail = (user.email || "").toLowerCase()
-                        const searchTerm = (userSearchQuery || "").toLowerCase()
+                        const searchTerm = (searchQuery || "").toLowerCase()
 
                         return userName.includes(searchTerm) || userEmail.includes(searchTerm)
                       } catch (error) {

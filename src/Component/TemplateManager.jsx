@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Box,
   Typography,
@@ -500,6 +501,11 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       const token = sessionStorage.getItem("token")
       const userId = sessionStorage.getItem("user")
 
+      if (!token || !userId) {
+        setError("Please log in to save templates")
+        return
+      }
+
       let content
       switch (selectedType) {
         case "flashcards":
@@ -552,6 +558,8 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
       }
 
+      const result = await response.json()
+      
       setSuccess(true)
       setTemplateName("") // Reset template name
       setSelectedCategories([])
@@ -1757,19 +1765,18 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         {/* Tags Dialog */}
         {showTagsDialog && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              {/*<TagSelector*/}
-              {/*    selectedCategories={selectedCategories}*/}
-              {/*    setSelectedCategories={setSelectedCategories}*/}
-              {/*    selectedTags={selectedTags}*/}
-              {/*    setSelectedTags={setSelectedTags}*/}
-              {/*    school_categories={school_categories}*/}
-              {/*    isMobile={isMobile}*/}
-              {/*    onCancel={() => setShowTagsDialog(false)}*/}
-              {/*    onSave={completeTemplateSave}*/}
-              {/*    saveButtonText="Save Template"*/}
-              {/*/>*/}
+              <TagSelector
+                  selectedCategories={selectedCategories}
+                  setSelectedCategories={setSelectedCategories}
+                  selectedTags={selectedTags}
+                  setSelectedTags={setSelectedTags}
+                  school_categories={school_categories}
+                  isMobile={isMobile}
+                  onCancel={() => setShowTagsDialog(false)}
+                  onSave={completeTemplateSave}
+                  saveButtonText="Save Template"
+              />
             </div>
-
         )}
 
         <Snackbar
