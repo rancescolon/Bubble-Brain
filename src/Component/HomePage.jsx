@@ -1346,29 +1346,34 @@ const HomePage = () => {
 
   return (
     <>
-      <Box
-        sx={{
-          flexGrow: 1,
-          bgcolor: "#1D1D20",
-          minHeight: "100vh",
-          backgroundImage: `url(${currentBackground.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          opacity: 1.0,
-          width: "100%",
-          maxWidth: "100vw",
-          overflowX: "hidden",
-          position: "relative",
-          [theme.breakpoints.down('sm')]: {
-            maxWidth: '100%',
-            margin: 0,
-            padding: 0,
-            width: '100vw',
-            overflowX: 'hidden',
-          }
-        }}
-      >
+        <Box
+          sx={{
+            flexGrow: 1,
+            bgcolor: "#1D1D20",
+            minHeight: "100vh",
+            backgroundImage: `url(${currentBackground.image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: 1.0,
+            width: "100%",
+            maxWidth: "100vw",
+            overflowX: "hidden",
+            position: "relative",
+            paddingLeft: {
+              xs: '72px', // <- Add padding for mobile to avoid nav overlap
+              sm: 0,      // <- Reset to 0 on larger screens
+            },
+            [theme.breakpoints.down('sm')]: {
+              maxWidth: '100%',
+              margin: 0,
+              padding: 0,
+              paddingLeft: '72px', // <- Repeat here to enforce for mobile view
+              width: '100%',
+              overflowX: 'hidden',
+            }
+          }}
+        >
         <AppBar position="static" sx={{ opacity: 0, boxShadow: "none" }}>
           <Toolbar sx={{ visibility: "hidden" }}>
             <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
