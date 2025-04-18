@@ -61,11 +61,6 @@ const LoginForm = ({ setLoggedIn }) => {
                 console.log("Login result:", result)
                 sessionStorage.setItem("token", result.token)
                 sessionStorage.setItem("user", result.userID)
-                sessionStorage.setItem("loginTimestamp", Date.now().toString())
-                
-                // Ensure we clear any non-specific skin data
-                localStorage.removeItem('lastEquippedSkinId')
-                
                 setLoginResult(result)
 
                 // Check if this is the first login
@@ -115,39 +110,10 @@ const LoginForm = ({ setLoggedIn }) => {
                         sessionStorage.setItem("name", userData.attributes.name)
                     }
 
-                    // Check if user has category badges
-                    fetch(`${process.env.REACT_APP_API_PATH}/user-badge?userID=${result.userID}`, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${result.token}`,
-                        },
-                    })
-                        .then((res) => res.json())
-                        .then((badgeData) => {
-                            // Check if user has any category badges
-                            const hasCategories =
-                                badgeData &&
-                                badgeData[0] &&
-                                badgeData[0].some((badge) => badge.attributes && badge.attributes.type === "category")
-
-                            // Complete login process
-                            setLoggedIn(true)
-                            setSessionToken(result.token)
-
-                            // If first login or no categories, redirect to category selection
-                            if (!hasCategories) {
-                                navigate("/select-categories")
-                            } else {
-                                navigate("/")
-                            }
-                        })
-                        .catch((err) => {
-                            console.error("Error fetching user badges:", err)
-                            // Still complete login even if badge fetch fails
-                            setLoggedIn(true)
-                            setSessionToken(result.token)
-                            navigate("/")
-                        })
+                    // Complete login process
+                    setLoggedIn(true)
+                    setSessionToken(result.token)
+                    navigate("/")
                 })
                 .catch((err) => {
                     console.error("Error fetching user data:", err)
@@ -367,4 +333,3 @@ const LoginForm = ({ setLoggedIn }) => {
 }
 
 export default LoginForm
-

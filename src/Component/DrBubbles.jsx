@@ -80,19 +80,36 @@ const DrBubbles = ({ onClose }) => {
       position: { x: 15, y: 170 },
     },
     {
+      element: "nav-upload",
+      message: "Upload your own study sets and share with others!",
+      position: { x: 15, y: 225 },
+    },
+    {
       element: "nav-community",
       message: "Join exciting communities and view study sets!",
-      position: { x: 15, y: 230 },
+      position: { x: 15, y: 280 },
     },
     {
       element: "nav-profile",
       message: "View and manage your profile and progress here!",
-      position: { x: 15, y: 285 },
+      position: { x: 15, y: 330 },
     },
     {
       element: "nav-style-guide",
       message: "Check out our style guide to understand the design system!",
-      position: { x: 15, y: 340 },
+      position: { x: 15, y: 390 },
+    },
+
+    {
+      element: "nav-feed",
+      message: "View your feed and see what others are up to!",
+      position: { x: 15, y: 440 },
+    },
+
+    {
+      element: "nav-shop",
+      message: "Buy new icons for Dr.Bubbles in the shop!",
+      position: { x: 15, y: 500 },
     },
   ]
 

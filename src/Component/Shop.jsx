@@ -1000,8 +1000,9 @@ const Shop = () => {
               onClick={handleFishermanClick} 
               sx={{
                 position: 'absolute',
-                top: { xs: '135px', md: '62px' }, 
-                left: { xs: 'calc(50% + 11px)', md: 'calc(50% + 113px)' }, 
+                // Default styles for different width breakpoints
+                top: { xs: '135px', sm: '62px', md: '62px' }, 
+                left: { xs: 'calc(50% + 11px)', sm: 'calc(50% + 113px)', md: 'calc(50% + 113px)' }, 
                 width: '70px',
                 height: 'auto',
                 zIndex: 2, 
@@ -1014,7 +1015,13 @@ const Shop = () => {
                   filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', // CHANGED: Apply universally
                   // Apply scaling transform on hover for everyone
                   transform: 'scale(1.05)', 
-                }
+                },
+                // Media query specifically for devices with aspect ratio = 3/4 (like Surface Duo portrait)
+                '@media (aspect-ratio: 3/4)': {
+                  // Only apply these overrides if the aspect ratio matches exactly
+                  top: '60px',          // Adjusted top for Surface Duo
+                  left: 'calc(50% + 113px)', // Adjusted left for Surface Duo
+                },
               }}
             />
             <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
@@ -1022,18 +1029,22 @@ const Shop = () => {
             </Typography>
             
             {/* Refresh button */}
-            <IconButton 
+            <IconButton
               onClick={handleRefreshData}
               disabled={isRefreshing || isLoading}
               sx={{
                 position: 'absolute',
-                top: { xs: '8px', md: '12px' },
+                top: { xs: '-12px', md: '-12px' }, // Adjusted xs top value
                 right: { xs: '8px', md: '12px' },
                 bgcolor: 'rgba(255, 255, 255, 0.8)',
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.95)',
                 },
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                // Media query specifically for devices with aspect ratio = 3/4
+                '@media (aspect-ratio: 3/4)': {
+                  top: '-20px', // Adjust top position for Surface Duo
+                },
               }}
               aria-label="Refresh shop data"
             >
@@ -1091,7 +1102,7 @@ const Shop = () => {
                       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
                         <RefreshCw size={18} style={{ marginRight: '8px' }} />
                         <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
-                          If your data isn't showing, click the refresh button in the top right
+                          If your data isn't showing, refresh the page
                     </Typography>
                       </Box>
                     )}
@@ -1257,12 +1268,7 @@ const Shop = () => {
                 Your Wardrobe
               </Typography>
               <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
-                {/* Debug info */}
-                {purchasedSkins.length === 0 && (
-                  <Typography sx={{ textAlign: 'center', color: 'text.secondary', mb: 2 }}>
-                    Buy some skins from the store to see them here!
-                  </Typography>
-                )}
+                
                 
                 <Grid container spacing={2}> 
                   {/* Include default skin and purchased skins only */}

@@ -15,7 +15,7 @@ import {
   Button,
   InputAdornment,
 } from '@mui/material';
-import { ThumbUp, Comment, Share, Favorite, FavoriteBorder, ChatBubbleOutline, Send } from '@mui/icons-material';
+import { ThumbUp, Comment, Share, Favorite, FavoriteBorder, ChatBubbleOutline, Send, Delete } from '@mui/icons-material';
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
 
@@ -48,7 +48,7 @@ const PostFeed = () => {
           const payload = JSON.parse(atob(tokenParts[1]));
           if (payload && payload.id) {
             console.log("Extracted user ID from token:", payload.id);
-            sessionStorage.setItem("userID", payload.id);
+            sessionStorage.setItem("user", payload.id);
             return { id: payload.id };
           }
         }
@@ -57,10 +57,7 @@ const PostFeed = () => {
       }
       
       // If we can't extract from token, look at session data
-      const userID = sessionStorage.getItem("userID") || 
-                    localStorage.getItem("userID") || 
-                    sessionStorage.getItem("userId") || 
-                    localStorage.getItem("userId");
+      const userID = sessionStorage.getItem("user");
                     
       if (userID) {
         console.log("Found user ID in storage:", userID);
@@ -101,12 +98,12 @@ const PostFeed = () => {
         username: data.attributes?.username || data.email?.split("@")[0] || "Anonymous User",
       };
       
-      // While we're fetching user data, if this is the current user,
-      // save the ID for later use
-      if (data.id === data.id) { // This is intentional; we want to save all user IDs
-        if (!sessionStorage.getItem("userID")) {
-          console.log("Saving user ID from fetchUserData:", data.id);
-          sessionStorage.setItem("userID", data.id);
+      // Only save the current user's ID if it matches the one we're fetching
+      const currentUserId = sessionStorage.getItem("user");
+      if (String(userId) === String(currentUserId)) {
+        if (!sessionStorage.getItem("user")) {
+          console.log("Saving current user ID:", userId);
+          sessionStorage.setItem("user", userId);
         }
       }
     }
@@ -122,7 +119,7 @@ const PostFeed = () => {
       
       // Get user info which will set userID in sessionStorage
       await getCurrentUserInfo();
-      const userId = sessionStorage.getItem("userID");
+      const userId = sessionStorage.getItem("user");
       
       if (!userId) {
         console.warn("Could not determine user ID. Like functionality may be limited.");
@@ -392,7 +389,7 @@ const PostFeed = () => {
       console.log("Toggle like for post ID:", postId, "Type:", typeof postId);
       
       // Check if we need to initialize user info first
-      if (!sessionStorage.getItem("userID")) {
+      if (!sessionStorage.getItem("user")) {
         await getCurrentUserInfo();
       }
       
@@ -438,7 +435,7 @@ const PostFeed = () => {
     
     // Get the current user info which will also set the userID in sessionStorage
     const userInfo = await getCurrentUserInfo();
-    const userId = userInfo?.id || sessionStorage.getItem("userID");
+    const userId = userInfo?.id || sessionStorage.getItem("user");
     
     if (!userId) {
       // If we still can't get a user ID, we need to abort
@@ -570,7 +567,7 @@ const PostFeed = () => {
       
       // Get the current user info
       await getCurrentUserInfo();
-      const userId = sessionStorage.getItem("userID");
+      const userId = sessionStorage.getItem("user");
       
       if (!userId) {
         alert("Could not determine your user ID. Please try logging out and back in.");
@@ -692,6 +689,91 @@ const PostFeed = () => {
     }
   };
 
+  const deletePost = async (postId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please log in to delete posts");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete post");
+      }
+
+      // Remove the post from the local state
+      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      
+      // Also remove any associated comments and reactions
+      setComments(prev => {
+        const updated = { ...prev };
+        delete updated[postId];
+        return updated;
+      });
+      
+      setLikeCounts(prev => {
+        const updated = { ...prev };
+        delete updated[postId];
+        return updated;
+      });
+      
+      setLikedPosts(prev => {
+        const updated = { ...prev };
+        delete updated[postId];
+        return updated;
+      });
+      
+      setUserReactions(prev => {
+        const updated = { ...prev };
+        delete updated[postId];
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      alert("Failed to delete post. Please try again.");
+    }
+  };
+
+  const deleteComment = async (commentId, postId) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please log in to delete comments");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/posts/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete comment");
+      }
+
+      // Remove the comment from the local state
+      setComments(prev => {
+        const updated = { ...prev };
+        if (updated[postId]) {
+          updated[postId] = updated[postId].filter(comment => comment.id !== commentId);
+        }
+        return updated;
+      });
+
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -749,24 +831,42 @@ const PostFeed = () => {
             <Box sx={{ 
               display: 'flex', 
               alignItems: 'center', 
+              justifyContent: 'space-between',
               p: 2,
               borderBottom: content.image ? 'none' : '1px solid #efefef'
             }}>
-              <Avatar 
-                src={post.attributes?.authorAvatar}
-                sx={{ width: 32, height: 32, mr: 1.5 }}
-              >
-                {post.authorUsername?.[0] || 'U'}
-              </Avatar>
-              <Typography 
-                variant="subtitle2"
-                sx={{ 
-                  fontWeight: 600,
-                  fontSize: '14px',
-                }}
-              >
-                {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Avatar 
+                  src={post.attributes?.authorAvatar}
+                  sx={{ width: 32, height: 32, mr: 1.5 }}
+                >
+                  {post.authorUsername?.[0] || 'U'}
+                </Avatar>
+                <Typography 
+                  variant="subtitle2"
+                  sx={{ 
+                    fontWeight: 600,
+                    fontSize: '14px',
+                  }}
+                >
+                  {post.authorUsername || post.authorEmail?.split("@")[0] || 'Anonymous User'}
+                </Typography>
+              </Box>
+              
+              {/* Delete button - only show for post creator */}
+              {post.authorID && currentUserId && String(post.authorID) === String(currentUserId) && (
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete this post?')) {
+                      deletePost(post.id);
+                    }
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              )}
             </Box>
 
             {/* Add Image Display Section Here */}
@@ -891,15 +991,30 @@ const PostFeed = () => {
                         >
                           {comment.authorUsername || comment.authorEmail?.split("@")[0] || 'Anonymous User'}
                         </Typography>
-                        <Typography 
-                          component="span" 
-                          variant="body2"
-                          sx={{ 
-                            fontSize: '14px',
-                          }}
-                        >
-                          {comment.text}
-                        </Typography>
+                        <Box sx={{ display: 'flex', flexGrow: 1, alignItems: 'center' }}>
+                          <Typography 
+                            component="span" 
+                            variant="body2"
+                            sx={{ 
+                              fontSize: '14px',
+                            }}
+                          >
+                            {comment.text}
+                          </Typography>
+                          {String(comment.authorId) === String(currentUserId) && (
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to delete this comment?')) {
+                                  deleteComment(comment.id, post.id);
+                                }
+                              }}
+                              sx={{ ml: 'auto', p: 0.5, color: 'error.main' }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
                       </Box>
                     ))}
                     

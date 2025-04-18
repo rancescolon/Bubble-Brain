@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import DrBubbles from "../assets/Frame.png"
 
 const BubbleTrapAnimation = ({ onComplete }) => {
+  const navigate = useNavigate()
   const [showButton, setShowButton] = useState(false)
   const [showBubble, setShowBubble] = useState(false)
 
@@ -96,8 +98,8 @@ const BubbleTrapAnimation = ({ onComplete }) => {
 
           {showButton && (
             <button
-              onClick={onComplete}
-              className="px-8 py-4 bg-[#EF7B6C] text-white rounded-lg transform transition-all hover:scale-105 hover:bg-[#e66a59] focus:outline-none focus:ring-2 focus:ring-[#EF7B6C] focus:ring-opacity-50 animate-fade-in"
+                onClick={() => navigate("/select-categories")}
+                className="px-8 py-4 bg-[#EF7B6C] text-white rounded-lg transform transition-all hover:scale-105 hover:bg-[#e66a59] focus:outline-none focus:ring-2 focus:ring-[#EF7B6C] focus:ring-opacity-50 animate-fade-in"
               style={{
                 fontFamily: "SourGummy, sans-serif",
                 fontSize: "28px",
