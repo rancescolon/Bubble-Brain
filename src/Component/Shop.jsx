@@ -1029,18 +1029,22 @@ const Shop = () => {
             </Typography>
             
             {/* Refresh button */}
-            <IconButton 
+            <IconButton
               onClick={handleRefreshData}
               disabled={isRefreshing || isLoading}
               sx={{
                 position: 'absolute',
-                top: { xs: '8px', md: '12px' },
+                top: { xs: '-12px', md: '-12px' }, // Adjusted xs top value
                 right: { xs: '8px', md: '12px' },
                 bgcolor: 'rgba(255, 255, 255, 0.8)',
                 '&:hover': {
                   bgcolor: 'rgba(255, 255, 255, 0.95)',
                 },
                 boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                // Media query specifically for devices with aspect ratio = 3/4
+                '@media (aspect-ratio: 3/4)': {
+                  top: '-20px', // Adjust top position for Surface Duo
+                },
               }}
               aria-label="Refresh shop data"
             >
@@ -1098,7 +1102,7 @@ const Shop = () => {
                       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
                         <RefreshCw size={18} style={{ marginRight: '8px' }} />
                         <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
-                          If your data isn't showing, click the refresh button in the top right
+                          If your data isn't showing, refresh the page
                     </Typography>
                       </Box>
                     )}
