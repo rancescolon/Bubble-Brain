@@ -5,8 +5,8 @@ import defaultBackground from '../assets/image3.png';
 import background1 from '../assets/fish1.png';
 import background2 from '../assets/fish2.png';
 import background3 from '../assets/fish3.png';
-import background4 from '../assets/coolfish.jpg';
-import background5 from '../assets/coolfish.jpg';
+import background4 from '../assets/coolfish.png';
+import background5 from '../assets/coolfish.png';
 
 // Define background options
 export const backgroundOptions = [
