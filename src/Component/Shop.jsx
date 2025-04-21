@@ -39,6 +39,7 @@ import {
   Tooltip
 } from '@mui/material';
 import { ShoppingCart, CheckCircle, HelpCircle, PlusCircle, MinusCircle, RefreshCw } from 'lucide-react'; // Added RefreshCw
+import { motion } from "framer-motion";
 //The code for the Shop page was assisted with the help of ChatGPT
 // Helper to format time (from HomePage.jsx)
 const formatTime = (seconds) => {
@@ -1136,128 +1137,137 @@ const Shop = () => {
               </Box>
 
               <Grid container spacing={3}>
-                {sortedSkins.map((skin) => {
+                {sortedSkins.map((skin, index) => {
                   const isOwned = purchasedSkins.includes(skin.id);
                   const isEquipped = equippedSkinId === skin.id;
-                  // Use context bubbleBucks for affordability check
                   const canAfford = bubbleBucks >= skin.price;
-                  const rarity = rarityMap[skin.rarityId]; // Get rarity details
-                  const isMythic = skin.rarityId === 'mythic'; // Check if mythic
+                  const rarity = rarityMap[skin.rarityId];
+                  const isMythic = skin.rarityId === 'mythic';
 
                   return (
                     <Grid item xs={12} sm={6} md={4} key={skin.id}>
-                      <Card sx={{ 
+                      <div
+                        className="skin-item"
+                        style={{ 
+                          animationDelay: `${index * 0.1}s`,
+                          opacity: 0,
+                          transform: 'translateY(20px)',
+                          animation: 'fadeInUp 0.3s ease forwards'
+                        }}
+                      >
+                        <Card sx={{ 
                           height: '100%', 
                           display: 'flex', 
                           flexDirection: 'column', 
                           borderRadius: '16px', 
-                          boxShadow: 3, // Base shadow for all cards
+                          boxShadow: 3,
                           bgcolor: 'rgba(255, 255, 255, 0.9)',
-                          border: '2px solid transparent', // Reverted to default transparent border
+                          border: '2px solid transparent',
                         }}>
-                        <CardMedia
-                          component="img"
-                          sx={{ 
+                          <CardMedia
+                            component="img"
+                            sx={{ 
                               height: 180, 
                               objectFit: 'contain', 
                               pt: 2, 
                               backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
-                          }}
-                          image={skin.image} 
-                          alt={skin.name}
-                          onError={(e) => { // Basic error handling for missing images
-                            e.target.onerror = null; 
-                            e.target.style.display='none'; 
-                            // Optionally show a placeholder text or icon
-                            const placeholder = e.target.parentNode.querySelector('.image-placeholder');
-                            if(placeholder) placeholder.style.display='block';
-                          }}
-                        />
-                        {/* Placeholder for missing image */}
-                        <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
-                           <HelpCircle size={48} style={{marginTop: '30px'}}/>
-                           <Typography variant="caption">Image not found</Typography>
-                        </Box>
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
-                            {skin.name}
-                          </Typography>
-                          {rarity && (
-                            <Typography variant="body2" sx={{
-                              fontFamily: 'SourGummy, sans-serif',
-                              fontWeight: 'bold',
-                              color: rarity.textColor || '#000000',
-                              mb: 1,
-                              // Removed textShadow
-                              textShadow: 'none' 
-                            }}>
-                              {rarity.name}
-                            </Typography>
-                          )}
-                          <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
-                            <img 
-                              src={bubbleBuckImage} 
-                              alt="" 
-                              style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
-                            />
-                            <Typography 
-                              variant="h6" // Slightly larger variant
-                              sx={{ 
-                                fontFamily: 'SourGummy, sans-serif', 
-                                fontWeight: 600, // Bolder 
-                                color: '#000000' // Theme black color
-                              }}
-                            >
-                              {skin.price}
-                            </Typography>
+                            }}
+                            image={skin.image} 
+                            alt={skin.name}
+                            onError={(e) => { // Basic error handling for missing images
+                              e.target.onerror = null; 
+                              e.target.style.display='none'; 
+                              // Optionally show a placeholder text or icon
+                              const placeholder = e.target.parentNode.querySelector('.image-placeholder');
+                              if(placeholder) placeholder.style.display='block';
+                            }}
+                          />
+                          {/* Placeholder for missing image */}
+                          <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
+                             <HelpCircle size={48} style={{marginTop: '30px'}}/>
+                             <Typography variant="caption">Image not found</Typography>
                           </Box>
-
-                          {/* Button/Status Display (Moved Here) */}
-                          <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
-                            {isEquipped ? (
-                              <Box
-                                component="img"
-                                src={finalEquippedButtonImage}
-                                alt="Equipped"
-                                sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
-                              />
-                            ) : isOwned ? (
-                              <Box
-                                component="img"
-                                src={actualOwnedButtonImage}
-                                alt="Owned"
-                                sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
-                              />
-                            ) : (
-                              // Buy Button
-                              <Box
-                                component="img"
-                                src={actualBuyButtonImage}
-                                alt="Buy"
-                                onClick={() => handleBuy(skin)}
-                                sx={{
-                                  width: 'auto',
-                                  height: '100%',
-                                  maxHeight: '45px', // Matched to Owned button height
-                                  cursor: canAfford ? 'pointer' : 'not-allowed',
-                                  opacity: canAfford ? 1 : 0.6,
-                                  display: 'block',
-                                  transition: 'transform 0.1s ease',
-                                  '&:hover': {
-                                    transform: canAfford ? 'scale(1.05)' : 'none',
-                                  }
-                                }}
-                              />
+                          <CardContent sx={{ flexGrow: 1 }}>
+                            <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
+                              {skin.name}
+                            </Typography>
+                            {rarity && (
+                              <Typography variant="body2" sx={{
+                                fontFamily: 'SourGummy, sans-serif',
+                                fontWeight: 'bold',
+                                color: rarity.textColor || '#000000',
+                                mb: 1,
+                                // Removed textShadow
+                                textShadow: 'none' 
+                              }}>
+                                {rarity.name}
+                              </Typography>
                             )}
-                          </Box>
-                          {/* Not enough bucks message */}
-                          {!isOwned && !canAfford && (
-                            <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
-                              Need {skin.price} Bucks!
-                            </Typography>
-                          )}
-                        </CardContent>
-                      </Card>
+                            <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
+                              <img 
+                                src={bubbleBuckImage} 
+                                alt="" 
+                                style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
+                              />
+                              <Typography 
+                                variant="h6" // Slightly larger variant
+                                sx={{ 
+                                  fontFamily: 'SourGummy, sans-serif', 
+                                  fontWeight: 600, // Bolder 
+                                  color: '#000000' // Theme black color
+                                }}
+                              >
+                                {skin.price}
+                              </Typography>
+                            </Box>
+
+                            {/* Button/Status Display (Moved Here) */}
+                            <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
+                              {isEquipped ? (
+                                <Box
+                                  component="img"
+                                  src={finalEquippedButtonImage}
+                                  alt="Equipped"
+                                  sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
+                                />
+                              ) : isOwned ? (
+                                <Box
+                                  component="img"
+                                  src={actualOwnedButtonImage}
+                                  alt="Owned"
+                                  sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
+                                />
+                              ) : (
+                                // Buy Button
+                                <Box
+                                  component="img"
+                                  src={actualBuyButtonImage}
+                                  alt="Buy"
+                                  onClick={() => handleBuy(skin)}
+                                  sx={{
+                                    width: 'auto',
+                                    height: '100%',
+                                    maxHeight: '45px', // Matched to Owned button height
+                                    cursor: canAfford ? 'pointer' : 'not-allowed',
+                                    opacity: canAfford ? 1 : 0.6,
+                                    display: 'block',
+                                    transition: 'transform 0.1s ease',
+                                    '&:hover': {
+                                      transform: canAfford ? 'scale(1.05)' : 'none',
+                                    }
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            {/* Not enough bucks message */}
+                            {!isOwned && !canAfford && (
+                              <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
+                                Need {skin.price} Bucks!
+                              </Typography>
+                            )}
+                          </CardContent>
+                        </Card>
+                      </div>
                     </Grid>
                   );
                 })}

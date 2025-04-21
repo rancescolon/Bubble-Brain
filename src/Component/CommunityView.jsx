@@ -38,6 +38,7 @@ import {
   Chip,
 } from "@mui/material"
 import TagSelector from "./tag-selector"
+import { motion } from "framer-motion"
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
@@ -2535,50 +2536,31 @@ export default function CommunityView() {
                   {currentStep === 2 && (
                       <div>
                         <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-4 mb-6`}>
-                          {[
-                            {
-                              id: 1,
-                              name: "Basic Flashcards",
-                              type: "flashcards",
-                              icon: BookOpen,
-                              content: [{ front: "", back: "" }],
-                            },
-                            {
-                              id: 2,
-                              name: "Multiple Choice Quiz",
-                              type: "multiple_choice",
-                              icon: FileText,
-                              content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
-                            },
-                            {
-                              id: 3,
-                              name: "Fill in the Blank",
-                              type: "fill_in_blank",
-                              icon: FileText,
-                              content: [{ text: "", answer: "" }],
-                            },
-                            {
-                              id: 4,
-                              name: "Matching Exercise",
-                              type: "matching",
-                              icon: FileText,
-                              content: [{ left: "", right: "" }],
-                            },
-                          ].map((template) => (
+                          {templateOptions.map((template, index) => (
+                            <div
+                              key={template.id}
+                              className="template-item"
+                              style={{ 
+                                animationDelay: `${index * 0.1}s`,
+                                opacity: 0,
+                                transform: 'translateY(20px)',
+                                animation: 'fadeInUp 0.3s ease forwards'
+                              }}
+                            >
                               <div
-                                  key={template.id}
-                                  className={`border rounded-xl p-${isMobile ? "3" : "4"} cursor-pointer hover:bg-[#F4FDFF] ${
-                                      selectedTemplate?.id === template.id ? "border-[#1D6EF1] bg-[#F4FDFF]" : ""
-                                  }`}
-                                  onClick={() => handleTemplateSelect(template)}
+                                className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"} cursor-pointer hover:bg-[#F4FDFF] transition-colors ${
+                                  selectedTemplateId === template.id ? "bg-[#F4FDFF] border-[#1D6EF1]" : ""
+                                }`}
+                                onClick={() => handleTemplateChange(template)}
                               >
-                                <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>
-                                  {template.name}
-                                </h3>
-                                <p className={`text-[${isMobile ? "12px" : "14px"}] text-[#1D1D20]/70`}>
-                                  Type: {formatStudySetType(template.type)}
-                                </p>
+                                <div className="flex items-center gap-3">
+                                  <template.icon size={isMobile ? 20 : 24} className="text-[#1D6EF1]" />
+                                  <h3 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
+                                    {template.name}
+                                  </h3>
+                                </div>
                               </div>
+                            </div>
                           ))}
                         </div>
 
