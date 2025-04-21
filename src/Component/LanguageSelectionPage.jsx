@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { Box, Container, Typography, Card, CardContent, Button, Grid } from "@mui/material"
-import { Globe, Check } from 'lucide-react'
+import { Globe, Check } from "lucide-react"
 import { styled } from "@mui/material/styles"
+import { useNavigate } from "react-router-dom"
 
 // Custom styled Component
 const GradientBackground = styled(Box)(({ theme }) => ({
@@ -67,53 +68,125 @@ const LanguageCard = ({ language, flag, onClick, isSelected }) => {
     )
 }
 
-const LanguageSelectionPage = () => {
-    const [selectedLanguage, setSelectedLanguage] = useState("English")
+const LanguageSelectionPage = ({ language, setLanguage }) => {
+    const navigate = useNavigate()
     const [isWiggling, setIsWiggling] = useState(false)
 
-    // Translations for UI text
+    // Translations for UI text - expanded to include notification messages
     const translations = {
         English: {
             pageTitle: "Choose Your Language",
             pageSubtitle: "Select your preferred language for the Bubble Brain experience",
             continueButton: "Continue with English",
+            successNotification: "Language set to English successfully!",
+            closeButton: "✕",
+            redirectingMessage: "Redirecting to home page...",
         },
         Español: {
             pageTitle: "Elige tu idioma",
             pageSubtitle: "Selecciona tu idioma preferido para la experiencia Bubble Brain",
             continueButton: "Continuar en Español",
+            successNotification: "¡Español elegido para el Idioma!",
+            closeButton: "✕",
+            redirectingMessage: "Redirigiendo a la página principal...",
         },
     }
 
     // Get current translations based on selected language
-    const currentTranslations = translations[selectedLanguage]
+    const currentTranslations = translations[language]
 
     // Simplified to only include English and Spanish
-    const languages = [
-        { language: "English"},
-        { language: "Español"},
-    ]
+    const languages = [{ language: "English" }, { language: "Español" }]
 
     const handleLanguageSelect = (language) => {
-        setSelectedLanguage(language)
+        setLanguage(language)
         // Trigger wiggle animation on logo
         setIsWiggling(true)
         setTimeout(() => setIsWiggling(false), 1000)
     }
 
+    // Add this state for controlling the notification visibility
+    const [showNotification, setShowNotification] = useState(false)
+    const [notificationMessage, setNotificationMessage] = useState("")
+    const [isRedirecting, setIsRedirecting] = useState(false)
+
     const handleContinue = () => {
-        // Here you would typically navigate to the next page or save the language preference
-        alert(`Language set to: ${selectedLanguage}`)
+        // Save the selected language to localStorage
+        localStorage.setItem("selectedLanguage", language)
+
+        // Show the success notification
+        setNotificationMessage(currentTranslations.successNotification)
+        setShowNotification(true)
+
+        // After a short delay, update the notification to show redirecting message
+        setTimeout(() => {
+            setNotificationMessage(currentTranslations.redirectingMessage)
+            setIsRedirecting(true)
+
+            // After another short delay, redirect to home page
+            setTimeout(() => {
+                navigate("/")
+            }, 1500)
+        }, 1500)
+    }
+
+    // Updated notification component to use translated messages
+    const SuccessNotification = () => {
+        if (!showNotification) return null
+
+        return (
+            <Box
+                sx={{
+                    position: "fixed",
+                    top: "20px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "90%",
+                    maxWidth: "400px",
+                    bgcolor: "rgba(220, 243, 232, 0.95)",
+                    borderRadius: "4px",
+                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "12px 16px",
+                    zIndex: 9999,
+                    border: "1px solid #c3e6d3",
+                    animation: "slideDown 0.3s ease-out",
+                }}
+            >
+                <Check size={20} color="#5B8C5A" style={{ marginRight: "8px" }} />
+                <Typography sx={{ color: "#2d5a2d", flexGrow: 1 }}>{notificationMessage}</Typography>
+                {!isRedirecting && (
+                    <Button
+                        onClick={() => setShowNotification(false)}
+                        sx={{
+                            minWidth: "auto",
+                            p: 0,
+                            color: "#5B8C5A",
+                            "&:hover": { bgcolor: "transparent" },
+                        }}
+                    >
+                        {currentTranslations.closeButton}
+                    </Button>
+                )}
+            </Box>
+        )
     }
 
     return (
         <GradientBackground>
+            <SuccessNotification />
             <style jsx="true">{`
                 @import url('https://fonts.googleapis.com/css2?family=Sour+Gummy:wght@400;600;800&display=swap');
 
                 @keyframes wiggle {
-                    0%, 100% { transform: rotate(-3deg); }
-                    50% { transform: rotate(3deg); }
+                    0%,
+                    100% {
+                        transform: rotate(-3deg);
+                    }
+                    50% {
+                        transform: rotate(3deg);
+                    }
                 }
 
                 .animate-wiggle {
@@ -121,11 +194,27 @@ const LanguageSelectionPage = () => {
                 }
 
                 @keyframes color-change {
-                    0%, 100% { background-color: #5B8C5A; }
-                    50% { background-color: #9DDCB1; }
+                    0%,
+                    100% {
+                        background-color: #5B8C5A;
+                    }
+                    50% {
+                        background-color: #9DDCB1;
+                    }
                 }
                 .animate-color-change {
                     animation: color-change 4s infinite;
+                }
+
+                @keyframes slideDown {
+                    from {
+                        transform: translate(-50%, -20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translate(-50%, 0);
+                        opacity: 1;
+                    }
                 }
             `}</style>
 
@@ -157,7 +246,7 @@ const LanguageSelectionPage = () => {
                                 <LanguageCard
                                     language={lang.language}
                                     flag={lang.flag}
-                                    isSelected={selectedLanguage === lang.language}
+                                    isSelected={language === lang.language}
                                     onClick={() => handleLanguageSelect(lang.language)}
                                 />
                             </Grid>
