@@ -1,0 +1,2455 @@
+{
+  "en": {
+    "upload": {
+      "title": "Create Your Study Set",
+      "subtitle": "Choose a template and create your study set",
+      "labelStudySetName": "Study Set Name",
+      "buttonSelectTemplate": "Select Template",
+      "currentTemplateSelected": "Current template selected: {{templateName}}",
+      "labelSelectCommunity": "Select Community",
+      "studySetUploadedTo": "Study set will be uploaded to: {{communityName}}",
+      "accessControlTitle": "Access Control",
+      "questionWhoCanView": "Who can view this study set?",
+      "optionEveryone": "Everyone - Study set visible to all users",
+      "optionAllMembers": "Community Members Only - Only visible to anyone who joined the community",
+      "optionSpecificMembers": "Specific Members - Choose exactly who can see this study set",
+      "noMembersFound": "No members found in this community",
+      "infoOnlySelectedMembers": "Only selected members will be able to view this study set",
+      "categoriesTagsTitle": "Categories & Tags",
+      "instructionSelectCategories": "Select Categories (up to 3)",
+      "selectedCategoriesCount": "Selected: {{count}}/3",
+      "instructionSelectTags": "Select Tags (up to 5)",
+      "categoryTagLabel": "{{category}} Tags:",
+      "selectedTagsCount": "Selected: {{count}}/5",
+      "posting": "Posting...",
+      "buttonPost": "Post \"{{studySetName}}\" to {{communityName}}",
+      "errorFailedLoadCommunities": "Failed to load communities",
+      "errorUserNotFound": "User not found. Please log in again.",
+      "errorInvalidTemplate": "Invalid template selected",
+      "errorSelectCommunity": "Please select a community",
+      "errorEmptyName": "Please enter a name for your study set",
+      "errorSelectMembers": "Please select at least one member who can access this study set",
+      "errorFailedCreateStudySet": "Failed to create study set. Please try again.",
+      "successStudySetCreated": "Study set created successfully!",
+      "buttonSeePost": "See post in community"
+    },
+    "school_categories": {
+      "Math": [
+        "Algebra",
+        "Geometry",
+        "Calculus",
+        "Trigonometry",
+        "Statistics",
+        "Probability",
+        "Functions",
+        "Matrices",
+        "Equations",
+        "Graphs"
+      ],
+      "Science": [
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Earth Science",
+        "Astronomy",
+        "Genetics",
+        "Ecology",
+        "Laboratory",
+        "Periodic Table",
+        "Experiments"
+      ],
+      "Literature": [
+        "Novels",
+        "Poetry",
+        "Shakespeare",
+        "Analysis",
+        "Short Stories",
+        "Fiction",
+        "Non-fiction",
+        "Literary Devices",
+        "Themes",
+        "Book Reviews"
+      ],
+      "History": [
+        "Ancient Civilizations",
+        "World Wars",
+        "U.S. History",
+        "Revolutions",
+        "Geography",
+        "Historical Figures",
+        "Wars",
+        "Presidents",
+        "Political Movements",
+        "Artifacts"
+      ],
+      "Geography": [
+        "Maps",
+        "Countries",
+        "Capitals",
+        "Climate",
+        "Landforms",
+        "Physical Geography",
+        "Urbanization",
+        "Migration",
+        "Natural Resources",
+        "Time Zones"
+      ],
+      "Foreign Languages": [
+        "Spanish",
+        "French",
+        "German",
+        "Italian",
+        "Chinese",
+        "Japanese",
+        "Vocabulary",
+        "Grammar",
+        "Pronunciation",
+        "Language Exchange"
+      ],
+      "Art": [
+        "Painting",
+        "Sculpture",
+        "Drawing",
+        "Digital Art",
+        "Art History",
+        "Canvas",
+        "Portraits",
+        "Abstract",
+        "Artists",
+        "Creativity"
+      ],
+      "Music": [
+        "Instruments",
+        "Composers",
+        "Genres",
+        "Music Theory",
+        "Choir",
+        "Band",
+        "Symphony",
+        "Singing",
+        "Sheet Music",
+        "Rhythm"
+      ],
+      "Physical Education": [
+        "Sports",
+        "Fitness",
+        "Exercises",
+        "Health",
+        "Endurance",
+        "Teamwork",
+        "Running",
+        "Strength Training",
+        "Flexibility",
+        "Physical Health"
+      ],
+      "Technology": [
+        "Coding",
+        "Software",
+        "Hardware",
+        "Programming",
+        "Artificial Intelligence",
+        "Web Development",
+        "Robotics",
+        "Cybersecurity",
+        "Databases",
+        "Machine Learning"
+      ],
+      "Business Studies": [
+        "Economics",
+        "Finance",
+        "Marketing",
+        "Entrepreneurship",
+        "Accounting",
+        "Management",
+        "Business Plans",
+        "Investment",
+        "Trade",
+        "Corporations"
+      ],
+      "Philosophy": [
+        "Ethics",
+        "Logic",
+        "Metaphysics",
+        "Epistemology",
+        "Plato",
+        "Aristotle",
+        "Morality",
+        "Knowledge",
+        "Free Will",
+        "Political Philosophy"
+      ],
+      "Psychology": [
+        "Behavior",
+        "Cognition",
+        "Mental Health",
+        "Emotions",
+        "Motivation",
+        "Perception",
+        "Social Psychology",
+        "Developmental Psychology",
+        "Therapy",
+        "Neuroscience"
+      ],
+      "Sociology": [
+        "Society",
+        "Culture",
+        "Social Change",
+        "Inequality",
+        "Groups",
+        "Socialization",
+        "Deviance",
+        "Families",
+        "Education Systems",
+        "Race & Ethnicity"
+      ],
+      "Economics": [
+        "Supply and Demand",
+        "Inflation",
+        "GDP",
+        "Trade",
+        "Markets",
+        "Microeconomics",
+        "Macroeconomics",
+        "Economic Systems",
+        "Resources",
+        "Taxes"
+      ],
+      "Health Education": [
+        "Nutrition",
+        "Mental Health",
+        "Wellness",
+        "Exercise",
+        "Hygiene",
+        "Diseases",
+        "Prevention",
+        "Vaccines",
+        "Sexual Health",
+        "First Aid"
+      ],
+      "Home Economics": [
+        "Cooking",
+        "Sewing",
+        "Budgeting",
+        "Interior Design",
+        "Childcare",
+        "Household Management",
+        "Nutrition",
+        "Textiles",
+        "Family Planning",
+        "Sustainability"
+      ],
+      "Public Speaking": [
+        "Presentations",
+        "Rhetoric",
+        "Speech Writing",
+        "Communication Skills",
+        "Confidence",
+        "Debates",
+        "Persuasion",
+        "Audience",
+        "Body Language",
+        "Speech Delivery"
+      ],
+      "Technology & Engineering": [
+        "Robotics",
+        "Engineering Design",
+        "CAD (Computer-Aided Design)",
+        "Prototyping",
+        "Electronics",
+        "Renewable Energy",
+        "Structural Engineering",
+        "Computer Engineering",
+        "3D Printing",
+        "Programming"
+      ],
+      "Debate": [
+        "Argumentation",
+        "Persuasion",
+        "Logical Fallacies",
+        "Evidence",
+        "Counterarguments",
+        "Rhetorical Strategies",
+        "Public Speaking",
+        "Research",
+        "Debating Styles",
+        "Cross-examination"
+      ],
+      "Environmental Science": [
+        "Ecosystems",
+        "Conservation",
+        "Climate Change",
+        "Pollution",
+        "Sustainability",
+        "Renewable Energy",
+        "Biodiversity",
+        "Recycling",
+        "Environmental Policy",
+        "Environmental Impact"
+      ],
+      "Theatre": [
+        "Acting",
+        "Stage Design",
+        "Directing",
+        "Playwriting",
+        "Auditions",
+        "Performances",
+        "Costumes",
+        "Set Construction",
+        "Lighting",
+        "Rehearsals"
+      ],
+      "Law": [
+        "Legal Studies",
+        "Constitutional Law",
+        "Criminal Law",
+        "Civil Law",
+        "Contracts",
+        "Courts",
+        "Lawyers",
+        "Law Enforcement",
+        "Legal Systems",
+        "Human Rights"
+      ],
+      "Education": [
+        "Pedagogy",
+        "Classroom Management",
+        "Learning Styles",
+        "Curriculum Development",
+        "Assessment",
+        "Special Education",
+        "Teaching Strategies",
+        "Technology in Education",
+        "Teacher Training",
+        "Online Learning"
+      ],
+      "Career Development": [
+        "Job Search",
+        "Internships",
+        "Networking",
+        "Resumes",
+        "Interviews",
+        "Professional Skills",
+        "Career Pathways",
+        "Entrepreneurship",
+        "Certifications",
+        "Personal Branding"
+      ]
+    },
+    "templateManager": {
+      "title": "Template Manager",
+      "tabTypes": "Types",
+      "tabForm": "Form",
+      "tabSaved": "Saved",
+      "sectionTemplateTypes": "Template Types",
+      "type_flashcards": "Flashcards",
+      "type_fill_in_blank": "Fill In Blank",
+      "type_matching": "Matching",
+      "type_multiple_choice": "Multiple Choice",
+      "labelTemplateName": "Template Name",
+      "buttonSaveTemplate": "Save Template",
+      "previewTitle": "Preview",
+      "labelCategories": "Categories:",
+      "labelTags": "Tags:",
+      "buttonUseTemplate": "Use Template",
+      "buttonAddFlashcard": "Add Flashcard",
+      "buttonAddPair": "Add Pair",
+      "buttonAddQuestion": "Add Question",
+      "buttonAddBlank": "Add Blank",
+      "labelQuestion": "Question",
+      "labelCorrectAnswer": "Correct Answer",
+      "placeholderQuestionExample": "Example: The capital of France is _____",
+      "placeholderAnswerExample": "Example: Paris",
+      "labelOptions": "Options:",
+      "savedTemplates": "Saved Templates",
+      "noSavedTemplates": "No saved templates yet",
+      "errorLoginViewTemplates": "Please log in to view templates",
+      "errorFailedLoadTemplates": "Failed to load templates. Please try again.",
+      "errorLoginSaveTemplates": "Please log in to save templates",
+      "errorEnterTemplateName": "Please enter a template name",
+      "errorInvalidTemplateType": "Invalid template type",
+      "errorPrepareTemplate": "Failed to prepare template. Please try again.",
+      "errorSaveTemplate": "Failed to save template. Please try again.",
+      "successTemplateSaved": "Template saved successfully!"
+    },
+    "tagSelector": {
+      "embedded": {
+        "headerCategories": "Categories",
+        "headerTags": "Tags",
+        "categoriesSelected": "{{selectedCategories.length}}/{{maxCategories}} categories selected",
+        "tagsSelected": "{{selectedTags.length}}/5 tags selected"
+      },
+      "full": {
+        "title": "Add Categories & Tags",
+        "description": "Categories and tags help others find your content and optimize your feed for relevant study materials.",
+        "helpText": "Helps optimize your feed",
+        "labelSelectCategories": "Select Categories (up to {{maxCategories}})",
+        "selectedCategories": "Selected: {{selectedCategories.length}}/{{maxCategories}} categories",
+        "labelSelectTags": "Select Tags (up to 5)",
+        "selectedTags": "Selected: {{selectedTags.length}}/5 tags",
+        "buttonCancel": "Cancel",
+        "buttonSave": "{{saveButtonText}}"
+      },
+      "studySetView": {
+        "buttonBack": "Back to Community",
+        "labelStudyTime": "Study Time:",
+        "flashcard": {
+          "question": "Question",
+          "clickToSeeAnswer": "Click to see answer",
+          "answer": "Answer",
+          "clickToSeeQuestion": "Click to see question"
+        },
+        "fillInBlank": {
+          "buttonShowAnswer": "Show Answer",
+          "buttonHideAnswer": "Hide Answer"
+        },
+        "matching": {
+          "instruction": "Match the following",
+          "buttonResetGame": "Reset game",
+          "gameHelp": "Click on a term or definition to select it, then click on its matching pair from the other column. Correct matches will turn green, incorrect matches will briefly turn red.",
+          "labelTerms": "Terms:",
+          "labelDefinitions": "Definitions:",
+          "score": "Score: {{score}} / {{total}}"
+        },
+        "multipleChoice": {
+          "correct": "Correct!"
+        },
+        "unsupportedType": "Unsupported study set type: {{type}}",
+        "errors": {
+          "notLoggedIn": "You must be logged in to view this study set",
+          "loadDetailsFailed": "Failed to load study set details"
+        },
+        "commentsSection": {
+          "title": "Comments",
+          "placeholderLoadingUser": "Loading user info...",
+          "placeholderAddComment": "Add a comment...",
+          "buttonPostComment": "Post Comment",
+          "posting": "Posting...",
+          "noComments": "No comments yet. Be the first to comment!",
+          "buttonEdit": "Edit",
+          "buttonDelete": "Delete",
+          "buttonCancel": "Cancel",
+          "buttonSaveChanges": "Save Changes"
+        }
+      },
+      "shop": {
+        "title": "Bubble Shop",
+        "tooltipEarnBucks": "Earn Bubble Bucks from studying!",
+        "statsTitle": "Your Stats",
+        "conversionInfo": "1 minute of study time = 1 Bubble Buck",
+        "refreshSuggestion": "If your data isn't showing, click the refresh button in the top right",
+        "loadingShop": "Loading Shop...",
+        "sections": {
+          "skinsStore": "Skins Store",
+          "wardrobe": "Your Wardrobe",
+          "noWardrobeItems": "Buy some skins from the store to see them here!"
+        },
+        "sort": {
+          "label": "Sort By",
+          "options": {
+            "default": "Default",
+            "rarityAsc": "Rarity: Low to High",
+            "rarityDesc": "Rarity: High to Low",
+            "priceAsc": "Price: Low to High",
+            "priceDesc": "Price: High to Low"
+          }
+        },
+        "buttons": {
+          "altFisherman": "Click for Bucks!",
+          "altBuy": "Buy",
+          "altOwned": "Owned",
+          "altEquipped": "Equipped"
+        },
+        "messages": {
+          "loginToShop": "Please log in to access the shop",
+          "loadStudyTimeFailed": "Failed to load study time.",
+          "updateBucksFailed": "Failed to update Bubble Bucks. Try refreshing the page.",
+          "loginToUseFeature": "Please log in to use this feature.",
+          "fishermanCooldown": "The fishing line snapped! Try again in {{minutes}} minute{{plural}}.",
+          "caughtBucks": "Caught {{amount}} Bubble Bucks!",
+          "notEnoughBucks": "Not enough Bubble Bucks (need {{price}}) to buy {{name}}.",
+          "purchasingSkin": "Purchasing {{name}}...",
+          "purchaseFailed": "Failed to purchase {{name}}. Please try again.",
+          "purchaseSuccess": "Successfully purchased {{name}}!",
+          "defaultEquipped": "Default skin equipped!",
+          "needPurchaseToEquip": "You need to purchase {{name}} before equipping it.",
+          "equipSuccess": "Equipped {{name}}!",
+          "equipFailed": "Failed to equip skin. Please try again.",
+          "skinNotFound": "Error: Skin not found",
+          "needBucks": "Need {{price}} Bucks!"
+        }
+      }
+    },
+    "resetPassword": {
+      "appBarTitle": "Bubble Brain",
+      "appBarLogin": "Login",
+      "requestTitle": "Reset Password",
+      "stepsTitle": "Follow these steps to reset your password:",
+      "step1": "Enter your email address below",
+      "step2": "Check your email for the reset token",
+      "step3": "Return here to enter the token and set a new password",
+      "emailLabel": "Email",
+      "buttonSendInstructions": "Send Reset Instructions",
+      "sending": "Sending...",
+      "changeTitle": "Change Your Password",
+      "changeSubtitle": "Check your email for the reset token. Enter it below along with your new password. The token expires in 30 minutes for security.",
+      "tokenLabel": "Reset Token",
+      "newPasswordLabel": "New Password",
+      "passwordHelperText": "Password must contain at least 8 characters, including one uppercase letter, one number, and one special character",
+      "togglePasswordVisibilityAria": "toggle password visibility",
+      "buttonChangePassword": "Change Password",
+      "changing": "Changing...",
+      "backToLogin": "Back to Login"
+    },
+    "registerForm": {
+      "appBarTitle": "Bubble Brain",
+      "appBarLogin": "Login",
+      "title": "Create an Account",
+      "errors": {
+        "registrationFailed": "Registration failed. Ensure you are using a valid email with a special character, number, and letters."
+      },
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "password": "Password"
+      },
+      "buttons": {
+        "signUp": "Sign Up",
+        "signingUp": "Signing up..."
+      },
+      "links": {
+        "haveAccount": "Have an account?",
+        "login": "Login",
+        "resetPassword": "Reset your password"
+      }
+    },
+    "feedToggle": {
+      "public": "Public Feed",
+      "private": "My Private Posts"
+    },
+    "alerts": {
+      "loginToViewPosts": "Please log in to view posts",
+      "loginToLike": "Please log in to like posts",
+      "loginToComment": "Please log in to comment",
+      "failedFetchPosts": "Failed to fetch posts",
+      "failedUpdateLike": "Failed to update like status. Please try again.",
+      "failedSubmitComment": "Failed to submit comment. Please try again."
+    },
+    "buttons": {
+      "post": "Post",
+      "viewAllComments": "View all {{count}} comments",
+      "showLess": "Show less"
+    },
+    "labels": {
+      "addComment": "Add a comment...",
+      "likes": {
+        "one": "1 like",
+        "other": "{{count}} likes"
+      }
+    },
+    "errors": {
+      "fetchComments": "Failed to fetch comments"
+    },
+    "post": {
+      "tagButton": "tag post",
+      "likeAlt": "Like Post",
+      "viewCommentsAlt": "View Comments",
+      "commentsCount": "{{count}} Comments",
+      "reactionsCount": "({{count}})",
+      "deleteAlt": "Delete Post"
+    },
+    "brand": {
+      "logoAlt": "Bubble Brain Logo",
+      "title": "Bubble Brain"
+    },
+    "navbar": {
+      "appName": "Bubble Brain",
+      "toggleTooltip": "Toggle sidebar",
+      "items": {
+        "home": "Home",
+        "friends": "Friends",
+        "upload": "Upload",
+        "community": "Community",
+        "profile": "Profile",
+        "styleGuide": "Style Guide",
+        "feed": "Feed",
+        "shop": "Shop"
+      }
+    },
+    "messaging": {
+      "backButton": "Back",
+      "chatDefaultTitle": "Chat",
+      "statusOnline": "Online",
+      "statusOffline": "Offline",
+      "messagePlaceholder": "Type a message...",
+      "errorLostConnection": "Lost connection to chat server",
+      "errorConnectionError": "Connection error: {{errorMessage}}",
+      "errorLoadUserData": "Failed to load user data",
+      "errorLoadPartnerData": "Failed to load chat partner data",
+      "errorLoadHistory": "Failed to load chat history",
+      "errorSendMessage": "Failed to send message"
+    },
+    "loginForm": {
+      "welcomeBack": "Welcome Back!",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "loginButton": "Login",
+      "loggingIn": "Logging in...",
+      "signUpButton": "Sign Up",
+      "forgotPassword": "Forgot Password?",
+      "noAccountPrompt": "Don't have an account?",
+      "signUpLink": "Sign Up",
+      "incorrectCredentials": "Incorrect email or password"
+    },
+    "homePage": {
+      "diveIntoLearning": "Dive into Learning",
+      "learningSubtitle": "Explore our gamified courses and quizzes designed to make learning fun and engaging.",
+      "getStarted": "Get Started",
+      "latestCommunities": "Latest Communities",
+      "noCommunities": "No communities found. Create one to get started!",
+      "viewAllCommunities": "View All Communities",
+      "bubbleBrainiacs": "Bubble Brainiacs",
+      "brainiacsSubtitle": "Top students ranked by total study time.",
+      "activeUsers": "Active Users",
+      "noActiveUsers": "No users active in the last 30 minutes. Be the first to engage with the community!",
+      "bubbleAchievers": "Bubble Achievers",
+      "achieversSubtitle": "Remarkable feats across study categories."
+    },
+    "groups": {
+      "joinTitle": "Join a Group!"
+    },
+    "groupList": {
+      "errorPrefix": "Error: ",
+      "loading": "Loading...",
+      "testUpdateButton": "Test Update",
+      "testAddButton": "Test Add",
+      "blockUser": "Block User",
+      "unblockUser": "Unblock User",
+      "deleteGroup": "Delete Group"
+    },
+    "friends": {
+      "pageTitle": "Friends",
+      "subtitle": "Manage your Bubble Brain connections",
+      "tabs": {
+        "option1": "Option 1",
+        "option2": "Option 2"
+      },
+      "search": {
+        "friendsPlaceholder": "Search friends...",
+        "usersPlaceholder": "Search users..."
+      },
+      "buttons": {
+        "findUsers": "Find Users",
+        "hideUsers": "Hide Users",
+        "addFriend": "Add Friend",
+        "accept": "Accept",
+        "decline": "Decline",
+        "removeFriend": "Remove",
+        "blockUser": "Block",
+        "unblockUser": "Unblock",
+        "startChat": "Message"
+      },
+      "sections": {
+        "allUsers": "All Users",
+        "pendingRequests": "Pending Friend Requests",
+        "yourFriends": "Your Friends",
+        "blockedUsers": "Blocked Users"
+      },
+      "messages": {
+        "noFriends": "No friends yet. Add some friends to get started!",
+        "noUsers": "No users to display.",
+        "noPending": "No pending friend requests.",
+        "noBlocked": "No blocked users."
+      }
+    },
+    "notifications": {
+      "loadUsersError": "Failed to load users",
+      "userNotFound": "User not found",
+      "cannotAddSelf": "You cannot add yourself as a friend",
+      "alreadyFriends": "This user is already in your friends list",
+      "requestPending": "A friend request with this user is already pending",
+      "requestSent": "Friend request sent successfully!",
+      "requestSendFailed": "Failed to send friend request",
+      "errorAddingFriend": "Error adding friend",
+      "friendRemoved": "Friend removed successfully",
+      "removeFailed": "Failed to remove friend",
+      "errorRemovingFriend": "Error removing friend",
+      "userBlocked": "User blocked successfully",
+      "blockFailed": "Failed to block user",
+      "errorBlocking": "Error blocking user",
+      "userUnblocked": "User unblocked successfully",
+      "unblockFailed": "Failed to unblock user",
+      "errorUnblocking": "Error unblocking user",
+      "requestAccepted": "Friend request accepted!",
+      "acceptFailed": "Error accepting friend request",
+      "requestDeclined": "Friend request declined",
+      "declineFailed": "Error declining friend request",
+      "chatConnectionFailed": "Chat server connection failed"
+    },
+    "friendList": {
+      "loading": "Loading...",
+      "error": "Error: {{message}}",
+      "statuses": {
+        "active": "Active",
+        "blocked": "Blocked"
+      },
+      "actions": {
+        "message": {
+          "alt": "Message User",
+          "title": "Message User"
+        },
+        "block": {
+          "alt": "Block User",
+          "title": "Block User"
+        },
+        "unblock": {
+          "alt": "Unblock User",
+          "title": "Unblock User"
+        }
+      }
+    },
+    "drBubbles": {
+      "altImage": "Dr. Bubbles",
+      "buttons": {
+        "next": "Next",
+        "gotIt": "Got it!",
+        "close": "Close"
+      },
+      "guideSteps": {
+        "nav-start": "Welcome! I'm Dr. Bubbles, and I'll help you navigate around. Let's start with the Home button!",
+        "nav-home": "Return to this page at anytime here!",
+        "nav-friends": "Here you can connect with others and make new friends!",
+        "nav-community": "Join exciting communities and view study sets!",
+        "nav-profile": "View and manage your profile and progress here!",
+        "nav-style-guide": "Check out our style guide to understand the design system!",
+        "nav-feed": "View your feed and see what others are up to!",
+        "nav-shop": "Buy new icons for Dr. Bubbles in the shop!"
+      }
+    },
+    "createPost": {
+      "title": "Create Post",
+      "placeholder": "What's on your mind?",
+      "buttons": {
+        "addPhoto": "Add Photo",
+        "post": "Post",
+        "posting": "Posting..."
+      },
+      "audience": {
+        "label": "Audience",
+        "public": "Public",
+        "connections": "Connections Only",
+        "private": "Private"
+      },
+      "errors": {
+        "noContent": "Please add some content or an image to your post",
+        "login": "Please log in to create a post",
+        "fileSize": "File size exceeds the {{maxSizeKB}}KB limit."
+      },
+      "snackbar": {
+        "success": "Post created successfully!",
+        "error": "Failed to create post: {{message}}"
+      }
+    },
+    "communityView": {
+      "titles": {
+        "studySets": "Study Sets",
+        "chatRoom": "Chat Room",
+        "members": "Members"
+      },
+      "placeholders": {
+        "messageInput": "Type a message...",
+        "addMemberPrompt": "Enter the email of the user you want to add:"
+      },
+      "buttons": {
+        "back": "Back",
+        "addStudyMaterial": "Add Study Material",
+        "message": "Message",
+        "members": "Members",
+        "deleteCommunity": "Delete Community",
+        "send": "Send",
+        "chooseTemplate": "Choose Template",
+        "createStudySet": "Create Study Set",
+        "addItem": "Add Item",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "share": "Share",
+        "delete": "Delete"
+      },
+      "dialogSteps": {
+        "nameStep": "Name Your Study Set",
+        "templateStep": "Select a Template",
+        "contentStep": "Customize Your Content",
+        "tagsStep": "Add Tags"
+      },
+      "stepLabels": {
+        "step1": "1. Name",
+        "step2": "2. Template",
+        "step3": "3. Content",
+        "step4": "4. Tags"
+      },
+      "templateOptions": {
+        "flashcards": "Basic Flashcards",
+        "multiple_choice": "Multiple Choice",
+        "fill_in_blank": "Fill in the Blank",
+        "matching": "Matching"
+      },
+      "accessControl": {
+        "label": "Access Control",
+        "everyone": "Everyone – visible to all users",
+        "allMembers": "Community Members Only – only visible to anyone who joined",
+        "specificMembers": "Specific Members – choose exactly who can see it",
+        "memberSelectLabel": "Select Members"
+      },
+      "filters": {
+        "viewAll": "View All",
+        "flashcards": "Flashcards",
+        "fillInBlank": "Fill in the Blank",
+        "matching": "Matching",
+        "multipleChoice": "Multiple Choice"
+      },
+      "errors": {
+        "loginRequired": "You must be logged in to view this community",
+        "fetchCommunity": "Failed to load community details",
+        "addMemberLogin": "You must be logged in to add a member",
+        "userNotFound": "User not found",
+        "failedAddMember": "Failed to add member. Please check the email and try again.",
+        "deleteCommunityLogin": "You must be logged in to delete a community",
+        "deleteCommunityPermission": "You are not the creator of this community",
+        "failedDeleteCommunity": "Failed to delete community",
+        "sendMessageLogin": "You must be logged in to send a message",
+        "failedSendMessage": "Failed to send message. Please try again."
+      },
+      "notifications": {
+        "connecting": "Connecting to chat server...",
+        "chatFailed": "Chat server connection failed. Please try again.",
+        "studySetCreated": "Study set created successfully!",
+        "studySetCreateError": "Failed to create study set: {{message}}",
+        "communityDeleted": "Community deleted successfully"
+      },
+      "messages": {
+        "welcome": "Welcome to the community chat!",
+        "noMessages": "No messages yet. Start the conversation!"
+      },
+      "emptyStates": {
+        "noMembers": "No members yet.",
+        "noStudySets": "No study sets available."
+      }
+    },
+    "communityMessaging": {
+      "loading": "Loading community chat...",
+      "sidebar": {
+        "title": "Community Members",
+        "noMembers": "No members found"
+      },
+      "header": {
+        "chatTitle": "{{communityName}} Chat",
+        "fallbackTitle": "Community Chat",
+        "status": {
+          "connected": "Connected",
+          "disconnected": "Disconnected"
+        },
+        "membersCount": "{{count}} members"
+      },
+      "messages": {
+        "systemWelcome": "Welcome to the community chat room!",
+        "welcomeWithName": "Welcome to the {{communityName}} chat room!"
+      },
+      "input": {
+        "placeholder": "Type a message to the community..."
+      },
+      "buttons": {
+        "back": "Back",
+        "send": "Send"
+      },
+      "errors": {
+        "lostConnection": "Lost connection to chat server",
+        "authRequired": "Authentication required",
+        "failedLoadUser": "Failed to load user data",
+        "failedLoadCommunity": "Failed to load community data",
+        "failedLoadMembers": "Failed to load community members",
+        "failedLoadHistory": "Failed to load chat history",
+        "failedLoadInitial": "Failed to load necessary data"
+      },
+      "details": {
+        "errorSummary": "Error details (for debugging)"
+      }
+    },
+    "preview": {
+      "banner": "Preview Mode Active - You're viewing draft content"
+    },
+    "popup": {
+      "success": "Community created successfully!",
+      "error": "Failed to create community. Please try again.",
+      "joinSuccess": "Successfully joined the community!",
+      "joinError": "Failed to join community. Please try again.",
+      "alreadyMember": "You are already a member of this community",
+      "notLoggedIn": "You must be logged in to perform this action",
+      "copySuccess": "Community link copied to clipboard!",
+      "copyError": "Failed to copy link. Please try again."
+    },
+    "common": {
+      "cancel": "Cancel",
+      "create": "Create",
+      "back": "Back",
+      "join": "Join",
+      "copied": "Copied!",
+      "searchPlaceholder": "Search communities by name...",
+      "maxCharsReached": "Maximum of 30 characters reached."
+    },
+    "loading": {
+      "communities": "Loading communities...",
+      "checkingBadges": "Checking existing preferences...",
+      "saving": "Saving your preferences..."
+    },
+    "error": {
+      "general": "Failed to load communities. Please try again later.",
+      "notLoggedIn": "You must be logged in to view communities"
+    },
+    "empty": {
+      "noCommunities": "No communities yet. Create your own or search for others.",
+      "noSearchResults": "No communities match your search.",
+      "noJoined": "No joined communities yet"
+    },
+    "header": {
+      "title": "Communities",
+      "subtitle": "Join existing communities or create your own to share study materials and collaborate with others."
+    },
+    "section": {
+      "available": "Available Communities",
+      "myCommunities": "My Communities"
+    },
+    "sidebar": {
+      "createButton": "Create Your Own"
+    },
+    "modal": {
+      "title": "Create Community",
+      "nameLabel": "Community Name",
+      "namePlaceholder": "Enter a name for your community",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe your community",
+      "createButton": "Create",
+      "cancelButton": "Cancel"
+    },
+    "communityCard": {
+      "joinButton": "Join",
+      "shareButton": "Share"
+    },
+    "categorySelector": {
+      "title": "Choose Your Interests",
+      "subtitle": "Select up to {maxCategories} categories that interest you",
+      "description": "This helps us personalize your experience and show you relevant content",
+      "saveButton": "Save Preferences",
+      "saving": "Saving...",
+      "skipButton": "Skip for Now",
+      "selectedCount": "Selected: {count}/{maxCategories}"
+    },
+    "notification": {
+      "errorNoSelection": "Please select at least one category",
+      "errorFetchBadges": "Failed to check your existing preferences. Please try again.",
+      "errorSave": "Failed to save your preferences. Please try again.",
+      "successSave": "Preferences saved successfully!"
+    },
+    "categories": {
+      "Math": "Math",
+      "Science": "Science",
+      "Literature": "Literature",
+      "History": "History",
+      "Geography": "Geography",
+      "Foreign Languages": "Foreign Languages",
+      "Art": "Art",
+      "Music": "Music",
+      "Physical Education": "Physical Education",
+      "Technology": "Technology",
+      "Business Studies": "Business Studies",
+      "Philosophy": "Philosophy",
+      "Psychology": "Psychology",
+      "Sociology": "Sociology",
+      "Economics": "Economics",
+      "Health Education": "Health Education",
+      "Home Economics": "Home Economics",
+      "Public Speaking": "Public Speaking",
+      "Technology & Engineering": "Technology & Engineering",
+      "Debate": "Debate",
+      "Environmental Science": "Environmental Science",
+      "Theatre": "Theatre",
+      "Law": "Law",
+      "Education": "Education",
+      "Career Development": "Career Development"
+    },
+    "teamMembers": [
+      {
+        "id": "rances",
+        "name": "Rances Colon",
+        "bio": "Im like making game in UE and made a game called \"Bizarre Bender\"",
+        "imageSrc": "rancesco.jpg",
+        "profileLink": "/rances",
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Score 100% on a study set"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Study every day for a single week"
+          },
+          {
+            "icon": "🧠",
+            "title": "Collective Brain-cell",
+            "description": "Join your first study group"
+          }
+        ]
+      },
+      {
+        "id": "akib",
+        "name": "Akib Mahdi",
+        "bio": "I am a senior CS major at UB looking for the nearest burger king to hopefully be employed as a cashier.",
+        "imageSrc": "Akibpfp.png",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Score 100% on a study set"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Study every day for a single week"
+          },
+          {
+            "icon": "🧠",
+            "title": "Collective Brain-cell",
+            "description": "Join your first study group"
+          }
+        ]
+      },
+      {
+        "id": "cayden",
+        "name": "Cayden La Bara",
+        "bio": "Hi, I'm Cayden and I'm a senior that is about to graduate this spring with a Computer Science Degree, I hope to make a lot of money and the future with this degree, and I know how to play the acoustic guitar.",
+        "imageSrc": "caydenla.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Score 100% on a study set"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Study every day for a single week"
+          },
+          {
+            "icon": "🧠",
+            "title": "Collective Brain-cell",
+            "description": "Join your first study group"
+          }
+        ]
+      },
+      {
+        "id": "jacob",
+        "name": "Jacob Mieszawski",
+        "bio": "Hi, I'm Jacob and I'm a senior studying Computer Science. I aspire to be a full stack developer in the future, and my favorite dog breed are Bernese Mountain Dogs just incase you were curious",
+        "imageSrc": "jacobmie.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Score 100% on a study set"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Study every day for a single week"
+          },
+          {
+            "icon": "🧠",
+            "title": "Collective Brain-cell",
+            "description": "Join your first study group"
+          }
+        ]
+      },
+      {
+        "id": "tariq",
+        "name": "Tariq Biviji",
+        "bio": "Hello, I am Tariq Biviji a CS student and I like caffeine.",
+        "imageSrc": "tariqbiv.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Score 100% on a study set"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Study every day for a single week"
+          },
+          {
+            "icon": "🧠",
+            "title": "Collective Brain-cell",
+            "description": "Join your first study group"
+          }
+        ]
+      }
+    ],
+    "typographyExamples": [
+      {
+        "title": "Normal Text",
+        "items": [
+          {
+            "size": "14px",
+            "text": "Sour Gummy Normal",
+            "className": "text-[14px] font-normal",
+            "usage": "Use for normal Text, Paragraphs, captions"
+          },
+          {
+            "size": "16px",
+            "text": "Sour Gummy Normal",
+            "className": "text-[16px] font-normal",
+            "usage": "Use for normal text, Subheaders, body text"
+          }
+        ]
+      },
+      {
+        "title": "Semi Focus",
+        "items": [
+          {
+            "size": "26px",
+            "text": "Sour Gummy Semi Bold",
+            "className": "text-[26px] font-semibold",
+            "usage": "Use for subheader or Section titles"
+          },
+          {
+            "size": "32px",
+            "text": "Sour Gummy Semi Bold",
+            "className": "text-[32px] font-semibold",
+            "usage": "Header3, titles"
+          }
+        ]
+      },
+      {
+        "title": "Focus Text",
+        "items": [
+          {
+            "size": "40px",
+            "text": "Sour Gummy Extra Bold",
+            "className": "text-[40px] font-extrabold",
+            "usage": "Header 2, important headers"
+          },
+          {
+            "size": "52px",
+            "text": "Sour Gummy Extra Bold",
+            "className": "text-[52px] font-extrabold",
+            "usage": "Main titles, Header 1"
+          }
+        ]
+      }
+    ],
+    "colorSections": [
+      {
+        "title": "Core Colors",
+        "colors": [
+          { "name": "Dark", "class": "bg-core-dark", "hex": "#1D1D20" },
+          { "name": "Light", "class": "bg-core-light", "hex": "#F4FDFF" },
+          { "name": "Danger Red", "class": "bg-red-600", "hex": "#DC2626" },
+          { "name": "Confirm Green", "class": "bg-[#48BB78]", "hex": "#48BB78" }
+        ]
+      },
+      {
+        "title": "Water Colors",
+        "colors": [
+          { "name": "Water 1", "class": "bg-water-1", "hex": "#F4FDFF" },
+          { "name": "Water 2", "class": "bg-water-2", "hex": "#1D6EF1" },
+          { "name": "Water 3", "class": "bg-water-3", "hex": "#97C7F1" },
+          { "name": "Water 4", "class": "bg-water-4", "hex": "#C5EDFD" }
+        ]
+      },
+      {
+        "title": "Sea Element Colors",
+        "colors": [
+          { "name": "Sea 1", "class": "bg-sea-1", "hex": "#1D6EF1" },
+          { "name": "Sea 2", "class": "bg-sea-2", "hex": "#5B8C5A" },
+          { "name": "Sea 3", "class": "bg-sea-3", "hex": "#EF7B6C" },
+          { "name": "Sea 4", "class": "bg-sea-4", "hex": "#C5EDFD" },
+          { "name": "Sea 5", "class": "bg-sea-5", "hex": "#9DDCB1" }
+        ]
+      },
+      {
+        "title": "Background Element Colors",
+        "colors": [
+          { "name": "Sea weed 1", "class": "bg-bg-1", "hex": "#5B8C5A" },
+          { "name": "Sea weed 2", "class": "bg-bg-2", "hex": "#9DDCB1" },
+          { "name": "Sand 1", "class": "bg-bg-3", "hex": "#E9D0CE" },
+          { "name": "Sand 2", "class": "bg-bg-4", "hex": "#F1DEFB" }
+        ]
+      }
+    ],
+    "icons": [
+      { "name": "Logo", "isLogo": true },
+      { "name": "Home", "isLogo": false },
+      { "name": "Chat", "isLogo": false },
+      { "name": "Community", "isLogo": false },
+      { "name": "Settings", "isLogo": false },
+      { "name": "Profile", "isLogo": false },
+      { "name": "More", "isLogo": false },
+      { "name": "Upload", "isLogo": false },
+      { "name": "Download", "isLogo": false },
+      { "name": "Copy", "isLogo": false },
+      { "name": "Left", "isLogo": false },
+      { "name": "Right", "isLogo": false },
+      { "name": "Up", "isLogo": false },
+      { "name": "Down", "isLogo": false },
+      { "name": "Help", "isLogo": false }
+    ],
+    "drawerWidth": 240,
+    "collapsedDrawerWidth": 68,
+    "navItems": [
+      {
+        "icon": "Home",
+        "label": "Overview",
+        "section": "overview"
+      },
+      {
+        "icon": "Layout",
+        "label": "Layout",
+        "section": "layout"
+      },
+      {
+        "icon": "Book",
+        "label": "Typography",
+        "section": "typography"
+      },
+      {
+        "icon": "Palette",
+        "label": "Colors",
+        "section": "colors"
+      },
+      {
+        "icon": "Bell",
+        "label": "Feedback",
+        "section": "feedback"
+      },
+      {
+        "icon": "HelpCircle",
+        "label": "Inline Help",
+        "section": "inline-help"
+      },
+      {
+        "icon": "Aperture",
+        "label": "Icons",
+        "section": "icons"
+      }
+    ],
+    "actions": [
+      {
+        "label": "Back",
+        "icon": "Home",
+        "type": "navigateHome"
+      },
+      {
+        "label": "Download",
+        "icon": "Download",
+        "type": "downloadNavbarCode"
+      },
+      {
+        "label": "Toggle Sidebar",
+        "icon": "EllipsisVertical",
+        "type": "toggleSidebar"
+      }
+    ]
+  },
+
+  "es": {
+    "upload": {
+      "title": "Crear tu conjunto de estudio",
+      "subtitle": "Elige una plantilla y crea tu conjunto de estudio",
+      "labelStudySetName": "Nombre del conjunto de estudio",
+      "buttonSelectTemplate": "Seleccionar plantilla",
+      "currentTemplateSelected": "Plantilla seleccionada actualmente: {{templateName}}",
+      "labelSelectCommunity": "Seleccionar comunidad",
+      "studySetUploadedTo": "El conjunto de estudio se subirá a: {{communityName}}",
+      "accessControlTitle": "Control de acceso",
+      "questionWhoCanView": "¿Quién puede ver este conjunto de estudio?",
+      "optionEveryone": "Todos - Conjunto de estudio visible para todos los usuarios",
+      "optionAllMembers": "Solo miembros de la comunidad - Solo visible para quienes se unieron a la comunidad",
+      "optionSpecificMembers": "Miembros específicos - Elige exactamente quién puede ver este conjunto de estudio",
+      "noMembersFound": "No se encontraron miembros en esta comunidad",
+      "infoOnlySelectedMembers": "Solo los miembros seleccionados podrán ver este conjunto de estudio",
+      "categoriesTagsTitle": "Categorías y etiquetas",
+      "instructionSelectCategories": "Selecciona categorías (hasta 3)",
+      "selectedCategoriesCount": "Seleccionados: {{count}}/3",
+      "instructionSelectTags": "Selecciona etiquetas (hasta 5)",
+      "categoryTagLabel": "Etiquetas de {{category}}:",
+      "selectedTagsCount": "Seleccionadas: {{count}}/5",
+      "posting": "Publicando...",
+      "buttonPost": "Publicar \"{{studySetName}}\" en {{communityName}}",
+      "errorFailedLoadCommunities": "Error al cargar comunidades",
+      "errorUserNotFound": "Usuario no encontrado. Por favor, inicia sesión de nuevo.",
+      "errorInvalidTemplate": "Plantilla seleccionada inválida",
+      "errorSelectCommunity": "Por favor, selecciona una comunidad",
+      "errorEmptyName": "Por favor, ingresa un nombre para tu conjunto de estudio",
+      "errorSelectMembers": "Por favor, selecciona al menos un miembro que pueda acceder a este conjunto de estudio",
+      "errorFailedCreateStudySet": "Error al crear el conjunto de estudio. Por favor, inténtalo de nuevo.",
+      "successStudySetCreated": "¡Conjunto de estudio creado con éxito!",
+      "buttonSeePost": "Ver publicación en la comunidad"
+    },
+    "school_categories": {
+      "Math": ["Álgebra","Geometría","Cálculo","Trigonometría","Estadística","Probabilidad","Funciones","Matrices","Ecuaciones","Gráficos"],
+      "Science": ["Física","Química","Biología","Ciencias de la Tierra","Astronomía","Genética","Ecología","Laboratorio","Tabla periódica","Experimentos"],
+      "Literature": ["Novelas","Poesía","Shakespeare","Análisis","Cuentos","Ficción","No ficción","Recursos literarios","Temas","Reseñas de libros"],
+      "History": ["Civilizaciones antiguas","Guerras mundiales","Historia de EE.UU.","Revoluciones","Geografía","Figuras históricas","Guerras","Presidentes","Movimientos políticos","Artefactos"],
+      "Geography": ["Mapas","Países","Capitales","Clima","Formas terrestres","Geografía física","Urbanización","Migración","Recursos naturales","Zonas horarias"],
+      "Foreign Languages": ["Español","Francés","Alemán","Italiano","Chino","Japonés","Vocabulario","Gramática","Pronunciación","Intercambio de idiomas"],
+      "Art": ["Pintura","Escultura","Dibujo","Arte digital","Historia del arte","Lienzo","Retratos","Abstracto","Artistas","Creatividad"],
+      "Music": ["Instrumentos","Compositores","Géneros","Teoría musical","Coro","Banda","Sinfonía","Canto","Partituras","Ritmo"],
+      "Physical Education": ["Deportes","Aptitud física","Ejercicios","Salud","Resistencia","Trabajo en equipo","Carreras","Entrenamiento de fuerza","Flexibilidad","Salud física"],
+      "Technology": ["Programación","Software","Hardware","Programación","Inteligencia artificial","Desarrollo web","Robótica","Ciberseguridad","Bases de datos","Aprendizaje automático"],
+      "Business Studies": ["Economía","Finanzas","Mercadotecnia","Emprendimiento","Contabilidad","Gestión","Planes de negocio","Inversión","Comercio","Corporaciones"],
+      "Philosophy": ["Ética","Lógica","Metafísica","Epistemología","Platón","Aristóteles","Moralidad","Conocimiento","Libre albedrío","Filosofía política"],
+      "Psychology": ["Comportamiento","Cognición","Salud mental","Emociones","Motivación","Percepción","Psicología social","Psicología del desarrollo","Terapia","Neurociencia"],
+      "Sociology": ["Sociedad","Cultura","Cambio social","Desigualdad","Grupos","Socialización","Desviación","Familias","Sistemas educativos","Raza y etnicidad"],
+      "Economics": ["Oferta y demanda","Inflación","PIB","Comercio","Mercados","Microeconomía","Macroeconomía","Sistemas económicos","Recursos","Impuestos"],
+      "Health Education": ["Nutrición","Salud mental","Bienestar","Ejercicio","Higiene","Enfermedades","Prevención","Vacunas","Salud sexual","Primeros auxilios"],
+      "Home Economics": ["Cocina","Costura","Presupuesto","Diseño de interiores","Cuidado infantil","Administración del hogar","Nutrición","Textiles","Planificación familiar","Sostenibilidad"],
+      "Public Speaking": ["Presentaciones","Retórica","Redacción de discursos","Habilidades de comunicación","Confianza","Debates","Persuasión","Audiencia","Lenguaje corporal","Entrega del discurso"],
+      "Technology & Engineering": ["Robótica","Diseño de ingeniería","CAD (Diseño asistido por computadora)","Prototipado","Electrónica","Energía renovable","Ingeniería estructural","Ingeniería informática","Impresión 3D","Programación"],
+      "Debate": ["Argumentación","Persuasión","Falacias lógicas","Evidencia","Contraargumentos","Estrategias retóricas","Oratoria","Investigación","Estilos de debate","Contrainterrogatorio"],
+      "Environmental Science": ["Ecosistemas","Conservación","Cambio climático","Contaminación","Sostenibilidad","Energía renovable","Biodiversidad","Reciclaje","Política ambiental","Impacto ambiental"],
+      "Theatre": ["Actuación","Diseño de escenario","Dirección","Dramaturgia","Audiciones","Presentaciones","Vestuario","Construcción de escenario","Iluminación","Ensayos"],
+      "Law": ["Estudios legales","Derecho constitucional","Derecho penal","Derecho civil","Contratos","Cortes","Abogados","Fuerzas del orden","Sistemas legales","Derechos humanos"],
+      "Education": ["Pedagogía","Gestión del aula","Estilos de aprendizaje","Desarrollo curricular","Evaluación","Educación especial","Estrategias de enseñanza","Tecnología en la educación","Formación docente","Aprendizaje en línea"],
+      "Career Development": ["Búsqueda de empleo","Prácticas","Redes de contacto","Currículum vitae","Entrevistas","Habilidades profesionales","Trayectorias profesionales","Emprendimiento","Certificaciones","Marca personal"]
+    },
+    "templateManager": {
+      "title": "Gestor de plantillas",
+      "tabTypes": "Tipos",
+      "tabForm": "Formulario",
+      "tabSaved": "Guardadas",
+      "sectionTemplateTypes": "Tipos de plantillas",
+      "type_flashcards": "Tarjetas de estudio",
+      "type_fill_in_blank": "Rellenar espacio",
+      "type_matching": "Relacionar",
+      "type_multiple_choice": "Opción múltiple",
+      "labelTemplateName": "Nombre de la plantilla",
+      "buttonSaveTemplate": "Guardar plantilla",
+      "previewTitle": "Vista previa",
+      "labelCategories": "Categorías:",
+      "labelTags": "Etiquetas:",
+      "buttonUseTemplate": "Usar plantilla",
+      "buttonAddFlashcard": "Agregar tarjeta",
+      "buttonAddPair": "Agregar par",
+      "buttonAddQuestion": "Agregar pregunta",
+      "buttonAddBlank": "Agregar espacio",
+      "labelQuestion": "Pregunta",
+      "labelCorrectAnswer": "Respuesta correcta",
+      "placeholderQuestionExample": "Ejemplo: La capital de Francia es _____",
+      "placeholderAnswerExample": "Ejemplo: París",
+      "labelOptions": "Opciones:",
+      "savedTemplates": "Plantillas guardadas",
+      "noSavedTemplates": "Aún no hay plantillas guardadas",
+      "errorLoginViewTemplates": "Por favor, inicia sesión para ver plantillas",
+      "errorFailedLoadTemplates": "Error al cargar plantillas. Por favor, inténtalo de nuevo.",
+      "errorLoginSaveTemplates": "Por favor, inicia sesión para guardar plantillas",
+      "errorEnterTemplateName": "Por favor, ingresa un nombre para la plantilla",
+      "errorInvalidTemplateType": "Tipo de plantilla inválido",
+      "errorPrepareTemplate": "Error al preparar la plantilla. Por favor, inténtalo de nuevo.",
+      "errorSaveTemplate": "Error al guardar la plantilla. Por favor, inténtalo de nuevo.",
+      "successTemplateSaved": "¡Plantilla guardada con éxito!"
+    },
+    "tagSelector": {
+      "embedded": {
+        "headerCategories": "Categorías",
+        "headerTags": "Etiquetas",
+        "categoriesSelected": "{{selectedCategories.length}}/{{maxCategories}} categorías seleccionadas",
+        "tagsSelected": "{{selectedTags.length}}/5 etiquetas seleccionadas"
+      },
+      "full": {
+        "title": "Agregar categorías y etiquetas",
+        "description": "Las categorías y etiquetas ayudan a otros a encontrar tu contenido y optimizar tu feed con materiales de estudio relevantes.",
+        "helpText": "Ayuda a optimizar tu feed",
+        "labelSelectCategories": "Selecciona categorías (hasta {{maxCategories}})",
+        "selectedCategories": "Seleccionadas: {{selectedCategories.length}}/{{maxCategories}} categorías",
+        "labelSelectTags": "Selecciona etiquetas (hasta 5)",
+        "selectedTags": "Seleccionadas: {{selectedTags.length}}/5 etiquetas",
+        "buttonCancel": "Cancelar",
+        "buttonSave": "{{saveButtonText}}"
+      },
+      "studySetView": {
+        "buttonBack": "Volver a la comunidad",
+        "labelStudyTime": "Tiempo de estudio:",
+        "flashcard": {
+          "question": "Pregunta",
+          "clickToSeeAnswer": "Haz clic para ver la respuesta",
+          "answer": "Respuesta",
+          "clickToSeeQuestion": "Haz clic para ver la pregunta"
+        },
+        "fillInBlank": {
+          "buttonShowAnswer": "Mostrar respuesta",
+          "buttonHideAnswer": "Ocultar respuesta"
+        },
+        "matching": {
+          "instruction": "Relaciona lo siguiente",
+          "buttonResetGame": "Reiniciar juego",
+          "gameHelp": "Haz clic en un término o definición para seleccionarlo, luego haz clic en su par correspondiente. Las coincidencias correctas se volverán verdes, las incorrectas se volverán rojas brevemente.",
+          "labelTerms": "Términos:",
+          "labelDefinitions": "Definiciones:",
+          "score": "Puntuación: {{score}} / {{total}}"
+        },
+        "multipleChoice": {
+          "correct": "¡Correcto!"
+        },
+        "unsupportedType": "Tipo de conjunto de estudio no compatible: {{type}}",
+        "errors": {
+          "notLoggedIn": "Debes iniciar sesión para ver este conjunto de estudio",
+          "loadDetailsFailed": "Error al cargar detalles del conjunto de estudio"
+        },
+        "commentsSection": {
+          "title": "Comentarios",
+          "placeholderLoadingUser": "Cargando información del usuario...",
+          "placeholderAddComment": "Agrega un comentario...",
+          "buttonPostComment": "Publicar comentario",
+          "posting": "Publicando...",
+          "noComments": "Aún no hay comentarios. ¡Sé el primero!",
+          "buttonEdit": "Editar",
+          "buttonDelete": "Eliminar",
+          "buttonCancel": "Cancelar",
+          "buttonSaveChanges": "Guardar cambios"
+        }
+      },
+      "shop": {
+        "title": "Tienda de Burbujas",
+        "tooltipEarnBucks": "¡Gana Bubble Bucks al estudiar!",
+        "statsTitle": "Tus estadísticas",
+        "conversionInfo": "1 minuto de estudio = 1 Bubble Buck",
+        "refreshSuggestion": "Si tus datos no aparecen, haz clic en el botón de recargar en la esquina superior derecha",
+        "loadingShop": "Cargando tienda...",        "sections": {
+          "skinsStore": "Tienda de apariencias",
+          "wardrobe": "Tu guardarropa",
+          "noWardrobeItems": "¡Compra algunas apariencias para verlas aquí!"
+        },
+        "sort": {
+          "label": "Ordenar por",
+          "options": {
+            "default": "Predeterminado",
+            "rarityAsc": "Rareza: Bajo a Alto",
+            "rarityDesc": "Rareza: Alto a Bajo",
+            "priceAsc": "Precio: Bajo a Alto",
+            "priceDesc": "Precio: Alto a Bajo"
+          }
+        },
+        "buttons": {
+          "altFisherman": "¡Haz clic para ganar Bucks!",
+          "altBuy": "Comprar",
+          "altOwned": "Comprado",
+          "altEquipped": "Equipado"
+        },
+        "messages": {
+          "loginToShop": "Por favor, inicia sesión para acceder a la tienda",
+          "loadStudyTimeFailed": "Error al cargar tiempo de estudio.",
+          "updateBucksFailed": "Error al actualizar Bubble Bucks. Intenta recargar la página.",
+          "loginToUseFeature": "Por favor, inicia sesión para usar esta función.",
+          "fishermanCooldown": "¡La línea se rompió! Intenta de nuevo en {{minutes}} minuto{{plural}}.",
+          "caughtBucks": "¡Has atrapado {{amount}} Bubble Bucks!",
+          "notEnoughBucks": "No tienes suficientes Bubble Bucks (necesitas {{price}}) para comprar {{name}}.",
+          "purchasingSkin": "Comprando {{name}}...",
+          "purchaseFailed": "Error al comprar {{name}}. Por favor, inténtalo de nuevo.",
+          "purchaseSuccess": "¡Has comprado {{name}} con éxito!",
+          "defaultEquipped": "¡Apariencia predeterminada equipada!",
+          "needPurchaseToEquip": "Necesitas comprar {{name}} antes de equiparla.",
+          "equipSuccess": "¡{{name}} equipada!",
+          "equipFailed": "Error al equipar la apariencia. Por favor, inténtalo de nuevo.",
+          "skinNotFound": "Error: Apariencia no encontrada",
+          "needBucks": "¡Necesitas {{price}} Bucks!"
+        }
+      }
+    },
+    "resetPassword": {
+      "appBarTitle": "Bubble Brain",
+      "appBarLogin": "Iniciar sesión",
+      "requestTitle": "Restablecer contraseña",
+      "stepsTitle": "Sigue estos pasos para restablecer tu contraseña:",
+      "step1": "Ingresa tu dirección de correo electrónico abajo",
+      "step2": "Revisa tu correo para el token de restablecimiento",
+      "step3": "Regresa aquí para ingresar el token y establecer una nueva contraseña",
+      "emailLabel": "Correo electrónico",
+      "buttonSendInstructions": "Enviar instrucciones de restablecimiento",
+      "sending": "Enviando...",
+      "changeTitle": "Cambia tu contraseña",
+      "changeSubtitle": "Revisa tu correo para el token de restablecimiento. Ingresa el token junto con tu nueva contraseña. El token expira en 30 minutos por seguridad.",
+      "tokenLabel": "Token de restablecimiento",
+      "newPasswordLabel": "Nueva contraseña",
+      "passwordHelperText": "La contraseña debe tener al menos 8 caracteres, incluyendo una letra mayúscula, un número y un carácter especial",
+      "togglePasswordVisibilityAria": "alternar visibilidad de contraseña",
+      "buttonChangePassword": "Cambiar contraseña",
+      "changing": "Cambiando...",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "registerForm": {
+      "appBarTitle": "Bubble Brain",
+      "appBarLogin": "Iniciar sesión",
+      "title": "Crear una cuenta",
+      "errors": {
+        "registrationFailed": "Registro fallido. Asegúrate de usar un correo válido con un carácter especial, número y letras."
+      },
+      "labels": {
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "password": "Contraseña"
+      },
+      "buttons": {
+        "signUp": "Registrarse",
+        "signingUp": "Registrando..."
+      },
+      "links": {
+        "haveAccount": "¿Ya tienes una cuenta?",
+        "login": "Iniciar sesión",
+        "resetPassword": "Restablecer tu contraseña"
+      }
+    },
+    "feedToggle": {
+      "public": "Feed público",
+      "private": "Mis publicaciones privadas"
+    },
+    "alerts": {
+      "loginToViewPosts": "Por favor, inicia sesión para ver publicaciones",
+      "loginToLike": "Por favor, inicia sesión para dar me gusta",
+      "loginToComment": "Por favor, inicia sesión para comentar",
+      "failedFetchPosts": "Error al obtener publicaciones",
+      "failedUpdateLike": "Error al actualizar estado de me gusta. Por favor, inténtalo de nuevo.",
+      "failedSubmitComment": "Error al enviar comentario. Por favor, inténtalo de nuevo."
+    },
+    "buttons": {
+      "post": "Publicar",
+      "viewAllComments": "Ver las {{count}} comentarios",
+      "showLess": "Mostrar menos"
+    },
+    "labels": {
+      "addComment": "Agrega un comentario...",
+      "likes": {
+        "one": "1 me gusta",
+        "other": "{{count}} me gusta"
+      }
+    },
+    "errors": {
+      "fetchComments": "Error al cargar comentarios"
+    },
+    "post": {
+      "tagButton": "etiquetar publicación",
+      "likeAlt": "Dar me gusta",
+      "viewCommentsAlt": "Ver comentarios",
+      "commentsCount": "{{count}} comentarios",
+      "reactionsCount": "({{count}})",
+      "deleteAlt": "Eliminar publicación"
+    },
+    "brand": {
+      "logoAlt": "Logotipo de Bubble Brain",
+      "title": "Bubble Brain"
+    },
+    "navbar": {
+      "appName": "Bubble Brain",
+      "toggleTooltip": "Alternar barra lateral",
+      "items": {
+        "home": "Inicio",
+        "friends": "Amigos",
+        "upload": "Subir",
+        "community": "Comunidad",
+        "profile": "Perfil",
+        "styleGuide": "Guía de estilo",
+        "feed": "Feed",
+        "shop": "Tienda"
+      }
+    },
+    "messaging": {
+      "backButton": "Volver",
+      "chatDefaultTitle": "Chat",
+      "statusOnline": "En línea",
+      "statusOffline": "Desconectado",
+      "messagePlaceholder": "Escribe un mensaje...",
+      "errorLostConnection": "Conexión con el servidor de chat perdida",
+      "errorConnectionError": "Error de conexión: {{errorMessage}}",
+      "errorLoadUserData": "Error al cargar datos del usuario",
+      "errorLoadPartnerData": "Error al cargar datos del interlocutor",
+      "errorLoadHistory": "Error al cargar historial de chat",
+      "errorSendMessage": "Error al enviar mensaje"
+    },
+    "loginForm": {
+      "welcomeBack": "¡Bienvenido de nuevo!",
+      "emailLabel": "Correo electrónico",
+      "passwordLabel": "Contraseña",
+      "loginButton": "Iniciar sesión",
+      "loggingIn": "Iniciando sesión...",
+      "signUpButton": "Registrarse",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccountPrompt": "¿No tienes una cuenta?",
+      "signUpLink": "Registrarse",
+      "incorrectCredentials": "Correo o contraseña incorrectos"
+    },
+    "homePage": {
+      "diveIntoLearning": "Sumérgete en el aprendizaje",
+      "learningSubtitle": "Explora nuestros cursos y cuestionarios gamificados diseñados para hacer el aprendizaje divertido y atractivo.",
+      "getStarted": "Comenzar",
+      "latestCommunities": "Últimas comunidades",
+      "noCommunities": "No se encontraron comunidades. ¡Crea una para comenzar!",
+      "viewAllCommunities": "Ver todas las comunidades",
+      "bubbleBrainiacs": "Bubble Brainiacs",
+      "brainiacsSubtitle": "Estudiantes destacados según tiempo total de estudio.",
+      "activeUsers": "Usuarios activos",
+      "noActiveUsers": "Ningún usuario activo en los últimos 30 minutos. ¡Sé el primero en participar!",
+      "bubbleAchievers": "Bubble Achievers",
+      "achieversSubtitle": "Logros notables en categorías de estudio."
+    },
+    "groups": {
+      "joinTitle": "¡Únete a un grupo!"
+    },
+    "groupList": {
+      "errorPrefix": "Error: ",
+      "loading": "Cargando...",
+      "testUpdateButton": "Prueba actualización",
+      "testAddButton": "Prueba agregar",
+      "blockUser": "Bloquear usuario",
+      "unblockUser": "Desbloquear usuario",
+      "deleteGroup": "Eliminar grupo"
+    },
+    "friends": {
+      "pageTitle": "Amigos",
+      "subtitle": "Gestiona tus conexiones en Bubble Brain",
+      "tabs": {
+        "option1": "Opción 1",
+        "option2": "Opción 2"
+      },
+      "search": {
+        "friendsPlaceholder": "Buscar amigos...",
+        "usersPlaceholder": "Buscar usuarios..."
+      },
+      "buttons": {
+        "findUsers": "Buscar usuarios",
+        "hideUsers": "Ocultar usuarios",
+        "addFriend": "Agregar amigo",
+        "accept": "Aceptar",
+        "decline": "Rechazar",
+        "removeFriend": "Eliminar",
+        "blockUser": "Bloquear",
+        "unblockUser": "Desbloquear",
+        "startChat": "Mensaje"
+      },
+      "sections": {
+        "allUsers": "Todos los usuarios",
+        "pendingRequests": "Solicitudes pendientes",
+        "yourFriends": "Tus amigos",
+        "blockedUsers": "Usuarios bloqueados"
+      },
+      "messages": {
+        "noFriends": "Aún no tienes amigos. ¡Agrega alguno para comenzar!",
+        "noUsers": "No hay usuarios para mostrar.",
+        "noPending": "No hay solicitudes pendientes.",
+        "noBlocked": "No hay usuarios bloqueados."
+      }
+    },
+    "notifications": {
+      "loadUsersError": "Error al cargar usuarios",
+      "userNotFound": "Usuario no encontrado",
+      "cannotAddSelf": "No puedes agregarte a ti mismo",
+      "alreadyFriends": "Este usuario ya está en tu lista de amigos",
+      "requestPending": "Ya hay una solicitud pendiente con este usuario",
+      "requestSent": "¡Solicitud de amistad enviada con éxito!",
+      "requestSendFailed": "Error al enviar solicitud de amistad",
+      "errorAddingFriend": "Error al agregar amigo",
+      "friendRemoved": "Amigo eliminado con éxito",
+      "removeFailed": "Error al eliminar amigo",
+      "errorRemovingFriend": "Error al eliminar amigo",
+      "userBlocked": "Usuario bloqueado con éxito",
+      "blockFailed": "Error al bloquear usuario",
+      "errorBlocking": "Error al bloquear usuario",
+      "userUnblocked": "Usuario desbloqueado con éxito",
+      "unblockFailed": "Error al desbloquear usuario",
+      "errorUnblocking": "Error al desbloquear usuario",
+      "requestAccepted": "¡Solicitud de amistad aceptada!",
+      "acceptFailed": "Error al aceptar solicitud de amistad",
+      "requestDeclined": "Solicitud de amistad rechazada",
+      "declineFailed": "Error al rechazar solicitud de amistad",
+      "chatConnectionFailed": "Error de conexión al servidor de chat"
+    },
+    "friendList": {
+      "loading": "Cargando...",
+      "error": "Error: {{message}}",
+      "statuses": {
+        "active": "Activo",
+        "blocked": "Bloqueado"
+      },
+      "actions": {
+        "message": {
+          "alt": "Enviar mensaje",
+          "title": "Enviar mensaje"
+        },
+        "block": {
+          "alt": "Bloquear usuario",
+          "title": "Bloquear usuario"
+        },
+        "unblock": {
+          "alt": "Desbloquear usuario",
+          "title": "Desbloquear usuario"
+        }
+      }
+    },
+    "drBubbles": {
+      "altImage": "Dr. Bubbles",
+      "buttons": {
+        "next": "Siguiente",
+        "gotIt": "¡Entendido!",
+        "close": "Cerrar"
+      },
+      "guideSteps": {
+        "nav-start": "¡Bienvenido! Soy Dr. Bubbles y te ayudaré a navegar. ¡Comencemos con el botón Inicio!",
+        "nav-home": "Regresa a esta página en cualquier momento aquí.",
+        "nav-friends": "¡Aquí puedes conectar con otros y hacer nuevos amigos!",
+        "nav-community": "¡Únete a comunidades emocionantes y ve conjuntos de estudio!",
+        "nav-profile": "¡Aquí puedes ver y administrar tu perfil y progreso!",
+        "nav-style-guide": "¡Consulta nuestra guía de estilo para entender el sistema de diseño!",
+        "nav-feed": "¡Mira tu feed y ve qué hacen los demás!",
+        "nav-shop": "¡Compra nuevos íconos para Dr. Bubbles en la tienda!"
+      }
+    },
+    "createPost": {
+      "title": "Crear publicación",
+      "placeholder": "¿En qué estás pensando?",
+      "buttons": {
+        "addPhoto": "Agregar foto",
+        "post": "Publicar",
+        "posting": "Publicando..."
+      },
+      "audience": {
+        "label": "Audiencia",
+        "public": "Público",
+        "connections": "Solo conexiones",
+        "private": "Privado"
+      },
+      "errors": {
+        "noContent": "Por favor, agrega contenido o una imagen a tu publicación",
+        "login": "Por favor, inicia sesión para crear una publicación",
+        "fileSize": "El tamaño del archivo supera el límite de {{maxSizeKB}}KB."
+      },
+      "snackbar": {
+        "success": "¡Publicación creada con éxito!",
+        "error": "Error al crear publicación: {{message}}"
+      }
+    },
+    "communityView": {
+      "titles": {
+        "studySets": "Conjuntos de estudio",
+        "chatRoom": "Sala de chat",
+        "members": "Miembros"
+      },
+      "placeholders": {
+        "messageInput": "Escribe un mensaje...",
+        "addMemberPrompt": "Ingresa el correo del usuario que quieres agregar:"
+      },
+      "buttons": {
+        "back": "Volver",
+        "addStudyMaterial": "Agregar material de estudio",
+        "message": "Mensaje",
+        "members": "Miembros",
+        "deleteCommunity": "Eliminar comunidad",
+        "send": "Enviar",
+        "chooseTemplate": "Elegir plantilla",
+        "createStudySet": "Crear conjunto de estudio",
+        "addItem": "Agregar elemento",
+        "confirm": "Confirmar",
+        "cancel": "Cancelar",
+        "share": "Compartir",
+        "delete": "Eliminar"
+      },
+      "dialogSteps": {
+        "nameStep": "Nombra tu conjunto de estudio",
+        "templateStep": "Selecciona una plantilla",
+        "contentStep": "Personaliza tu contenido",
+        "tagsStep": "Agrega etiquetas"
+      },
+      "stepLabels": {
+        "step1": "1. Nombre",
+        "step2": "2. Plantilla",
+        "step3": "3. Contenido",
+        "step4": "4. Etiquetas"
+      },
+      "templateOptions": {
+        "flashcards": "Tarjetas básicas",
+        "multiple_choice": "Opción múltiple",
+        "fill_in_blank": "Rellenar espacio",
+        "matching": "Relacionar"
+      },
+      "accessControl": {
+        "label": "Control de acceso",
+        "everyone": "Todos – visible para todos los usuarios",
+        "allMembers": "Solo miembros de la comunidad – solo visible para quienes se unieron",
+        "specificMembers": "Miembros específicos – elige quién puede verlo",
+        "memberSelectLabel": "Seleccionar miembros"
+      },
+      "filters": {
+        "viewAll": "Ver todo",
+        "flashcards": "Tarjetas",
+        "fillInBlank": "Rellenar espacio",
+        "matching": "Relacionar",
+        "multipleChoice": "Opción múltiple"
+      },
+      "errors": {
+        "loginRequired": "Debes iniciar sesión para ver esta comunidad",
+        "fetchCommunity": "Error al cargar detalles de la comunidad",
+        "addMemberLogin": "Debes iniciar sesión para agregar un miembro",
+        "userNotFound": "Usuario no encontrado",
+        "failedAddMember": "Error al agregar miembro. Verifica el correo e inténtalo de nuevo.",
+        "deleteCommunityLogin": "Debes iniciar sesión para eliminar una comunidad",
+        "deleteCommunityPermission": "No eres el creador de esta comunidad",
+        "failedDeleteCommunity": "Error al eliminar la comunidad",
+        "sendMessageLogin": "Debes iniciar sesión para enviar un mensaje",
+        "failedSendMessage": "Error al enviar mensaje. Por favor, inténtalo de nuevo."
+      },
+      "notifications": {
+        "connecting": "Conectando al servidor de chat...",
+        "chatFailed": "Error de conexión al chat. Por favor, inténtalo de nuevo.",
+        "studySetCreated": "¡Conjunto de estudio creado con éxito!",
+        "studySetCreateError": "Error al crear conjunto de estudio: {{message}}",
+        "communityDeleted": "Comunidad eliminada con éxito"
+      },
+      "messages": {
+        "welcome": "¡Bienvenido al chat de la comunidad!",
+        "noMessages": "Aún no hay mensajes. ¡Comienza la conversación!"
+      },
+      "emptyStates": {
+        "noMembers": "Aún no hay miembros.",
+        "noStudySets": "No hay conjuntos de estudio disponibles."
+      }
+    },
+    "communityMessaging": {
+      "loading": "Cargando chat de la comunidad...",
+      "sidebar": {
+        "title": "Miembros de la comunidad",
+        "noMembers": "No se encontraron miembros"
+      },
+      "header": {
+        "chatTitle": "Chat de {{communityName}}",
+        "fallbackTitle": "Chat de comunidad",
+        "status": {
+          "connected": "Conectado",
+          "disconnected": "Desconectado"
+        },
+        "membersCount": "{{count}} miembros"
+      },
+      "messages": {
+        "systemWelcome": "¡Bienvenido a la sala de chat de la comunidad!",
+        "welcomeWithName": "¡Bienvenido a la sala de chat de {{communityName}}!"
+      },
+      "input": {
+        "placeholder": "Escribe un mensaje para la comunidad..."
+      },
+      "buttons": {
+        "back": "Volver",
+        "send": "Enviar"
+      },
+      "errors": {
+        "lostConnection": "Conexión con el servidor de chat perdida",
+        "authRequired": "Autenticación requerida",
+        "failedLoadUser": "Error al cargar datos del usuario",
+        "failedLoadCommunity": "Error al cargar datos de la comunidad",
+        "failedLoadMembers": "Error al cargar miembros de la comunidad",
+        "failedLoadHistory": "Error al cargar historial de chat",
+        "failedLoadInitial": "Error al cargar datos necesarios"
+      },
+      "details": {
+        "errorSummary": "Detalles del error (para depuración)"
+      }
+    },
+    "preview": {
+      "banner": "Modo de vista previa activo: estás viendo contenido borrador"
+    },
+    "popup": {
+      "success": "¡Comunidad creada con éxito!",
+      "error": "Error al crear comunidad. Por favor, inténtalo de nuevo.",
+      "joinSuccess": "¡Te uniste a la comunidad con éxito!",
+      "joinError": "Error al unirse a la comunidad. Por favor, inténtalo de nuevo.",
+      "alreadyMember": "Ya eres miembro de esta comunidad",
+      "notLoggedIn": "Debes iniciar sesión para realizar esta acción",
+      "copySuccess": "¡Enlace de la comunidad copiado al portapapeles!",
+      "copyError": "Error al copiar enlace. Por favor, inténtalo de nuevo."
+    },
+    "common": {
+      "cancel": "Cancelar",
+      "create": "Crear",
+      "back": "Volver",
+      "join": "Unirse",
+      "copied": "¡Copiado!",
+      "searchPlaceholder": "Buscar comunidades por nombre...",
+      "maxCharsReached": "Máximo de 30 caracteres alcanzado."
+    },
+    "loading": {
+      "communities": "Cargando comunidades...",
+      "checkingBadges": "Comprobando preferencias existentes...",
+      "saving": "Guardando tus preferencias..."
+    },
+    "error": {
+      "general": "Error al cargar comunidades. Por favor, inténtalo de nuevo más tarde.",
+      "notLoggedIn": "Debes iniciar sesión para ver comunidades"
+    },
+    "empty": {
+      "noCommunities": "Aún no hay comunidades. Crea la tuya o busca otras.",
+      "noSearchResults": "Ninguna comunidad coincide con tu búsqueda.",
+      "noJoined": "Aún no te has unido a ninguna comunidad"
+    },
+    "header": {
+      "title": "Comunidades",
+      "subtitle": "Únete a comunidades existentes o crea la tuya para compartir materiales de estudio y colaborar con otros."
+    },
+    "section": {
+      "available": "Comunidades disponibles",
+      "myCommunities": "Mis comunidades"
+    },
+    "sidebar": {
+      "createButton": "Crear la tuya"
+    },
+    "modal": {
+      "title": "Crear comunidad",
+      "nameLabel": "Nombre de la comunidad",
+      "namePlaceholder": "Ingresa un nombre para tu comunidad",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Describe tu comunidad",
+      "createButton": "Crear",
+      "cancelButton": "Cancelar"
+    },
+    "communityCard": {
+      "joinButton": "Unirse",
+      "shareButton": "Compartir"
+    },
+    "categorySelector": {
+      "title": "Elige tus intereses",
+      "subtitle": "Selecciona hasta {maxCategories} categorías que te interesen",
+      "description": "Esto nos ayuda a personalizar tu experiencia y mostrar contenido relevante",
+      "saveButton": "Guardar preferencias",
+      "saving": "Guardando...",
+      "skipButton": "Omitir por ahora",
+      "selectedCount": "Seleccionados: {count}/{maxCategories}"
+    },
+    "notification": {
+      "errorNoSelection": "Por favor, selecciona al menos una categoría",
+      "errorFetchBadges": "Error al comprobar tus preferencias. Por favor, inténtalo de nuevo.",
+      "errorSave": "Error al guardar tus preferencias. Por favor, inténtalo de nuevo.",
+      "successSave": "¡Preferencias guardadas con éxito!"
+    },
+    "categories": {
+      "Math": "Matemáticas",
+      "Science": "Ciencias",
+      "Literature": "Literatura",
+      "History": "Historia",
+      "Geography": "Geografía",
+      "Foreign Languages": "Idiomas extranjeros",
+      "Art": "Arte",
+      "Music": "Música",
+      "Physical Education": "Educación física",
+      "Technology": "Tecnología",
+      "Business Studies": "Estudios empresariales",
+      "Philosophy": "Filosofía",
+      "Psychology": "Psicología",
+      "Sociology": "Sociología",
+      "Economics": "Economía",
+      "Health Education": "Educación para la salud",
+      "Home Economics": "Economía doméstica",
+      "Public Speaking": "Oratoria",
+      "Technology & Engineering": "Tecnología e ingeniería",
+      "Debate": "Debate",
+      "Environmental Science": "Ciencias ambientales",
+      "Theatre": "Teatro",
+      "Law": "Derecho",
+      "Education": "Educación",
+      "Career Development": "Desarrollo profesional"
+    },
+    "teamMembers": [
+      {
+        "id": "rances",
+        "name": "Rances Colon",
+        "bio": "Me gusta crear juegos en UE e hice un juego llamado \"Bizarre Bender\"",
+        "imageSrc": "rancesco.jpg",
+        "profileLink": "/rances",
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Obtener 100% en un conjunto de estudio"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Estudiar todos los días durante una semana"
+          },
+          {
+            "icon": "🧠",
+            "title": "Colectivo de neuronas",
+            "description": "Unirte a tu primer grupo de estudio"
+          }
+        ]
+      },
+      {
+        "id": "akib",
+        "name": "Akib Mahdi",
+        "bio": "Soy estudiante de último año de Informática en la UB buscando el Burger King más cercano con la esperanza de trabajar como cajero.",
+        "imageSrc": "Akibpfp.png",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Obtener 100% en un conjunto de estudio"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Estudiar todos los días durante una semana"
+          },
+          {
+            "icon": "🧠",
+            "title": "Colectivo de neuronas",
+            "description": "Unirte a tu primer grupo de estudio"
+          }
+        ]
+      },
+      {
+        "id": "cayden",
+        "name": "Cayden La Bara",
+        "bio": "Hola, soy Cayden y soy un estudiante de último año que se graduará esta primavera con un título en Ciencias de la Computación; espero ganar mucho dinero en el futuro con este título, y sé tocar la guitarra acústica.",
+        "imageSrc": "caydenla.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Obtener 100% en un conjunto de estudio"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Estudiar todos los días durante una semana"
+          },
+          {
+            "icon": "🧠",
+            "title": "Colectivo de neuronas",
+            "description": "Unirte a tu primer grupo de estudio"
+          }
+        ]
+      },
+      {
+        "id": "jacob",
+        "name": "Jacob Mieszawski",
+        "bio": "Hola, soy Jacob y soy un estudiante de último año de Ciencias de la Computación. Aspiro a ser desarrollador full stack en el futuro, y mi raza de perro favorita es el Boyero de Berna por si tenías curiosidad.",
+        "imageSrc": "jacobmie.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Obtener 100% en un conjunto de estudio"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Estudiar todos los días durante una semana"
+          },
+          {
+            "icon": "🧠",
+            "title": "Colectivo de neuronas",
+            "description": "Unirte a tu primer grupo de estudio"
+          }
+        ]
+      },
+      {
+        "id": "tariq",
+        "name": "Tariq Biviji",
+        "bio": "Hola, soy Tariq Biviji, estudiante de Ciencias de la Computación, y me gusta la cafeína.",
+        "imageSrc": "tariqbiv.jpg",
+        "profileLink": null,
+        "uploadedMaterials": [
+          "Quantum Mechanics Notes",
+          "Biology Diagrams",
+          "Organic Chemistry Guide",
+          "Periodic Table Notes",
+          "Algebra II Notes",
+          "Calculus Notes"
+        ],
+        "studyGroups": [
+          "Quantum Computing",
+          "Systems Programming",
+          "Psychology",
+          "Geometry",
+          "Forensics",
+          "World History"
+        ],
+        "favoriteVideos": [
+          "Minecraft Parkour",
+          "Subway Surfers",
+          "Skibidi Toilet",
+          "Soap Cutting",
+          "Baby Gronk",
+          "Fanum Tax"
+        ],
+        "achievements": [
+          {
+            "icon": "🧪",
+            "title": "IQ +1",
+            "description": "Obtener 100% en un conjunto de estudio"
+          },
+          {
+            "icon": "🎮",
+            "title": "Gigachad Grindset",
+            "description": "Estudiar todos los días durante una semana"
+          },
+          {
+            "icon": "🧠",
+            "title": "Colectivo de neuronas",
+            "description": "Unirte a tu primer grupo de estudio"
+          }
+        ]
+      }
+    ],
+    "typographyExamples": [
+      {
+        "title": "Texto normal",
+        "items": [
+          {
+            "size": "14px",
+            "text": "Sour Gummy Normal",
+            "className": "text-[14px] font-normal",
+            "usage": "Usar para texto normal, párrafos y leyendas"
+          },
+          {
+            "size": "16px",
+            "text": "Sour Gummy Normal",
+            "className": "text-[16px] font-normal",
+            "usage": "Usar para texto normal, subtítulos, cuerpo de texto"
+          }
+        ]
+      },
+      {
+        "title": "Semi enfocado",
+        "items": [
+          {
+            "size": "26px",
+            "text": "Sour Gummy Semi Bold",
+            "className": "text-[26px] font-semibold",
+            "usage": "Usar para subtítulos o títulos de secciones"
+          },
+          {
+            "size": "32px",
+            "text": "Sour Gummy Semi Bold",
+            "className": "text-[32px] font-semibold",
+            "usage": "Encabezado3, títulos"
+          }
+        ]
+      },
+      {
+        "title": "Texto enfocado",
+        "items": [
+          {
+            "size": "40px",
+            "text": "Sour Gummy Extra Bold",
+            "className": "text-[40px] font-extrabold",
+            "usage": "Encabezado 2, encabezados importantes"
+          },
+          {
+            "size": "52px",
+            "text": "Sour Gummy Extra Bold",
+            "className": "text-[52px] font-extrabold",
+            "usage": "Títulos principales, Encabezado 1"
+          }
+        ]
+      }
+    ],
+    "colorSections": [
+      {
+        "title": "Colores principales",
+        "colors": [
+          { "name": "Oscuro", "class": "bg-core-dark", "hex": "#1D1D20" },
+          { "name": "Claro", "class": "bg-core-light", "hex": "#F4FDFF" },
+          { "name": "Rojo de peligro", "class": "bg-red-600", "hex": "#DC2626" },
+          { "name": "Verde de confirmación", "class": "bg-[#48BB78]", "hex": "#48BB78" }
+        ]
+      },
+      {
+        "title": "Colores del agua",
+        "colors": [
+          { "name": "Agua 1", "class": "bg-water-1", "hex": "#F4FDFF" },
+          { "name": "Agua 2", "class": "bg-water-2", "hex": "#1D6EF1" },
+          { "name": "Agua 3", "class": "bg-water-3", "hex": "#97C7F1" },
+          { "name": "Agua 4", "class": "bg-water-4", "hex": "#C5EDFD" }
+        ]
+      },
+      {
+        "title": "Colores de elemento marino",
+        "colors": [
+          { "name": "Mar 1", "class": "bg-sea-1", "hex": "#1D6EF1" },
+          { "name": "Mar 2", "class": "bg-sea-2", "hex": "#5B8C5A" },
+          { "name": "Mar 3", "class": "bg-sea-3", "hex": "#EF7B6C" },
+          { "name": "Mar 4", "class": "bg-sea-4", "hex": "#C5EDFD" },
+          { "name": "Mar 5", "class": "bg-sea-5", "hex": "#9DDCB1" }
+        ]
+      },
+      {
+        "title": "Colores de fondo",
+        "colors": [
+          { "name": "Alga 1", "class": "bg-bg-1", "hex": "#5B8C5A" },
+          { "name": "Alga 2", "class": "bg-bg-2", "hex": "#9DDCB1" },
+          { "name": "Arena 1", "class": "bg-bg-3", "hex": "#E9D0CE" },
+          { "name": "Arena 2", "class": "bg-bg-4", "hex": "#F1DEFB" }
+        ]
+      }
+    ],
+    "icons": [
+      { "name": "Logo", "isLogo": true },
+      { "name": "Inicio", "isLogo": false },
+      { "name": "Chat", "isLogo": false },
+      { "name": "Comunidad", "isLogo": false },
+      { "name": "Configuración", "isLogo": false },
+      { "name": "Perfil", "isLogo": false },
+      { "name": "Más", "isLogo": false },
+      { "name": "Subir", "isLogo": false },
+      { "name": "Descargar", "isLogo": false },
+      { "name": "Copiar", "isLogo": false },
+      { "name": "Izquierda", "isLogo": false },
+      { "name": "Derecha", "isLogo": false },
+      { "name": "Arriba", "isLogo": false },
+      { "name": "Abajo", "isLogo": false },
+      { "name": "Ayuda", "isLogo": false }
+    ],
+    "drawerWidth": 240,
+    "collapsedDrawerWidth": 68,
+    "navItems": [
+      { "icon": "Home", "label": "Descripción general", "section": "overview" },
+      { "icon": "Layout", "label": "Diseño", "section": "layout" },
+      { "icon": "Book", "label": "Tipografía", "section": "typography" },
+      { "icon": "Palette", "label": "Colores", "section": "colors" },
+      { "icon": "Bell", "label": "Comentarios", "section": "feedback" },
+      { "icon": "HelpCircle", "label": "Ayuda interna", "section": "inline-help" },
+      { "icon": "Aperture", "label": "Iconos", "section": "icons" }
+    ],
+    "actions": [
+      { "label": "Atrás", "icon": "Home", "type": "navigateHome" },
+      { "label": "Descargar", "icon": "Download", "type": "downloadNavbarCode" },
+      { "label": "Alternar barra lateral", "icon": "EllipsisVertical", "type": "toggleSidebar" }
+    ]
+  }
+}

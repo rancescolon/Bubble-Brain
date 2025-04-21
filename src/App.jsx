@@ -44,7 +44,8 @@ import background1 from "./assets/gang.png" // Create this file
 import background2 from "./assets/voyage.png" // Create this file
 import background3 from "./assets/war.png" // Create this file
 import background4 from "./assets/building.png"
-import CategorySelection from "./Component/category-selection"; // Create this file
+import CategorySelection from "./Component/category-selection";
+import LanguageSelectionPage from "./Component/LanguageSelectionPage"; // Create this file
 
 // Create Background Context
 export const BackgroundContext = createContext();
@@ -546,6 +547,16 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                   </ProtectedRoute>
                 }
               />
+
+              <Route
+                  path="/languageSelection"
+                  element={
+                    <ProtectedRoute>
+                      <LanguageSelectionPage />
+                    </ProtectedRoute>
+                  }
+              />
+
             </Routes>
           </div>
         </header>
