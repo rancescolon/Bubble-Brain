@@ -546,7 +546,7 @@ const CommunityMessaging = () => {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="flex gap-4 h-[80vh]">
           {/* Members Sidebar */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden w-64 hidden md:block">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden w-72 hidden md:block">
             <div className="bg-[#1D6EF1] p-4">
               <h3 className="text-xl font-bold text-white">Community Members</h3>
             </div>
@@ -577,7 +577,12 @@ const CommunityMessaging = () => {
                         )}
                       </div>
                       <div>
-                        <p className="text-[#1D1D20]">{member.name}</p>
+                        <p 
+                          className="text-[#1D1D20]"
+                          title={member.name}
+                        >
+                          {member.name.length > 12 ? `${member.name.substring(0, 12)}...` : member.name}
+                        </p>
                         {member.isAdmin && (
                           <span className="text-xs bg-gray-200 px-2 py-0.5 rounded text-gray-700">Admin</span>
                         )}

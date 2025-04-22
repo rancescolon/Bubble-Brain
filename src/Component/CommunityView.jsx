@@ -1930,7 +1930,8 @@ export default function CommunityView() {
 
               <div className={`flex ${isMobile ? "flex-wrap" : ""} gap-2 ${isMobile ? "mt-2" : ""}`}>
                 <button
-                    className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                    // Change bg to Confirm Green (#48BB78) and hover to Sea weed 2 (#9DDCB1)
+                    className={`bg-[#48BB78] hover:bg-[#9DDCB1] text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
                     onClick={handleAddStudyMaterial}
                 >
                   <Plus size={isMobile ? 14 : 18} className="mr-2" />
@@ -1938,7 +1939,8 @@ export default function CommunityView() {
                 </button>
 
                 <button
-                    className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                    // Update hover color to Water 3 (#97C7F1)
+                    className={`bg-[#1D6EF1] hover:bg-[#97C7F1] text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
                     onClick={handleOpenChatRoom}
                 >
                   <MessageSquare size={isMobile ? 14 : 18} className="mr-2" />
@@ -1946,7 +1948,8 @@ export default function CommunityView() {
                 </button>
 
                 <button
-                    className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
+                    // Update hover color to Water 3 (#97C7F1)
+                    className={`bg-[#1D6EF1] hover:bg-[#97C7F1] text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "2" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}] flex items-center`}
                     onClick={toggleMembers}
                 >
                   <Users size={isMobile ? 14 : 18} className="mr-2" />
@@ -2079,7 +2082,8 @@ export default function CommunityView() {
                                   >
                                     <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
                                       <button
-                                          className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
+                                          // Change Share button bg to Water 4 (#C5EDFD), text to Water 2 (#1D6EF1), hover bg to Water 3 (#97C7F1)
+                                          className={`bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
                                           onClick={() => handleShareStudySet(studySet.id)}
                                       >
                                         {copiedSetId === studySet.id ? (
@@ -2092,9 +2096,11 @@ export default function CommunityView() {
                                         )}
                                       </button>
                                       <button
-                                          className="bg-black text-white py-1 px-3 rounded-xl flex items-center"
+                                          // Change bg from black to Danger Red (#DC2626) and adjust hover
+                                          className="bg-[#DC2626] hover:bg-[#DC2626]/80 text-white py-1 px-3 rounded-xl flex items-center"
                                           onClick={() => handleDeleteStudySet(studySet.id, studySet.creator)}
                                       >
+                                        <Trash2 size={isMobile ? 14 : 16} className="mr-1" />
                                         <span className="text-[14px]">Delete</span>
                                       </button>
                                     </div>
