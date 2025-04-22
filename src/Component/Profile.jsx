@@ -21,6 +21,8 @@ import {
   DialogContentText,
   DialogActions,
   IconButton,
+  Divider,
+  CircularProgress,
 } from "@mui/material"
 import { styled } from "@mui/material/styles"
 import { LogOut, Save, Upload, Users, UserCircle } from "lucide-react"
@@ -30,62 +32,76 @@ import brainToggleOff from '../assets/braintoggleoff.png'; // Import OFF image
 
 // Custom styled components following style guide
 const StyledTextField = styled(TextField)(({ theme }) => ({
-  "& .MuiOutlinedInput-root": {
-    color: "black",
-    fontSize: "1.2rem",
-    "& fieldset": {
-      borderColor: "rgba(0, 0, 0, 0.23)",
+  '& .MuiOutlinedInput-root': {
+    color: '#1D1D20', // Core Dark
+    fontSize: '1rem', // 16px Normal
+    fontFamily: 'Sour Gummy, sans-serif', // Explicit font
+    '& fieldset': {
+      borderColor: 'rgba(0, 0, 0, 0.23)', // Subtle border
     },
-    "&:hover fieldset": {
-      borderColor: "rgba(0, 0, 0, 0.5)",
+    '&:hover fieldset': {
+      borderColor: 'rgba(0, 0, 0, 0.5)', // Subtle hover border
     },
-    "&.Mui-focused fieldset": {
-      borderColor: "#1D6EF1",
+    '&.Mui-focused fieldset': {
+      borderColor: '#1D6EF1', // Water 2 / Sea 1
     },
   },
-  "& .MuiInputLabel-root": {
-    color: "rgba(0, 0, 0, 0.7)",
-    fontSize: "1.1rem",
-    fontWeight: 500,
+  '& .MuiInputLabel-root': {
+    color: '#1D1D20', // Core Dark
+    opacity: 0.9,
+    fontSize: '0.875rem', // 14px Normal for labels
+    fontWeight: 400, // Normal weight
+    fontFamily: 'Sour Gummy, sans-serif', // Explicit font
   },
-}))
+}));
 
-const SaveButton = styled(Button)({
-  backgroundColor: "#5B8C5A",
-  color: "white",
-  fontSize: "1.1rem",
-  fontWeight: 600,
-  "&:hover": {
-    backgroundColor: "#48BB78",
-  },
-})
+const BaseButton = styled(Button)(({ theme }) => ({
+  color: '#F4FDFF', // Core Light text
+  fontSize: '0.875rem', // 14px Normal base size
+  fontWeight: 600, // Semi Bold weight
+  fontFamily: 'Sour Gummy, sans-serif', // Explicit font
+  textTransform: 'none', // Keep text case as is
+  borderRadius: '8px', // Consistent rounding
+  padding: '6px 16px', // Standard padding
+  transition: 'background-color 0.3s ease, transform 0.1s ease',
+  '&:active': {
+    transform: 'scale(0.98)', // Press effect
+  }
+}));
 
-const ActionButton = styled(Button)({
-  backgroundColor: "#1D6EF1",
-  color: "white",
-  fontSize: "1.1rem",
-  fontWeight: 600,
-  "&:hover": {
-    backgroundColor: "#1555BC",
+const SaveButton = styled(BaseButton)({
+  backgroundColor: '#5B8C5A', // Sea 2
+  '&:hover': {
+    backgroundColor: '#48BB78', // Confirm Green
   },
-})
+});
 
-const LogoutButton = styled(Button)({
-  backgroundColor: "#DC2626",
-  color: "white",
-  "&:hover": {
-    backgroundColor: "#B91C1C",
+const ActionButton = styled(BaseButton)({
+  backgroundColor: '#1D6EF1', // Water 2 / Sea 1
+  fontSize: '1rem', // 16px Normal for primary actions
+  '&:hover': {
+    backgroundColor: '#1555BC', // Slightly darker Water 2
   },
-})
+});
 
-const DeleteAccountButton = styled(Button)({
-  backgroundColor: "#991B1B",
-  color: "white",
-  marginTop: "1rem",
-  "&:hover": {
-    backgroundColor: "#7F1D1D",
+const LogoutButton = styled(BaseButton)({
+  backgroundColor: '#EF7B6C', // Danger Red
+  '&:hover': {
+    backgroundColor: '#B91C1C', // Slightly darker Danger Red
   },
-})
+});
+
+const DeleteAccountButton = styled(BaseButton)({
+  backgroundColor: '#DC2626', // Danger Red
+  marginTop: '1rem',
+  '&:hover': {
+    backgroundColor: '#B91C1C', // Slightly darker Danger Red
+  },
+  '&.Mui-disabled': {
+    backgroundColor: 'rgba(220, 38, 38, 0.5)', // Consistent disabled style
+    color: 'rgba(244, 253, 255, 0.7)',
+  }
+});
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
@@ -326,13 +342,13 @@ export default function Profile({ setLoggedIn }) {
           const studySetId = content.studySetId || (log.attributes && log.attributes.studySetId)
           const studySetTitle = content.studySetTitle || content.name || "Unknown Set"
 
-          if (!duration) {
-            console.warn("Log missing duration:", content)
+          if (!duration || isNaN(duration)) {
+            console.warn("Log missing or invalid duration:", content)
             return
           }
 
           console.log("Adding duration:", duration, "for set:", studySetTitle)
-          totalTime += duration
+          totalTime += Number(duration)
 
           if (studySetId) {
             const key = studySetId.toString()
@@ -341,17 +357,19 @@ export default function Profile({ setLoggedIn }) {
                 id: studySetId,
                 title: studySetTitle,
                 totalTime: 0,
-                lastStudied: content.timestamp || new Date().toISOString(),
+                lastStudied: content.timestamp || log.createdAt || new Date().toISOString(),
               })
             }
 
             const stats = setStats.get(key)
-            stats.totalTime += duration
+            stats.totalTime += Number(duration)
+
+            const logTimestamp = content.timestamp || log.createdAt
             if (
-              content.timestamp &&
-              (!stats.lastStudied || new Date(content.timestamp) > new Date(stats.lastStudied))
+              logTimestamp &&
+              (!stats.lastStudied || new Date(logTimestamp) > new Date(stats.lastStudied))
             ) {
-              stats.lastStudied = content.timestamp
+              stats.lastStudied = logTimestamp
             }
           }
         } catch (parseError) {
@@ -365,11 +383,19 @@ export default function Profile({ setLoggedIn }) {
 
       console.log("Final processed stats:", { totalTime, recentSets })
 
-      // Step 1: Normalize dates to YYYY-MM-DD (remove time) and use Set to avoid duplicates
       const normalizeDate = (isoString) => {
-        const date = new Date(isoString)
-        date.setHours(0, 0, 0, 0)
-        return date.getTime()
+        try {
+          const date = new Date(isoString);
+          if (isNaN(date.getTime())) {
+              console.warn("Invalid date string for normalization:", isoString);
+              return null;
+          }
+          date.setHours(0, 0, 0, 0);
+          return date.getTime();
+        } catch (e) {
+           console.warn("Error normalizing date:", isoString, e);
+           return null;
+        }
       }
 
       const uniqueStudyDates = new Set(
@@ -384,12 +410,11 @@ export default function Profile({ setLoggedIn }) {
           })
           .filter(Boolean)
           .map(normalizeDate)
+          .filter(Boolean)
       )
 
-      // Step 2: Sort dates from newest to oldest
       const sortedDates = Array.from(uniqueStudyDates).sort((a, b) => b - a)
 
-      // Step 3: Calculate current streak
       let streak = 0
       let current = new Date()
       current.setHours(0, 0, 0, 0)
@@ -435,7 +460,7 @@ export default function Profile({ setLoggedIn }) {
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
+    const remainingSeconds = Math.round(seconds % 60)
 
     if (hours > 0) {
       return `${hours}h ${minutes}m ${remainingSeconds}s`
@@ -447,7 +472,14 @@ export default function Profile({ setLoggedIn }) {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString()
+    try {
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: 'numeric', month: 'short', day: 'numeric'
+        });
+    } catch (e) {
+        console.warn("Error formatting date:", dateString, e);
+        return "Invalid Date";
+    }
   }
 
   const handleSaveUsername = async () => {
@@ -468,6 +500,15 @@ export default function Profile({ setLoggedIn }) {
         return
       }
 
+      if (username.length > 20) {
+        setNotification({
+          open: true,
+          message: "Username cannot exceed 20 characters",
+          severity: "error",
+        })
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
         method: "PATCH",
         headers: {
@@ -485,13 +526,11 @@ export default function Profile({ setLoggedIn }) {
         throw new Error("Failed to update username")
       }
 
-      // Update local state
       setUserData((prev) => ({
         ...prev,
         username: username,
       }))
 
-      // Store in session storage for easy access
       sessionStorage.setItem("username", username)
 
       setNotification({
@@ -510,7 +549,6 @@ export default function Profile({ setLoggedIn }) {
   }
 
   const handleLogout = () => {
-    // Implement the logic to log out the user
     console.log("Logging out")
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
@@ -519,6 +557,7 @@ export default function Profile({ setLoggedIn }) {
     sessionStorage.removeItem("firstname")
     sessionStorage.removeItem("lastname")
     sessionStorage.removeItem("email")
+    sessionStorage.removeItem("lastStreakPopupDate")
     setLoggedIn(false)
     navigate("/login")
   }
@@ -526,7 +565,6 @@ export default function Profile({ setLoggedIn }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0]
     if (file) {
-      // --- Add file size check ---
       const MAX_SIZE_KB = 74;
       const MAX_SIZE_BYTES = MAX_SIZE_KB * 1024;
 
@@ -536,20 +574,19 @@ export default function Profile({ setLoggedIn }) {
           message: `File size exceeds the ${MAX_SIZE_KB}KB limit.`,
           severity: "error",
         });
-        return; // Stop processing if file is too large
+        if(fileInputRef.current) {
+          fileInputRef.current.value = "";
       }
-      // --- End file size check ---
+        return;
+      }
 
-      // Store the current picture before attempting the update
       const oldProfilePic = profilePic;
 
       const reader = new FileReader()
       reader.onloadend = () => {
          const base64String = reader.result
-        // Optimistically update UI
         setProfilePic(base64String)
         sessionStorage.setItem("profilePicture", base64String)
-        // Pass both new and old picture data to the API function
         saveProfilePictureToAPI(base64String, oldProfilePic)
       }
       reader.readAsDataURL(file)
@@ -573,7 +610,7 @@ export default function Profile({ setLoggedIn }) {
         },
         body: JSON.stringify({
           attributes: {
-            picture: newBase64String, // Send the new picture
+            picture: newBase64String,
           },
         }),
       })
@@ -582,16 +619,13 @@ export default function Profile({ setLoggedIn }) {
         const errorData = await response.json();
         console.error("API Error Data:", errorData);
 
-        // --- Revert on API error ---
         setProfilePic(oldBase64String); 
         sessionStorage.setItem("profilePicture", oldBase64String);
         setUserData((prev) => ({ ...prev, picture: oldBase64String }));
-        // --- End Revert ---
 
         throw new Error(`Failed to update profile picture: ${errorData.message || response.statusText}`);
       }
 
-       // Optionally update userData state if necessary, though fetchUserData should handle it
       setUserData((prev) => ({ ...prev, picture: newBase64String }));
 
       setNotification({
@@ -601,11 +635,9 @@ export default function Profile({ setLoggedIn }) {
       })
 
     } catch (error) {
-      // --- Revert on fetch/other error ---
       setProfilePic(oldBase64String); 
       sessionStorage.setItem("profilePicture", oldBase64String);
       setUserData((prev) => ({ ...prev, picture: oldBase64String }));
-      // --- End Revert ---
 
       console.error("Error updating profile picture:", error)
       setNotification({
@@ -620,23 +652,26 @@ export default function Profile({ setLoggedIn }) {
     try {
       const token = sessionStorage.getItem("token")
       const userId = sessionStorage.getItem("user")
-      if (!userId) return
+      if (!userId || !token) return
       const response = await fetch(`${API_BASE_URL}/posts?type=study_set&authorID=${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (!response.ok) throw new Error("Failed to fetch study sets")
       const data = await response.json()
-      const parsedStudySets = data.map((set) => {
+      const studySets = data[0] || [];
+      const parsedStudySets = studySets.map((set) => {
         let studySetContent = {}
         try {
-          studySetContent = JSON.parse(set.content)
-        } catch {}
+          studySetContent = JSON.parse(set.content || '{}');
+        } catch (e) {
+            console.warn("Error parsing study set content:", e, set.content);
+        }
         return {
           id: set.id,
-          name: studySetContent?.name || "Unnamed Study Set",
+          name: studySetContent?.name || set.title || "Unnamed Study Set",
           communityId: set.attributes?.communityId || null,
         }
-      })
+      }).filter(set => set.id);
       setUploadedStudySets(parsedStudySets)
     } catch (error) {
       console.error("Error fetching study sets:", error)
@@ -649,26 +684,43 @@ export default function Profile({ setLoggedIn }) {
       const userStr = sessionStorage.getItem("user")
       if (!token || !userStr) return
   
-      const userId = typeof userStr === "string" && !isNaN(userStr) ? parseInt(userStr) : JSON.parse(userStr).id
+      let userId;
+      try {
+          const parsedUser = JSON.parse(userStr);
+          userId = typeof parsedUser === 'object' ? parsedUser.id : Number(userStr);
+      } catch (e) {
+           if (!isNaN(Number(userStr))) {
+               userId = Number(userStr);
+           } else {
+               throw new Error("Invalid user format in session storage");
+           }
+      }
+
+      if (!userId || isNaN(userId)) {
+          throw new Error("Could not extract valid user ID");
+      }
   
       const [groupsRes, membershipsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/groups`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_BASE_URL}/group-members?userID=${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
       ])
   
-      if (!groupsRes.ok || !membershipsRes.ok) throw new Error("Failed to fetch communities")
+      if (!groupsRes.ok || !membershipsRes.ok) throw new Error("Failed to fetch communities or memberships")
   
-      const allGroups = await groupsRes.json()
-      const memberships = await membershipsRes.json()
+      const allGroupsData = await groupsRes.json()
+      const membershipsData = await membershipsRes.json()
   
-      const joinedGroupIds = (memberships[0] || []).map((m) => m.groupID)
-      const myCommunities = (allGroups[0] || []).filter(
-        (group) => group.ownerID === userId || joinedGroupIds.includes(group.id)
-      )
+      const allGroups = allGroupsData[0] || [];
+      const memberships = membershipsData[0] || [];
   
-      setMyCommunities(myCommunities)
+      const joinedGroupIds = new Set(memberships.map((m) => m.groupID));
+      const myCommunities = allGroups.filter(
+        (group) => group.ownerID === userId || joinedGroupIds.has(group.id)
+      );
+  
+      setMyCommunities(myCommunities);
     } catch (error) {
-      console.error("Error fetching joined communities:", error)
+      console.error("Error fetching joined communities:", error);
     }
   }
   
@@ -683,7 +735,6 @@ export default function Profile({ setLoggedIn }) {
         throw new Error("User not authenticated")
       }
 
-      // Parse the user ID correctly
       let userId
       try {
         const parsed = JSON.parse(userStr)
@@ -704,7 +755,6 @@ export default function Profile({ setLoggedIn }) {
 
       console.log("Attempting to delete user with ID:", userId)
 
-      // First, delete all user's study sets
       const postsResponse = await fetch(`${API_BASE_URL}/posts?authorID=${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -713,11 +763,12 @@ export default function Profile({ setLoggedIn }) {
       })
 
       if (postsResponse.ok) {
-        const posts = await postsResponse.json()
-        console.log("Found posts to delete:", posts)
-        // Delete each study set
+        const postsData = await postsResponse.json()
+        const posts = postsData[0] || [];
+        console.log(`Found ${posts.length} posts to delete for user ${userId}`, posts)
         for (const post of posts) {
-          if (post.id) { // Only delete if post has an ID
+          if (post.id) {
+            console.log(`Deleting post ${post.id}...`);
             const deletePostResponse = await fetch(`${API_BASE_URL}/posts/${post.id}`, {
               method: "DELETE",
               headers: {
@@ -726,15 +777,20 @@ export default function Profile({ setLoggedIn }) {
               },
             })
             if (!deletePostResponse.ok) {
-              console.warn(`Failed to delete post ${post.id}:`, await deletePostResponse.text())
+              console.warn(`Failed to delete post ${post.id}: ${deletePostResponse.status}`, await deletePostResponse.text())
+            } else {
+              console.log(`Successfully deleted post ${post.id}`);
             }
+          } else {
+            console.warn("Found post without ID, skipping deletion:", post);
           }
         }
+      } else {
+         console.warn("Could not fetch user posts for deletion:", postsResponse.status);
       }
 
-      // Delete the user account
       console.log("Attempting to delete user account...")
-      const deleteResponse = await fetch(`${API_BASE_URL}/users/${userId}?relatedObjectsAction=delete`, {
+      const deleteUserResponse = await fetch(`${API_BASE_URL}/users/${userId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -742,25 +798,24 @@ export default function Profile({ setLoggedIn }) {
         }
       })
 
-      if (!deleteResponse.ok) {
-        const errorText = await deleteResponse.text()
-        console.error("Delete user response error:", errorText)
-        throw new Error(`Failed to delete account: ${errorText}`)
+      if (!deleteUserResponse.ok) {
+        const errorText = await deleteUserResponse.text()
+        console.error("Delete user response error:", deleteUserResponse.status, errorText)
+        throw new Error(`Failed to delete account: ${errorText || deleteUserResponse.statusText}`)
       }
 
-      // Clear all session storage and local storage
       sessionStorage.clear()
-      localStorage.clear()
+      localStorage.clear();
       
-      // Show success message
       setNotification({
         open: true,
         message: "Account successfully deleted",
         severity: "success",
       })
 
-      // Force a page reload to clear all state
-      window.location.href = "/register"
+      setTimeout(() => {
+        window.location.href = "/register";
+      }, 2000);
 
     } catch (error) {
       console.error("Error deleting account:", error)
@@ -775,13 +830,11 @@ export default function Profile({ setLoggedIn }) {
     }
   }
 
-  // --- Add handler for the toggle button ---
   const handleToggleProfilePics = () => {
     const newValue = !showProfilePics
     setShowProfilePics(newValue)
-    localStorage.setItem("showProfilePics", String(newValue)) // Store as string
+    localStorage.setItem("showProfilePics", String(newValue))
     
-    // Dispatch a storage event to notify other components
     window.dispatchEvent(new StorageEvent('storage', {
       key: 'showProfilePics',
       newValue: String(newValue),
@@ -795,7 +848,6 @@ export default function Profile({ setLoggedIn }) {
       severity: "info",
     })
   }
-  // --- End of added handler ---
 
   return (
     <Box
@@ -804,551 +856,581 @@ export default function Profile({ setLoggedIn }) {
         width: "100%",
         maxWidth: "100vw",
         overflowX: "hidden",
-        bgcolor: "#1b1b1b",
+        bgcolor: '#1D1D20',
         backgroundImage: `url(${currentBackground.image})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        py: 3,
+        backgroundAttachment: 'fixed',
+        py: { xs: 2, sm: 3, md: 4 },
         px: { xs: 1, sm: 2, md: 3 },
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
+        fontFamily: 'Sour Gummy, sans-serif',
       }}
     >
       <Container
         maxWidth="xl"
         sx={{
-          maxHeight: { xs: "100vh", sm: "90vh" },
+          maxHeight: { xs: "none", sm: "calc(100vh - 64px)" },
           overflowY: "auto",
           px: { xs: 1, sm: 2 },
-          pl: { xs: '50px', sm: 0 },
         }}
       >
-        <Stack spacing={2}>
-          {/* Top Row */}
+        <Stack spacing={3}>
           <Box
             sx={{
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
-              gap: 2,
+              gap: 3,
             }}
           >
-            {/* Profile Information */}
             <Card
               sx={{
-                bgcolor: "white",
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                bgcolor: '#F4FDFF',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 flex: 1,
                 width: "100%",
+                borderRadius: '16px',
+                height: '280px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: { xs: "column", sm: "row" },
-                    gap: 2,
-                    alignItems: "center",
-                    height: "100%",
-                    pl: { xs: 1, sm: 2, md: 4 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 0.5,
-                      pl: { xs: 0, sm: 2 },
-                    }}
-                  >
-                    {/* --- Updated Profile Picture Area --- */}
-                    {profilePic || userData.picture ? (
-                      <Box
-                        component="img"
-                        src={profilePic || userData.picture}
-                        alt="Profile"
-                        sx={{
-                          width: { xs: 80, sm: 100 },
-                          height: { xs: 80, sm: 100 },
-                          borderRadius: "50%",
-                          border: "3px solid #1D6EF1",
-                          cursor: "pointer",
-                          objectFit: "cover",
-                        }}
-                        onClick={() => fileInputRef.current.click()}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: { xs: 80, sm: 100 },
-                          height: { xs: 80, sm: 100 },
-                          borderRadius: "50%",
-                          border: "3px dashed #1D6EF1", // Dashed border for placeholder
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: "#f0f0f0", // Lighter grey background
-                          cursor: "pointer",
-                          color: "#bdbdbd", // Lighter grey icon color
-                          '&:hover': { // Add hover effect
-                            bgcolor: '#e0e0e0',
-                            color: '#757575',
-                          }
-                        }}
-                        onClick={() => fileInputRef.current.click()}
-                        title="Click to upload profile picture" // Add tooltip
-                      >
-                        <UserCircle size={isMobile ? 40 : 50} /> {/* Use UserCircle icon */}
-                      </Box>
-                    )}
-                    {/* --- End of Updated Profile Picture Area --- */}
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      style={{ display: "none" }}
-                    />
-                  </Box>
-                  <Box
-                    sx={{
-                      flex: 1,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                      width: "100%",
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        color: "#1D1D20",
-                        fontWeight: 800,
-                        fontSize: { xs: "1rem", sm: "1.1rem" },
-                        textAlign: "center",
-                      }}
-                    >
-                      Profile Information
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        alignItems: "center",
-                        width: "100%",
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          flexWrap: { xs: "wrap", sm: "nowrap" },
-                          justifyContent: { xs: "center", sm: "flex-start" },
-                          width: "100%",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#1D1D20",
-                            fontWeight: 500,
-                            textAlign: { xs: "center", sm: "left" },
-                          }}
-                        >
-                          Current Username:
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#1D1D20",
-                            textAlign: { xs: "center", sm: "left" },
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {userData.username || username}
-                        </Typography>
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          flexWrap: { xs: "wrap", sm: "nowrap" },
-                          justifyContent: { xs: "center", sm: "flex-start" },
-                          width: "100%",
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#1D1D20",
-                            fontWeight: 500,
-                            textAlign: { xs: "center", sm: "left" },
-                          }}
-                        >
-                          Email:
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#1D1D20",
-                            textAlign: { xs: "center", sm: "left" },
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {userData.email || email}
-                        </Typography>
-                      </Box>
-                      <LogoutButton
-                        startIcon={<LogOut size={16} />}
-                        onClick={handleLogout}
-                        sx={{
-                          height: "32px",
-                          fontSize: "0.9rem",
-                          mt: { xs: 1, sm: 0 },
-                        }}
-                      >
-                        Logout
-                      </LogoutButton>
-                      <DeleteAccountButton
-                        onClick={() => setShowDeleteConfirm(true)}
-                        disabled={isDeleting}
-                        sx={{
-                          height: "32px",
-                          fontSize: "0.9rem",
-                          mt: 1,
-                        }}
-                      >
-                        Delete Account
-                      </DeleteAccountButton>
-                    </Box>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-
-            {/* Profile Actions */}
-            <Card
-              sx={{
-                bgcolor: "white",
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                flex: 1,
-                width: "100%",
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography
                   variant="h6"
                   sx={{
-                    color: "#1D1D20",
-                    fontWeight: 800,
-                    fontSize: { xs: "1rem", sm: "1.1rem" },
+                    color: '#1D1D20',
+                    fontWeight: 600,
+                    fontSize: '1.25rem',
                     mb: 1,
                     textAlign: "center",
+                    fontFamily: 'Sour Gummy, sans-serif',
+                    width: "100%",
+                    flexShrink: 0,
+                  }}
+                >
+                  Profile Information
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    width: '100%',
+                    mb: 2,
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      color: '#1D1D20',
+                      fontWeight: 600,
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      textAlign: 'center',
+                      fontFamily: 'Sour Gummy, sans-serif',
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {userData.name}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      width: '100%',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: 0.5,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: '#1D1D20',
+                          fontWeight: 400,
+                          fontSize: '0.875rem',
+                          textAlign: "center",
+                          fontFamily: 'Sour Gummy, sans-serif',
+                        }}
+                      >
+                        Username:
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: '#1D1D20',
+                          fontWeight: 600,
+                          fontSize: '0.875rem',
+                          textAlign: "center",
+                          wordBreak: "break-word",
+                          fontFamily: 'Sour Gummy, sans-serif',
+                        }}
+                      >
+                        {userData.username || username}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: 0.5,
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: '#1D1D20',
+                          fontWeight: 400,
+                          fontSize: '0.875rem',
+                          textAlign: "center",
+                          fontFamily: 'Sour Gummy, sans-serif',
+                        }}
+                      >
+                        Email:
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          color: '#1D1D20',
+                          fontWeight: 600,
+                          fontSize: '0.875rem',
+                          textAlign: "center",
+                          wordBreak: "break-word",
+                          fontFamily: 'Sour Gummy, sans-serif',
+                        }}
+                      >
+                        {userData.email || email}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 'auto',
+                  }}
+                >
+                  {profilePic || userData.picture ? (
+                    <Box
+                      component="img"
+                      src={profilePic || userData.picture}
+                      alt="Profile"
+                      sx={{
+                        width: { xs: 60, sm: 80, md: 90 },
+                        height: { xs: 60, sm: 80, md: 90 },
+                        borderRadius: "50%",
+                        border: '3px solid #1D6EF1',
+                        cursor: "pointer",
+                        objectFit: "cover",
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                      }}
+                      onClick={() => fileInputRef.current.click()}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: { xs: 60, sm: 80, md: 90 },
+                        height: { xs: 60, sm: 80, md: 90 },
+                        borderRadius: "50%",
+                        border: '3px dashed #1D6EF1',
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: '#C5EDFD',
+                        cursor: "pointer",
+                        color: '#1D6EF1',
+                        transition: 'background-color 0.2s, color 0.2s',
+                        '&:hover': {
+                          bgcolor: '#97C7F1',
+                          color: '#1555BC',
+                        }
+                      }}
+                      onClick={() => fileInputRef.current.click()}
+                      title="Click to upload profile picture"
+                    >
+                      <UserCircle size={isMobile ? 30 : isTablet ? 40 : 50} />
+                    </Box>
+                  )}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/png, image/jpeg, image/gif"
+                    style={{ display: "none" }}
+                  />
+                </Box>
+
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{
+                    mt: 'auto',
+                    pt: 1,
+                    alignSelf: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <LogoutButton
+                    startIcon={<LogOut size={16} />}
+                    onClick={handleLogout}
+                    size="small"
+                  >
+                    Logout
+                  </LogoutButton>
+                  <DeleteAccountButton
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={isDeleting}
+                    size="small"
+                  >
+                    Delete Account
+                  </DeleteAccountButton>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card
+              sx={{
+                bgcolor: '#F4FDFF',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                flex: 1,
+                width: "100%",
+                borderRadius: '16px',
+                height: '280px',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: '#1D1D20',
+                    fontWeight: 600,
+                    fontSize: '1.25rem',
+                    mb: 2,
+                    textAlign: "center",
+                    fontFamily: 'Sour Gummy, sans-serif',
                   }}
                 >
                   Profile Actions
                 </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    justifyContent: "center",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      flexDirection: { xs: "column", sm: "row" },
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: "#1D1D20",
-                        fontWeight: 500,
-                        textAlign: { xs: "center", sm: "left" },
-                      }}
-                    >
-                      New Username:
-                    </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="center" mb={3}>
                     <StyledTextField
+                    label="New Username"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       inputProps={{ maxLength: 20 }}
                       size="small"
                       sx={{
-                        width: { xs: "100%", sm: "150px" },
-                        "& .MuiOutlinedInput-root": {
-                          fontSize: { xs: "1rem", sm: "1.2rem" },
-                        },
+                      width: { xs: "100%", sm: "200px" },
                       }}
+                    variant="outlined"
                     />
-                  </Box>
                   <SaveButton
                     startIcon={<Save size={16} />}
                     onClick={handleSaveUsername}
-                    sx={{
-                      height: "32px",
-                      fontSize: "0.9rem",
-                      mt: { xs: 1, sm: 0 },
-                    }}
+                    size="medium"
                   >
-                    Save
+                    Save Username
                   </SaveButton>
-                </Box>
-                {/* --- Add Profile Picture Toggle Action Inside Profile Actions --- */}
-                <Box sx={{ mt: 3, textAlign: 'center' }}> {/* Add margin top and center align */} 
+                </Stack>
+
+                <Box sx={{ textAlign: 'center', mt: -2 }}>
                   <Typography
-                    variant="h6" // Match title style
+                    variant="h6"
                     sx={{
-                      color: "#1D1D20",
-                      fontWeight: 800,
-                      fontSize: { xs: "1rem", sm: "1.1rem" },
+                      color: '#1D1D20',
+                      fontWeight: 600,
+                      fontSize: '1rem',
                       mb: 1,
                       textAlign: "center",
+                      fontFamily: 'Sour Gummy, sans-serif',
                     }}
                   >
-                    Show Profile Pictures
+                    Toggle Picture Visibility
                   </Typography>
                   <IconButton onClick={handleToggleProfilePics} aria-label="toggle profile picture visibility">
                     <img
                       src={showProfilePics ? brainToggleOn : brainToggleOff}
                       alt={showProfilePics ? "Profile pictures on" : "Profile pictures off"}
-                      style={{ width: '100px', height: '100px' }}
+                      style={{ width: '80px', height: '80px' }}
                     />
                   </IconButton>
                 </Box>
-                {/* --- End of Added Section --- */}
               </CardContent>
             </Card>
 
-            {/* Streak Box */}
             <Card
               sx={{
-                bgcolor: "white",
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                bgcolor: '#F4FDFF',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 flex: 1,
                 width: "100%",
-                display: { xs: "none", md: "block" }, // Hide on mobile to save space
+                borderRadius: '16px',
+                height: '280px',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
-              <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: "#1D1D20",
-                    mb: 1,
-                    fontWeight: "bold",
-                    fontSize: { xs: "1rem", sm: "1.1rem" },
-                    textAlign: "center",
-                  }}
-                >
-                  Current Streak
-                </Typography>
-                <Box sx={{ textAlign: "center", py: 0.5 }}>
-                <Typography
-                    sx={{
-                      fontSize: { xs: "1.75rem", sm: "2rem" },
-                      fontWeight: "bold",
-                      color: "#1D6EF1",
-                    }}
-                  >
-                    {studyStats.streak ?? 0} day{studyStats.streak === 1 ? "" : "s"}
-                    {studyStats.streak >= 5 && "🔥".repeat(Math.floor(studyStats.streak / 5))}
-                  </Typography>
+              <CardContent sx={{ p: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <Box sx={{ textAlign: "center" }}>
                   <Typography
+                    variant="h6"
                     sx={{
-                      fontSize: { xs: "0.875rem", sm: "1rem" },
-                      color: "#4B5563",
-                      mt: 0.5,
+                      color: '#1D1D20',
+                      fontWeight: 600,
+                      fontSize: '1.25rem',
+                      textAlign: "center",
+                      fontFamily: 'Sour Gummy, sans-serif',
+                      mb: 2,
                     }}
                   >
-                    Keep it up!
+                    Current Streak
                   </Typography>
-
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography
+                      sx={{
+                        fontSize: '1.75rem',
+                        fontWeight: 600,
+                        color: '#1D6EF1',
+                        fontFamily: 'Sour Gummy, sans-serif',
+                        lineHeight: 1.1,
+                        mb: 1,
+                      }}
+                    >
+                      {studyStats.loading ? '...' : (studyStats.streak ?? 0)} day{studyStats.streak === 1 ? "" : "s"}
+                      {studyStats.streak >= 5 && ` 🔥`.repeat(Math.min(5, Math.floor(studyStats.streak / 5)))}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '1rem',
+                        color: '#1D1D20',
+                        mt: 0.5,
+                        fontFamily: 'Sour Gummy, sans-serif',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {studyStats.loading ? 'Calculating...' : 'Keep it up!'}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        color: '#1D1D20',
+                        mt: 1,
+                        fontFamily: 'Sour Gummy, sans-serif',
+                        opacity: 0.8,
+                      }}
+                    >
+                      {studyStats.streak > 0 ? `You've studied for ${studyStats.streak} day${studyStats.streak === 1 ? '' : 's'} in a row!` : 'Start your study streak today!'}
+                    </Typography>
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
           </Box>
 
-          {/* Bottom Row */}
           <Box
             sx={{
               display: "flex",
               flexDirection: { xs: "column", md: "row" },
-              gap: 2,
+              gap: 3,
             }}
           >
-            {/* Left Column */}
             <Stack
-              spacing={2}
+              spacing={3}
               sx={{
                 flex: 1,
                 width: "100%",
               }}
             >
-              {/* Quick Actions */}
               <Card
                 sx={{
-                  bgcolor: "white",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                  height: { xs: "auto", md: "calc(50% - 8px)" },
+                  bgcolor: '#F4FDFF',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '16px',
                 }}
               >
-                <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Typography
                     variant="h6"
                     sx={{
-                      color: "#1D1D20",
-                      mb: 1,
-                      fontWeight: "bold",
-                      fontSize: { xs: "1rem", sm: "1.1rem" },
-                      textAlign: { xs: "center", sm: "left" },
+                      color: '#1D1D20',
+                      fontWeight: 600,
+                      fontSize: '1.25rem',
+                      mb: 2,
+                      textAlign: "center",
+                      fontFamily: 'Sour Gummy, sans-serif',
                     }}
                   >
                     Quick Actions
                   </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 2,
-                      height: { xs: "auto", md: "calc(100% - 40px)" },
-                      justifyContent: "space-between",
-                      py: 2,
-                    }}
-                  >
+                  <Stack spacing={1} sx={{ py: 0.5, alignItems: 'center' }}>
                     <ActionButton
-                      startIcon={<Upload size={isMobile ? 16 : 20} />}
+                      startIcon={<Upload size={isMobile ? 16 : 18} />}
                       onClick={() => navigate("/upload")}
                       fullWidth
-                      sx={{
-                        height: { xs: "40px", sm: "48px" },
-                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                      }}
+                      size="small"
                     >
                       Upload Study Set
                     </ActionButton>
                     <ActionButton
-                      startIcon={<Users size={isMobile ? 16 : 20} />}
+                      startIcon={<Users size={isMobile ? 16 : 18} />}
                       onClick={() => navigate("/community")}
                       fullWidth
-                      sx={{
-                        height: { xs: "40px", sm: "48px" },
-                        fontSize: { xs: "0.9rem", sm: "1.1rem" },
-                      }}
+                      size="small"
                     >
-                      Join Community
+                      Explore Communities
                     </ActionButton>
-                  </Box>
+                  </Stack>
                 </CardContent>
               </Card>
 
-              {/* Communities */}
               <Card
                 sx={{
-                  bgcolor: "white",
-                  boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                  width: "100%",
+                  bgcolor: '#F4FDFF',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '16px',
+                  height: '200px',
+                  display: 'flex',
+                  flexDirection: 'column',
                 }}
               >
-                <CardContent sx={{ p: 2 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Typography
                     variant="h6"
                     sx={{
-                      color: "#1D1D20",
-                      fontWeight: 800,
-                      fontSize: "1.1rem",
-                      mb: 2,
+                      color: '#1D1D20',
+                      fontWeight: 600,
+                      fontSize: '1.25rem',
+                      mb: 1,
                       textAlign: "center",
+                      fontFamily: 'Sour Gummy, sans-serif',
                     }}
                   >
                     My Communities
                   </Typography>
-                  
+
                   {myCommunities.length > 0 ? (
+                    <Box sx={{ position: 'relative', flex: 1 }}>
                       <Box
-                      sx={{
-                        maxHeight: "300px",
-                        overflowY: "auto",
-                        pr: 1,
-                        pb: 4, // 👈 Add bottom padding
-                      }}
+                        sx={{
+                          maxHeight: "140px",
+                          overflowY: "auto",
+                          pr: 1,
+                          pb: 1,
+                          scrollBehavior: 'smooth',
+                          '&::-webkit-scrollbar': {
+                            width: '6px',
+                          },
+                          '&::-webkit-scrollbar-track': {
+                            background: '#F4FDFF',
+                            borderRadius: '4px',
+                          },
+                          '&::-webkit-scrollbar-thumb': {
+                            background: '#C5EDFD',
+                            borderRadius: '4px',
+                            '&:hover': {
+                              background: '#97C7F1',
+                            },
+                          },
+                        }}
                       >
-                    
-                      <Stack spacing={1}>
-                        {myCommunities.map((community) => (
-                          <Box
-                            key={community.id}
-                            sx={{
-                              backgroundColor: "#F9FAFB",
-                              border: "1px solid #E0E0E0",
-                              borderRadius: "8px",
-                              padding: "8px 12px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              height: "60px", // 👈 Compact height
-                            }}
-                          >
-                            <Box sx={{ flex: 1, overflow: "hidden" }}>
-                              <Typography
-                                variant="subtitle2"
-                                fontWeight={600}
-                                sx={{
-                                  fontSize: "0.95rem",
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
-                              >
-                                {community.name}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  fontSize: "0.75rem",
-                                }}
-                              >
-                                {community.attributes?.description || "No description"}
-                              </Typography>
-                            </Box>
-                            <Button
-                              variant="contained"
-                              size="small"
+                        <Stack spacing={1}>
+                          {myCommunities.map((community) => (
+                            <Box
+                              key={community.id}
                               sx={{
-                                fontSize: "0.7rem",
-                                padding: "4px 10px",
-                                ml: 2,
-                                backgroundColor: "#1D6EF1",
-                                minWidth: "unset",
+                                backgroundColor: '#C5EDFD',
+                                border: '1px solid #97C7F1',
+                                borderRadius: '12px',
+                                padding: "8px 12px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                minHeight: "50px",
+                                transition: 'background-color 0.2s',
+                                '&:hover': {
+                                  bgcolor: '#97C7F1',
+                                }
                               }}
-                              onClick={() => navigate(`/community/view/${community.id}`)}
                             >
-                              View
-                            </Button>
-                          </Box>
-                        ))}
-                      </Stack>
+                              <Box sx={{ flex: 1, overflow: "hidden", mr: 1 }}>
+                                <Typography
+                                  variant="body1"
+                                  fontWeight={600}
+                                  sx={{
+                                    fontSize: '1rem',
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    color: '#1D1D20',
+                                    fontFamily: 'Sour Gummy, sans-serif',
+                                    lineHeight: 1.3,
+                                  }}
+                                  title={community.name}
+                                >
+                                  {community.name}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    whiteSpace: "nowrap",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    fontSize: '0.875rem',
+                                    fontFamily: 'Sour Gummy, sans-serif',
+                                    lineHeight: 1.3,
+                                  }}
+                                  title={community.attributes?.description || "No description"}
+                                >
+                                  {community.attributes?.description || "No description"}
+                                </Typography>
+                              </Box>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  padding: "4px 10px",
+                                  ml: 1,
+                                  backgroundColor: '#1D6EF1',
+                                  minWidth: "60px",
+                                  color: '#F4FDFF',
+                                  fontFamily: 'Sour Gummy, sans-serif',
+                                  '&:hover': {
+                                    backgroundColor: '#1555BC',
+                                  },
+                                }}
+                                onClick={() => navigate(`/community/view/${community.id}`)}
+                              >
+                                View
+                              </Button>
+                            </Box>
+                          ))}
+                        </Stack>
+                      </Box>
                     </Box>
                   ) : (
-                    <Typography align="center" color="text.secondary" fontSize="0.9rem">
-                      You’re not part of any communities yet.
+                    <Typography align="center" color="text.secondary" fontSize="0.875rem" sx={{ fontFamily: 'Sour Gummy, sans-serif', py: 2 }}>
+                      You're not part of any communities yet.
                     </Typography>
                   )}
                 </CardContent>
@@ -1356,24 +1438,26 @@ export default function Profile({ setLoggedIn }) {
 
             </Stack>
 
-            {/* Right Column - Study Statistics */}
             <Card
               sx={{
-                bgcolor: "white",
-                boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                bgcolor: '#F4FDFF',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                borderRadius: '16px',
                 flex: 1,
                 width: "100%",
+                height: '415px',
               }}
             >
-              <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography
                   variant="h6"
                   sx={{
-                    color: "#1D1D20",
+                    color: '#1D1D20',
+                    fontWeight: 600,
+                    fontSize: '1.25rem',
                     mb: 1,
-                    fontWeight: "bold",
-                    fontSize: { xs: "1rem", sm: "1.1rem" },
-                    textAlign: { xs: "center", sm: "left" },
+                    textAlign: "center",
+                    fontFamily: 'Sour Gummy, sans-serif',
                   }}
                 >
                   Study Statistics
@@ -1384,59 +1468,46 @@ export default function Profile({ setLoggedIn }) {
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
-                      height: "16px",
-                      py: 2,
+                      height: "100px",
                     }}
                   >
-                    <Box
-                      sx={{
-                        animation: "spin 1s linear infinite",
-                        height: "8px",
-                        width: "8px",
-                        borderRadius: "50%",
-                        borderWidth: "2px",
-                        borderStyle: "solid",
-                        borderColor: "transparent",
-                        borderBottomColor: "gray",
-                        "@keyframes spin": {
-                          "0%": {
-                            transform: "rotate(0deg)",
-                          },
-                          "100%": {
-                            transform: "rotate(360deg)",
-                          },
-                        },
-                      }}
-                    />
+                    <CircularProgress size={30} sx={{ color: '#1D6EF1' }} />
+                    <Typography sx={{ ml: 1.5, fontFamily: 'Sour Gummy, sans-serif', color: '#1D1D20' }}>Loading Stats...</Typography>
                   </Box>
                 ) : studyStats.error ? (
                   <Typography
                     sx={{
-                      color: "red",
+                      color: '#DC2626',
                       textAlign: "center",
-                      fontSize: { xs: "0.875rem", sm: "1rem" },
+                      fontSize: '0.875rem',
+                      fontFamily: 'Sour Gummy, sans-serif',
+                      py: 1,
                     }}
                   >
                     {studyStats.error}
                   </Typography>
                 ) : (
-                  <Box>
-                    <Box sx={{ mb: 2 }}>
+                  <Stack spacing={1.5}>
+                    <Box sx={{ textAlign: 'center' }}>
                       <Typography
                         sx={{
-                          fontSize: { xs: "1rem", sm: "1.125rem" },
+                          fontSize: '1rem',
+                          fontWeight: 400,
                           mb: 0.5,
-                          textAlign: { xs: "center", sm: "left" },
+                          textAlign: "center",
+                          color: '#1D1D20',
+                          fontFamily: 'Sour Gummy, sans-serif',
                         }}
                       >
                         Total Study Time
                       </Typography>
                       <Typography
                         sx={{
-                          fontSize: { xs: "1.5rem", sm: "1.75rem" },
-                          fontWeight: "bold",
-                          color: "#1D6EF1",
-                          textAlign: { xs: "center", sm: "left" },
+                          fontSize: '1.75rem',
+                          fontWeight: 600,
+                          color: '#1D6EF1',
+                          textAlign: "center",
+                          fontFamily: 'Sour Gummy, sans-serif',
                         }}
                       >
                         {formatTime(studyStats.totalTime)}
@@ -1444,12 +1515,15 @@ export default function Profile({ setLoggedIn }) {
                     </Box>
 
                     {studyStats.recentSets.length > 0 && (
-                      <Box>
+                      <Box sx={{ textAlign: 'center' }}>
                         <Typography
                           sx={{
-                            fontSize: { xs: "1rem", sm: "1.125rem" },
+                            fontSize: '1rem',
+                            fontWeight: 400,
                             mb: 1,
-                            textAlign: { xs: "center", sm: "left" },
+                            textAlign: "center",
+                            color: '#1D1D20',
+                            fontFamily: 'Sour Gummy, sans-serif',
                           }}
                         >
                           Recently Studied Sets
@@ -1459,25 +1533,29 @@ export default function Profile({ setLoggedIn }) {
                             <Box
                               key={set.id}
                               sx={{
-                                bgcolor: "#C5EDFD",
-                                p: { xs: 1.5, sm: 2 },
-                                borderRadius: 1,
+                                bgcolor: '#C5EDFD',
+                                p: { xs: 1, sm: 1.25 },
+                                borderRadius: '12px',
                                 cursor: "pointer",
-                                transition: "background-color 0.2s",
-                                "&:hover": {
-                                  bgcolor: "#97C7F1",
+                                transition: "background-color 0.2s, transform 0.1s ease",
+                                '&:hover': {
+                                  bgcolor: '#97C7F1',
                                 },
                               }}
+                              onClick={() => navigate(`/study/${set.id}`)}
                             >
                               <Typography
                                 sx={{
                                   fontWeight: 600,
-                                  color: "#1D1D20",
-                                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                                  color: '#1D1D20',
+                                  fontSize: '0.875rem',
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
+                                  fontFamily: 'Sour Gummy, sans-serif',
+                                  mb: 0.5,
                                 }}
+                                title={set.title}
                               >
                                 {set.title}
                               </Typography>
@@ -1485,23 +1563,24 @@ export default function Profile({ setLoggedIn }) {
                                 sx={{
                                   display: "flex",
                                   justifyContent: "space-between",
-                                  mt: 0.5,
                                   flexDirection: { xs: "column", sm: "row" },
-                                  gap: { xs: 0.5, sm: 0 },
+                                  gap: { xs: 0.5, sm: 1 },
                                 }}
                               >
                                 <Typography
                                   sx={{
-                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                                    color: "#1D1D20",
+                                    fontSize: '0.75rem',
+                                    color: '#1D1D20',
+                                    fontFamily: 'Sour Gummy, sans-serif',
                                   }}
                                 >
                                   Time: {formatTime(set.totalTime)}
                                 </Typography>
                                 <Typography
                                   sx={{
-                                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                                    color: "#1D1D20",
+                                    fontSize: '0.75rem',
+                                    color: '#1D1D20',
+                                    fontFamily: 'Sour Gummy, sans-serif',
                                   }}
                                 >
                                   Last: {formatDate(set.lastStudied)}
@@ -1512,7 +1591,7 @@ export default function Profile({ setLoggedIn }) {
                         </Stack>
                       </Box>
                     )}
-                  </Box>
+                  </Stack>
                 )}
               </CardContent>
             </Card>
@@ -1520,10 +1599,9 @@ export default function Profile({ setLoggedIn }) {
         </Stack>
       </Container>
 
-      {/* Notification */}
       <Snackbar
         open={notification.open}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={() => setNotification({ ...notification, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
@@ -1531,10 +1609,12 @@ export default function Profile({ setLoggedIn }) {
           onClose={() => setNotification({ ...notification, open: false })}
           severity={notification.severity}
           variant="filled"
+          sx={{ fontFamily: 'Sour Gummy, sans-serif', fontWeight: 600 }}
         >
           {notification.message}
         </Alert>
       </Snackbar>
+
             <Snackbar
         open={streakPopup.open}
         autoHideDuration={5000}
@@ -1545,29 +1625,51 @@ export default function Profile({ setLoggedIn }) {
           onClose={() => setStreakPopup({ ...streakPopup, open: false })}
           severity="success"
           variant="filled"
-          sx={{ fontWeight: 600 }}
+          sx={{ fontFamily: 'Sour Gummy, sans-serif', fontWeight: 600 }}
         >
           {streakPopup.message}
         </Alert>
       </Snackbar>
 
-      {/* Delete Account Confirmation Dialog */}
       <Dialog
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
+        PaperProps={{ sx: { borderRadius: '16px', bgcolor: '#F4FDFF', fontFamily: 'Sour Gummy, sans-serif' } }}
       >
-        <DialogTitle>Delete Account</DialogTitle>
+        <DialogTitle sx={{ color: '#1D1D20', fontWeight: 600, fontSize: '1.5rem', fontFamily: 'Sour Gummy, sans-serif' }}>
+            Confirm Account Deletion
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: '#1D1D20', fontSize: '1rem', fontFamily: 'Sour Gummy, sans-serif' }}>
             Are you sure you want to delete your account? This action cannot be undone.
-            All your study sets and data will be permanently deleted.
+            All your study sets, progress, and other data will be permanently deleted.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+        <DialogActions sx={{ p: '16px 24px', justifyContent: 'space-between' }}>
+           <Button
+             onClick={() => setShowDeleteConfirm(false)}
+             sx={{
+                 color: '#1D6EF1',
+                 fontSize: '0.875rem',
+                 fontWeight: 600,
+                 fontFamily: 'Sour Gummy, sans-serif',
+                 textTransform: 'none',
+                 '&:hover': { bgcolor: 'rgba(29, 110, 241, 0.1)'}
+            }}
+          >
+             Cancel
+          </Button>
           <Button
             onClick={handleDeleteAccount}
-            color="error"
+            sx={{
+                 color: '#DC2626',
+                 fontSize: '0.875rem',
+                 fontWeight: 600,
+                 fontFamily: 'Sour Gummy, sans-serif',
+                 textTransform: 'none',
+                 '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.1)'},
+                 '&.Mui-disabled': { color: 'rgba(220, 38, 38, 0.5)' }
+            }}
             disabled={isDeleting}
           >
             {isDeleting ? "Deleting..." : "Delete Account"}
