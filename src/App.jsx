@@ -59,6 +59,12 @@ import LanguageSelectionPage from "./Component/LanguageSelectionPage" // Create 
 // Create Background Context
 export const BackgroundContext = createContext()
 
+
+export function getSelectedLanguage() {
+  // fall back to “English” if nothing’s been saved yet
+  return localStorage.getItem("selectedLanguage") || "English";
+}
+
 // Styled component for background thumbnails
 const BackgroundThumbnail = styled(Box)(({ selected }) => ({
   width: "100%",

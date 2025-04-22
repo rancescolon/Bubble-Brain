@@ -1,7 +1,8 @@
 "use client"
 //The code for the homepage was assisted with the help of ChatGPT
 import { useEffect, useState, useRef, useContext } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import {json, Link, useNavigate} from "react-router-dom"
+import text from "../text.json"
 import {
   AppBar,
   Alert,
@@ -33,6 +34,12 @@ import { BackgroundContext } from "../App"
 import CreatePost from "./CreatePost"
 import PostFeed from "./PostFeed"
 import { useShop } from "../Context/ShopContext"
+
+import LanguageContext from "./../App"
+import { getSelectedLanguage } from "../App";
+
+console.log("Selected language from context:", getSelectedLanguage());
+
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -69,7 +76,11 @@ const MOCK_USERS = [
 ]
 
 const HomePage = () => {
-  const { currentBackground } = useContext(BackgroundContext);
+
+  const { currentBackground, language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const homeText = text[langKey].homePage;
+
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
   const [showGuide, setShowGuide] = useState(true)
@@ -87,14 +98,14 @@ const HomePage = () => {
   // Add effect to refresh skin data on initial load
   useEffect(() => {
     const token = sessionStorage.getItem("token");
-    
+
     // Only run once when component mounts and we have a logged-in user
     if (token && userId && !hasRefreshedDataRef.current) {
       console.log("[HomePage] First load after login, refreshing skin data");
-      
+
       // Set ref to prevent multiple refreshes
       hasRefreshedDataRef.current = true;
-      
+
       // Force refresh shop data (same as what happens in the Shop page)
       refreshUserData().then(success => {
         if (success) {
@@ -120,7 +131,7 @@ const HomePage = () => {
 
   // Adjust initial Y position for mobile
   const initialX = isMobile ? 100 : 50;
-  const initialY = isMobile ? -75 : 5; 
+  const initialY = isMobile ? -75 : 5;
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
@@ -136,7 +147,7 @@ const HomePage = () => {
   useEffect(() => {
     const storedSetting = localStorage.getItem("showProfilePics");
     setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
-    
+
     // Add event listener to detect changes to localStorage
     const handleStorageChange = (e) => {
       if (e.key === "showProfilePics") {
@@ -149,10 +160,10 @@ const HomePage = () => {
         // }
       }
     };
-    
+
     window.addEventListener("storage", handleStorageChange);
     console.log('Added storage event listener for showProfilePics');
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       console.log('Removed storage event listener for showProfilePics');
@@ -539,7 +550,7 @@ const HomePage = () => {
       combinedUser.avatar ||
       combinedUser.profilePicture ||
       null
-    
+
     // Try to prioritize URL-like pictures
     let pictureUrl = null;
     const topLevelPic = combinedUser.picture || combinedUser.avatar; // Combine potential top-level names
@@ -682,12 +693,12 @@ const HomePage = () => {
           console.error("Error fetching data:", error)
         }
       }
-      
+
       fetchData()
-      
+
       // Set up polling every 30 seconds
       const intervalId = setInterval(fetchData, 30000)
-      
+
       // Cleanup on unmount
       return () => clearInterval(intervalId)
     }
@@ -763,10 +774,10 @@ const HomePage = () => {
 
           // Get user display name from attributes
           let displayName = extractUserDisplayName(user)
-          
+
           // --- Extract avatar/profile picture using prioritization ---
           let pictureUrl = null;
-          const topLevelPic = user.picture || user.avatar; 
+          const topLevelPic = user.picture || user.avatar;
           const attributePic = user.attributes?.picture || user.attributes?.profilePicture;
 
           if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
@@ -796,7 +807,7 @@ const HomePage = () => {
       })
 
       const leaderboardResults = (await Promise.all(leaderboardPromises)).filter(Boolean)
-      
+
       if (!leaderboardResults || leaderboardResults.length === 0) {
         console.error("No valid leaderboard results found")
         setLeaderboardData([])
@@ -820,7 +831,7 @@ const HomePage = () => {
   const fetchUserStats = async () => {
     setLoadingUserStats(true)
     const token = sessionStorage.getItem("token")
-    
+
     if (!token) {
       setLoadingUserStats(false)
       return
@@ -868,7 +879,7 @@ const HomePage = () => {
               },
             }
           )
-          
+
           if (!studySessionsResponse.ok) {
             console.error(`Failed to fetch study sessions for user ${userId}: ${studySessionsResponse.status}`)
             return null
@@ -883,23 +894,23 @@ const HomePage = () => {
           let longestSession = 0;
           let sessionCount = studySessions.length;
           let todaySessionCount = 0;
-          
+
           // Get today's date (midnight) for comparing sessions
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const todayTimestamp = today.getTime();
-          
+
           // Process study sessions
           studySessions.forEach(session => {
             try {
               const content = typeof session.content === 'string' ? JSON.parse(session.content) : session.content
-              
+
               // Check session duration and add to total
               if (content && content.duration && !isNaN(content.duration)) {
                 const duration = Number(content.duration);
                 longestSession = Math.max(longestSession, duration);
               }
-              
+
               // Check if session was today
               if (content && content.startTime) {
                 try {
@@ -923,9 +934,9 @@ const HomePage = () => {
             }
           })
 
-          // Get user display name 
+          // Get user display name
           let displayName = extractUserDisplayName(user)
-          
+
           // --- Extract avatar/profile picture using prioritization ---
           let pictureUrl = null;
           const topLevelPic = user.picture || user.avatar;
@@ -961,7 +972,7 @@ const HomePage = () => {
 
       // Wait for all user stats to be processed
       let statsResults = (await Promise.all(statsPromises)).filter(Boolean)
-      
+
       if (!statsResults || statsResults.length === 0) {
         console.error("No valid user statistics found")
         setUserStats([])
@@ -969,21 +980,21 @@ const HomePage = () => {
       }
 
       console.log(`Found ${statsResults.length} users with valid statistics`)
-      
+
       // Find the top user for each stat category
       const topMarathon = findTopUserForStat(statsResults, 'longestSession', 'marathon')
       const topSessions = findTopUserForStat(statsResults, 'sessionCount', 'studySessions')
       const topTodaySessions = findTopUserForStat(statsResults, 'todaySessionCount', 'todaySessions')
-      
+
       // Combine all top users, ensuring we have all 3 badges
       let finalStats = [
-        topMarathon, 
-        topSessions, 
+        topMarathon,
+        topSessions,
         topTodaySessions
       ].filter(Boolean) // Remove any null values
-      
+
       console.log("Final user achievements:", finalStats)
-      
+
       // Set the state with our final statistics
       setUserStats(finalStats)
     } catch (error) {
@@ -1025,7 +1036,7 @@ const HomePage = () => {
         statValue = user.todaySessionCount || 0;
         break;
     }
-    
+
     return {
       id: `${user.id}-${statType}`,
       name: user.name,
@@ -1041,20 +1052,20 @@ const HomePage = () => {
 
     // Sort users by the stat value in descending order
     const sortedUsers = [...users].sort((a, b) => b[statKey] - a[statKey]);
-    
+
     console.log(`Sorted ${sortedUsers.length} users for ${statType}`);
-    
+
     // Take the top user for this stat
     const topUser = sortedUsers[0];
-    
+
     // If no user found, return null
     if (!topUser) {
       console.warn(`No top user found for ${statType}`);
       return null;
     }
-    
+
     console.log(`Top user for ${statType}: ${topUser.name} with value ${topUser[statKey]}`);
-    
+
     // Return formatted stat object
     return {
       id: topUser.id,
@@ -1068,11 +1079,11 @@ const HomePage = () => {
   // Helper function to extract user display name from user object
   const extractUserDisplayName = (user) => {
     if (!user) return "Anonymous User"
-    
+
     // Try to get username from different possible locations
     if (user.attributes?.username) return user.attributes.username
     if (user.username) return user.username
-    
+
     // Try to construct name from first and last name
     if (user.attributes?.firstName && user.attributes?.lastName) {
       return `${user.attributes.firstName} ${user.attributes.lastName}`
@@ -1080,11 +1091,11 @@ const HomePage = () => {
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`
     }
-    
+
     // Try to extract name from email
     if (user.attributes?.email) return user.attributes.email.split('@')[0]
     if (user.email) return user.email.split('@')[0]
-    
+
     // Final fallback
     return "Anonymous User"
   }
@@ -1120,7 +1131,7 @@ const HomePage = () => {
   // Helper function to format the stat value based on its type
   const formatStatValue = (statType, value) => {
     if (value === undefined || value === null) return "N/A";
-    
+
     switch (statType) {
       case 'marathon':
         // Convert seconds to minutes for readability
@@ -1245,9 +1256,9 @@ const HomePage = () => {
   useEffect(() => {
     const token = sessionStorage.getItem("token")
     const userStr = sessionStorage.getItem("user")
-  
+
     if (!token || !userStr) return
-  
+
     // Streak check (once per day)
     const showStreakPopupIfNeeded = async () => {
       try {
@@ -1256,12 +1267,12 @@ const HomePage = () => {
         const postsRes = await fetch(`${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-  
+
         if (!postsRes.ok) return
-  
+
         const postsData = await postsRes.json()
         const posts = postsData[0] || []
-  
+
         // Filter unique days
         const uniqueDays = new Set(
           posts.map(post => {
@@ -1276,16 +1287,16 @@ const HomePage = () => {
             }
           }).filter(Boolean)
         )
-  
+
         // Sort by most recent
         const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a)
-  
+
         // Calculate streak (daily or 5-minute test mode if you want!)
         let streak = 0
         let today = new Date()
         today.setHours(0, 0, 0, 0)
         let current = today.getTime()
-  
+
         for (let i = 0; i < sortedDays.length; i++) {
           const diff = (current - sortedDays[i]) / (1000 * 60 * 60 * 24)
           if (diff === 0 || diff === 1) {
@@ -1295,11 +1306,11 @@ const HomePage = () => {
             break
           }
         }
-  
+
         // Check if we've already shown it today
         const lastShown = sessionStorage.getItem("lastStreakPopupDate")
         const todayStr = new Date().toISOString().split("T")[0]
-  
+
         if (streak > 0 && lastShown !== todayStr) {
           setStreakPopup({
             open: true,
@@ -1311,10 +1322,10 @@ const HomePage = () => {
         console.error("Streak popup error:", e)
       }
     }
-  
+
     showStreakPopupIfNeeded()
   }, [])
-  
+
   // Add this useEffect to handle scroll behavior for both Dr. Bubbles and question mark bubble
   useEffect(() => {
     if (isMobile) {
@@ -1423,7 +1434,7 @@ const HomePage = () => {
         </AppBar>
 
         {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
-            
+
         {/* Help bubble that appears when guide is closed */}
         {!showGuide && isQuestionBubbleVisible && (
           <Tooltip title="Click for Dr. Bubbles' guide!" placement="right" arrow>
@@ -1490,7 +1501,7 @@ const HomePage = () => {
               >
                 ?
               </Box>
-              
+
               {/* Pulsing ring */}
               <Box
                 component={motion.div}
@@ -1536,9 +1547,9 @@ const HomePage = () => {
           </Tooltip>
         )}
 
-        <Container 
-          maxWidth="lg" 
-          sx={{ 
+        <Container
+          maxWidth="lg"
+          sx={{
             px: { xs: 2, sm: 2, md: 3 },
             width: '100%',
             maxWidth: { xs: '100%', sm: 'lg' },
@@ -1553,8 +1564,8 @@ const HomePage = () => {
           }}
         >
           {/* Add CreatePost component at the top with more visible styling */}
-          {/* <Box 
-            sx={{ 
+          {/* <Box
+            sx={{
               mb: 4,
               width: "100%",
               maxWidth: "800px",
@@ -1569,8 +1580,8 @@ const HomePage = () => {
           </Box>
 
           {/* Add PostFeed component */}
-          {/* <Box 
-            sx={{ 
+          {/* <Box
+            sx={{
               width: "100%",
               maxWidth: "800px",
               mx: "auto",
@@ -1581,7 +1592,7 @@ const HomePage = () => {
             }}
           >
             <PostFeed key={refreshFeed} />
-          </Box> */} 
+          </Box> */}
 
           <Box
             sx={{
@@ -1620,7 +1631,7 @@ const HomePage = () => {
                 fontSize: { xs: "28px", sm: "42px", md: "52px" },
               }}
             >
-              Dive into Learning
+              {homeText.diveIntoLearning}
             </Typography>
 
             <Typography
@@ -1638,7 +1649,7 @@ const HomePage = () => {
                 }
               }}
             >
-              Explore our gamified courses and quizzes designed to make learning fun and engaging.
+              {homeText.learningSubtitle}
             </Typography>
 
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
@@ -1662,7 +1673,7 @@ const HomePage = () => {
                   boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
-                Get Started
+                {homeText.getStarted}
               </Button>
 
             </Box>
@@ -1696,10 +1707,10 @@ const HomePage = () => {
               }
             }}
           >
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               mb: 2,
               position: 'relative',
               zIndex: 2,
@@ -1724,10 +1735,10 @@ const HomePage = () => {
                   mb: { xs: 1, sm: 0 }, // Add margin below title on mobile
                 }}
               >
-                Latest Communities
+                {homeText.latestCommunities}
               </Typography>
-              <Box sx={{ 
-                display: "flex", 
+              <Box sx={{
+                display: "flex",
                 gap: 1,
                 [theme.breakpoints.down('sm')]: {
                   position: 'relative',
@@ -1879,7 +1890,7 @@ const HomePage = () => {
                       fontSize: { xs: "14px", md: "16px" },
                     }}
                   >
-                    No communities found. Create one to get started!
+                    {homeText.noCommunities}
                   </Typography>
                 </Box>
               )}
@@ -1895,18 +1906,18 @@ const HomePage = () => {
                   fontSize: { xs: "14px", md: "16px" },
                 }}
               >
-                View All Communities
+                {homeText.viewAllCommunities}
               </Button>
             </Box>
           </Box>
 
           {/* Two-column layout for Champions and User Achievements */}
-          <Grid 
-            container 
-            spacing={0} 
-            sx={{ 
-              mt: 3, 
-              mb: 6, 
+          <Grid
+            container
+            spacing={0}
+            sx={{
+              mt: 3,
+              mb: 6,
               px: { xs: 0, sm: 0, md: 0 },
               width: "100%",
               mx: 0,
@@ -1937,13 +1948,13 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Box sx={{ 
-                  display: "flex", 
+                <Box sx={{
+                  display: "flex",
                   flexDirection: 'column', // Stack title and subtitle
                   justifyContent: "center", // Center vertically within this box
                   alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
-                  mb: 2, 
-                  position: "relative", 
+                  mb: 2,
+                  position: "relative",
                   zIndex: 1,
                   width: '100%', // Ensure box takes full width for centering
                   textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
@@ -1957,7 +1968,7 @@ const HomePage = () => {
                       color: "#1D1D20",
                     }}
                   >
-                    Bubble Brainiacs
+                    {homeText.bubbleBrainiacs}
                   </Typography>
                   <Typography
                     sx={{
@@ -1972,7 +1983,7 @@ const HomePage = () => {
                       mt: 0.5, // Add slight top margin
                     }}
                   >
-                    Top students ranked by total study time. 
+                    {homeText.brainiacsSubtitle}
                   </Typography>
                 </Box>
 
@@ -2107,15 +2118,15 @@ const HomePage = () => {
                           </Box>
                         </Box>
 
-                        <CardContent sx={{ 
-                          pt: 1, 
-                          pb: 1, 
-                          pl: { xs: '44px', md: 6 }, 
+                        <CardContent sx={{
+                          pt: 1,
+                          pb: 1,
+                          pl: { xs: '44px', md: 6 },
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
-                          display: "flex", 
-                          flexDirection: "column", 
+                          display: "flex",
+                          flexDirection: "column",
                           justifyContent: "center",
                           [theme.breakpoints.down('sm')]: {
                             padding: '0 8px',
@@ -2123,7 +2134,7 @@ const HomePage = () => {
                           }
                         }}>
                           {/* Ensure smaller gap for mobile */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}>
                             <Avatar
                               alt={user.name}
                               sx={{
@@ -2141,8 +2152,8 @@ const HomePage = () => {
                               }}
                             >
                               {shouldShowPics && user.avatar ? (
-                                <img 
-                                  src={user.avatar} 
+                                <img
+                                  src={user.avatar}
                                   alt={user.name.charAt(0).toUpperCase()}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                   onError={(e) => {
@@ -2253,13 +2264,13 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Box sx={{ 
-                  display: "flex", 
+                <Box sx={{
+                  display: "flex",
                   flexDirection: 'column', // Stack title and subtitle
                   justifyContent: "center", // Center vertically
                   alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
-                  mb: 2, 
-                  position: "relative", 
+                  mb: 2,
+                  position: "relative",
                   zIndex: 1,
                   width: '100%', // Ensure box takes full width for centering
                   textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
@@ -2273,7 +2284,7 @@ const HomePage = () => {
                       color: "#1D1D20",
                     }}
                   >
-                    Bubble Achievers
+                    {homeText.bubbleAchievers}
                   </Typography>
                   <Typography
                     sx={{
@@ -2288,7 +2299,7 @@ const HomePage = () => {
                        mt: 0.5, // Add slight top margin
                     }}
                   >
-                    Remarkable feats across study categories.
+                    {homeText.achieversSubtitle}
                   </Typography>
                 </Box>
 
@@ -2298,10 +2309,10 @@ const HomePage = () => {
                   </Box>
                 ) : userStats.length === 0 ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        textAlign: 'center', 
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        textAlign: 'center',
                         mb: 2,
                         fontFamily: "SourGummy, sans-serif",
                         color: "#1D1D20",
@@ -2310,13 +2321,13 @@ const HomePage = () => {
                     >
                       No user badges available yet.
                     </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
+                    <Typography
+                      variant="body2"
+                      sx={{
                         textAlign: 'center',
                         fontFamily: "SourGummy, sans-serif",
                         color: "#1D1D20",
-                        fontSize: { xs: "12px", md: "14px" }, 
+                        fontSize: { xs: "12px", md: "14px" },
                       }}
                     >
                       Start studying, answering quizzes, and collecting fish to earn badges!
@@ -2425,24 +2436,24 @@ const HomePage = () => {
                           </Box>
                         </Box>
 
-                        <CardContent sx={{ 
-                          pt: 1, 
-                          pb: 1, 
-                          pl: { xs: '40px', md: 6 }, 
+                        <CardContent sx={{
+                          pt: 1,
+                          pb: 1,
+                          pl: { xs: '40px', md: 6 },
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
-                          display: "flex", 
-                          flexDirection: "column", 
+                          display: "flex",
+                          flexDirection: "column",
                           justifyContent: "center",
                           [theme.breakpoints.down('sm')]: {
-                            padding: '0 8px', 
+                            padding: '0 8px',
                             // Reduce mobile pl override
-                            pl: '40px', 
+                            pl: '40px',
                           }
                         }}>
                           {/* Remove gap for mobile */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}> 
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}>
                             <Avatar
                               alt={stat.name}
                               sx={{
@@ -2460,8 +2471,8 @@ const HomePage = () => {
                               }}
                             >
                               {shouldShowPics && stat.avatar ? (
-                                <img 
-                                  src={stat.avatar} 
+                                <img
+                                  src={stat.avatar}
                                   alt={stat.name?.charAt(0).toUpperCase() || "?"}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                   onError={(e) => {
@@ -2500,7 +2511,7 @@ const HomePage = () => {
                                   {getStatTitle(stat.statType)}
                                 </Typography>
                               </Box>
-                                
+
                               {/* User name and stat value */}
                               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: { xs: 0.5, md: 1.5 } }}>
                                 <Tooltip title={stat.name} placement="top" arrow>
@@ -2537,7 +2548,7 @@ const HomePage = () => {
                                   {formatStatValue(stat.statType, stat.statValue)}
                                 </Typography>
                               </Box>
-                                
+
                               {/* Caption text positioned at the bottom and centered - hide on mobile */}
                               <Typography
                                 sx={{
@@ -2571,13 +2582,13 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
-          { /*Active Users Section*/ 
+          { /*Active Users Section*/
           /*<Box
             sx={{
               mt: 6,
               mb: 6,
               bgcolor: "#FFFFFF",
-              py: { xs: 3, md: 4 }, 
+              py: { xs: 3, md: 4 },
               px: { xs: 1, md: 2 }, // Ensure outer padding is 8px (1) on xs
               overflow: 'visible', // Keep overflow visible
               borderRadius: 2,
@@ -2599,10 +2610,10 @@ const HomePage = () => {
               }
             }}
           >
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               mb: 2,
               position: 'relative',
               zIndex: 2,
@@ -2632,10 +2643,10 @@ const HomePage = () => {
                   }
                 }}
               >
-                Active Users
+                {homeText.activeUsers}
               </Typography>
-              <Box sx={{ 
-                display: "flex", 
+              <Box sx={{
+                display: "flex",
                 gap: 1,
                 [theme.breakpoints.down('sm')]: {
                   position: 'relative',
@@ -2751,8 +2762,8 @@ const HomePage = () => {
                         }}
                       >
                         {shouldShowPics && user.avatar ? (
-                          <img 
-                            src={user.avatar} 
+                          <img
+                            src={user.avatar}
                             alt={user.name ? user.name.charAt(0).toUpperCase() : "U"}
                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                             onError={(e) => {
@@ -2841,7 +2852,7 @@ const HomePage = () => {
                       fontSize: "16px",
                     }}
                   >
-                    No users active in the last 30 minutes. Be the first to engage with the community!
+                     {homeText.noActiveUsers}
                   </Typography>
                 </Box>
               )}
@@ -2856,7 +2867,7 @@ const HomePage = () => {
       </Snackbar>
     </>
   )
-  
+
 }
 
 export default HomePage
