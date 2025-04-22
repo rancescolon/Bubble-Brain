@@ -1079,9 +1079,9 @@ const Communities = () => {
                 }`}
             >
               {customPopup.type === "success" ? (
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                  <CheckCircle className="h-5 w-5 text-[#48BB78] mr-2" />
               ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+                  <AlertTriangle className="h-5 w-5 text-[#DC2626] mr-2" />
               )}
               <span
                   style={fontStyle}
@@ -1130,7 +1130,7 @@ const Communities = () => {
                 <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
                   {/* Left Column */}
                   <div className="lg:w-3/4">
-                    <div className="bg-[#F4FDFF]/90 rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
+                    <div className="bg-[#F4FDFF] rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
                       <h1 className="text-3xl md:text-4xl font-extrabold text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
                         Communities
                       </h1>
@@ -1153,7 +1153,7 @@ const Communities = () => {
                             style={fontStyle}
                         />
                         {searchQuery.length === 30 && (
-                            <p className="text-red-500 text-sm mt-1">Maximum of 30 characters reached.</p>
+                            <p className="text-[#DC2626] text-sm mt-1">Maximum of 30 characters reached.</p>
                         )}
                       </div>
 
@@ -1212,7 +1212,7 @@ const Communities = () => {
                                                 Join
                                               </button>
                                               <button
-                                                  className="bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-1 px-3 rounded-xl flex items-center justify-center w-full"
+                                                  className="bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-3 rounded-xl flex items-center justify-center w-full"
                                                   onClick={() => handleShareCommunity(community.id)}
                                               >
                                                 {copiedCommunityId === community.id ? (
