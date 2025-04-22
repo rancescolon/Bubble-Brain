@@ -924,19 +924,6 @@ export default function Profile({ setLoggedIn }) {
                     mb: 2,
                   }}
                 >
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      color: '#1D1D20',
-                      fontWeight: 600,
-                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                      textAlign: 'center',
-                      fontFamily: 'Sour Gummy, sans-serif',
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {userData.name}
-                  </Typography>
                   <Box
                     sx={{
                       display: 'flex',
@@ -946,40 +933,19 @@ export default function Profile({ setLoggedIn }) {
                       width: '100%',
                     }}
                   >
-                    <Box
+                    <Typography
+                      variant="body1"
                       sx={{
-                        display: "flex",
-                        alignItems: "baseline",
-                        gap: 0.5,
-                        justifyContent: "center",
+                        color: '#1D1D20',
+                        fontSize: '0.875rem',
+                        textAlign: "center",
+                        fontFamily: 'Sour Gummy, sans-serif',
+                        wordBreak: "break-word",
                       }}
                     >
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: '#1D1D20',
-                          fontWeight: 400,
-                          fontSize: '0.875rem',
-                          textAlign: "center",
-                          fontFamily: 'Sour Gummy, sans-serif',
-                        }}
-                      >
-                        Username:
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          color: '#1D1D20',
-                          fontWeight: 600,
-                          fontSize: '0.875rem',
-                          textAlign: "center",
-                          wordBreak: "break-word",
-                          fontFamily: 'Sour Gummy, sans-serif',
-                        }}
-                      >
-                        {userData.username || username}
-                      </Typography>
-                    </Box>
+                      Username: <span style={{ fontWeight: 600 }}>{userData.name}</span>
+                    </Typography>
+
                     <Box
                       sx={{
                         display: "flex",
