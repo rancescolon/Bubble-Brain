@@ -14,6 +14,10 @@ import {
   TextField,
   Button,
   InputAdornment,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { ThumbUp, Comment, Share, Favorite, FavoriteBorder, ChatBubbleOutline, Send, Delete } from '@mui/icons-material';
 
@@ -31,6 +35,12 @@ const PostFeed = () => {
   const [expandedComments, setExpandedComments] = useState({});
   const [feedView, setFeedView] = useState('public');
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({
+    open: false,
+    type: null, // 'post' or 'comment'
+    id: null,
+    postId: null, // for comments
+  });
 
   const getCurrentUserInfo = async () => {
     try {
@@ -774,6 +784,34 @@ const PostFeed = () => {
     }
   };
 
+  const handleDeleteClick = (type, id, postId = null) => {
+    setDeleteDialog({
+      open: true,
+      type,
+      id,
+      postId,
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    const { type, id, postId } = deleteDialog;
+    try {
+      if (type === 'post') {
+        await deletePost(id);
+      } else if (type === 'comment') {
+        await deleteComment(id, postId);
+      }
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error);
+    } finally {
+      setDeleteDialog({ open: false, type: null, id: null, postId: null });
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({ open: false, type: null, id: null, postId: null });
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
@@ -858,9 +896,7 @@ const PostFeed = () => {
                 <IconButton
                   size="small"
                   onClick={() => {
-                    if (window.confirm('Are you sure you want to delete this post?')) {
-                      deletePost(post.id);
-                    }
+                    handleDeleteClick('post', post.id);
                   }}
                   sx={{ color: 'error.main' }}
                 >
@@ -1005,9 +1041,7 @@ const PostFeed = () => {
                             <IconButton
                               size="small"
                               onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this comment?')) {
-                                  deleteComment(comment.id, post.id);
-                                }
+                                handleDeleteClick('comment', comment.id, post.id);
                               }}
                               sx={{ ml: 'auto', p: 0.5, color: 'error.main' }}
                             >
@@ -1091,7 +1125,7 @@ const PostFeed = () => {
                   />
                   <Button
                     disabled={!newComments[post.id] || newComments[post.id].trim() === ''}
-                    onClick={() => handleCommentSubmit(post.id)}
+                    onClick={(e) => handleCommentSubmit(post.id, e)}
                     sx={{ 
                       color: '#0095f6',
                       textTransform: 'none',
@@ -1110,6 +1144,28 @@ const PostFeed = () => {
             </Paper>
           );
         })}
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleDeleteCancel}
+        aria-labelledby="delete-dialog-title"
+      >
+        <DialogTitle id="delete-dialog-title">
+          Delete {deleteDialog.type === 'post' ? 'Post' : 'Comment'}?
+        </DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this {deleteDialog.type}? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDeleteCancel}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
