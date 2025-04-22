@@ -612,7 +612,14 @@
       "activeUsers": "Active Users",
       "noActiveUsers": "No users active in the last 30 minutes. Be the first to engage with the community!",
       "bubbleAchievers": "Bubble Achievers",
-      "achieversSubtitle": "Remarkable feats across study categories."
+      "achieversSubtitle": "Remarkable feats across study categories.",
+      "members": "members",
+      "achievementDescriptions": {
+        "marathon": "Longest continuous study session",
+        "studySessions": "Highest number of study sessions",
+        "todaySessions": "Most study sessions completed today",
+        "default": "Outstanding achievement"
+      }
     },
     "groups": {
       "joinTitle": "Join a Group!"
@@ -1721,7 +1728,14 @@
       "activeUsers": "Usuarios activos",
       "noActiveUsers": "Ningún usuario activo en los últimos 30 minutos. ¡Sé el primero en participar!",
       "bubbleAchievers": "Bubble Achievers",
-      "achieversSubtitle": "Logros notables en categorías de estudio."
+      "achieversSubtitle": "Logros notables en categorías de estudio.",
+      "members": "miembros",
+      "achievementDescriptions": {
+        "marathon": "Sesión de estudio continua más larga",
+        "studySessions": "Mayor número de sesiones de estudio",
+        "todaySessions": "Más sesiones de estudio completadas hoy",
+        "default": "Logro sobresaliente"
+      }
     },
     "groups": {
       "joinTitle": "¡Únete a un grupo!"

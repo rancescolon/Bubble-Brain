@@ -1181,16 +1181,8 @@ const HomePage = () => {
 
   // Helper function to get the caption for each stat type
   const getStatCaption = (statType) => {
-    switch (statType) {
-      case 'marathon':
-        return 'Longest continuous study session';
-      case 'studySessions':
-        return 'Highest number of study sessions';
-      case 'todaySessions':
-        return 'Most study sessions completed today';
-      default:
-        return 'Outstanding achievement';
-    }
+    const descs = homeText.achievementDescriptions;
+    return descs[statType] || descs.default;
   };
 
   // Remove the separate useEffect for fetchLeaderboardData and fetchUserStats
@@ -1875,7 +1867,7 @@ const HomePage = () => {
                           fontSize: { xs: "12px", md: "14px" },
                         }}
                       >
-                        {community.members} members
+                        {community.members} {homeText.members}
                       </Typography>
                     </CardContent>
                   </Card>
