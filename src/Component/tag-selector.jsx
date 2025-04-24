@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {useState, useEffect, useContext} from "react"
 import { X } from "lucide-react"
+import {BackgroundContext} from "../App";
+import text from "../text.json";
 
 const TagSelector = ({
                          selectedCategories,
@@ -18,6 +20,10 @@ const TagSelector = ({
                      }) => {
     const [availableTags, setAvailableTags] = useState([])
     const [showTagsSection, setShowTagsSection] = useState(false)
+
+    const { currentBackground, language } = useContext(BackgroundContext)
+    const langKey = language === "English" ? "en" : "es"
+    const tagViewText = text[langKey]
 
     // Update available tags whenever selected categories change
     useEffect(() => {
@@ -63,7 +69,7 @@ const TagSelector = ({
             <div className="p-2">
                 {/* Categories Selection */}
                 <div className="mb-4">
-                    <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>Categories</h3>
+                    <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>{tagViewText.upload.categoriesHeader}</h3>
                     <div className="flex flex-wrap gap-2">
                         {Object.keys(school_categories).map((category) => (
                             <button
@@ -79,14 +85,14 @@ const TagSelector = ({
                         ))}
                     </div>
                     <p className="mt-1 text-[12px] text-[#1D1D20]/70">
-                        {selectedCategories.length}/{maxCategories} categories selected
+                        {selectedCategories.length}/{maxCategories} {tagViewText.tagSelector.embedded.categoriesSelected}
                     </p>
                 </div>
 
                 {/* Tags Selection */}
                 {showTagsSection && (
                     <div>
-                        <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>Tags</h3>
+                        <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>{tagViewText.templateManager.labelTags}</h3>
                         <div className="flex flex-wrap gap-2">
                             {availableTags.map((tag) => (
                                 <button
@@ -101,7 +107,7 @@ const TagSelector = ({
                                 </button>
                             ))}
                         </div>
-                        <p className="mt-1 text-[12px] text-[#1D1D20]/70">{selectedTags.length}/5 tags selected</p>
+                        <p className="mt-1 text-[12px] text-[#1D1D20]/70">{selectedTags.length}/5 {tagViewText.tagSelector.embedded.tagsSelected}</p>
                     </div>
                 )}
             </div>

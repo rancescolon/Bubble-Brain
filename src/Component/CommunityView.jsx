@@ -91,308 +91,310 @@ export default function CommunityView() {
   })
 
   // Add school categories for tag selection
+
   const school_categories = {
-    Math: [
-      "Algebra",
-      "Geometry",
-      "Calculus",
-      "Trigonometry",
-      "Statistics",
-      "Probability",
-      "Functions",
-      "Matrices",
-      "Equations",
-      "Graphs",
+    [comViewText.categories.Math]: [
+      comViewText.school_categories.Math[0],
+      comViewText.school_categories.Math[1],
+      comViewText.school_categories.Math[2],
+      comViewText.school_categories.Math[3],
+      comViewText.school_categories.Math[4],
+      comViewText.school_categories.Math[5],
+      comViewText.school_categories.Math[6],
+      comViewText.school_categories.Math[7],
+      comViewText.school_categories.Math[8],
+      comViewText.school_categories.Math[9],
     ],
-    Science: [
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "Earth Science",
-      "Astronomy",
-      "Genetics",
-      "Ecology",
-      "Laboratory",
-      "Periodic Table",
-      "Experiments",
+    [comViewText.categories.Science]: [
+      comViewText.school_categories.Science[0],
+      comViewText.school_categories.Science[1],
+      comViewText.school_categories.Science[2],
+      comViewText.school_categories.Science[3],
+      comViewText.school_categories.Science[4],
+      comViewText.school_categories.Science[5],
+      comViewText.school_categories.Science[6],
+      comViewText.school_categories.Science[7],
+      comViewText.school_categories.Science[8],
+      comViewText.school_categories.Science[9],
     ],
-    Literature: [
-      "Novels",
-      "Poetry",
-      "Shakespeare",
-      "Analysis",
-      "Short Stories",
-      "Fiction",
-      "Non-fiction",
-      "Literary Devices",
-      "Themes",
-      "Book Reviews",
+    [comViewText.categories.Literature]: [
+      comViewText.school_categories.Literature[0],
+      comViewText.school_categories.Literature[1],
+      comViewText.school_categories.Literature[2],
+      comViewText.school_categories.Literature[3],
+      comViewText.school_categories.Literature[4],
+      comViewText.school_categories.Literature[5],
+      comViewText.school_categories.Literature[6],
+      comViewText.school_categories.Literature[7],
+      comViewText.school_categories.Literature[8],
+      comViewText.school_categories.Literature[9],
     ],
-    History: [
-      "Ancient Civilizations",
-      "World Wars",
-      "U.S. History",
-      "Revolutions",
-      "Geography",
-      "Historical Figures",
-      "Wars",
-      "Presidents",
-      "Political Movements",
-      "Artifacts",
+    [comViewText.categories.History]: [
+      comViewText.school_categories.History[0],
+      comViewText.school_categories.History[1],
+      comViewText.school_categories.History[2],
+      comViewText.school_categories.History[3],
+      comViewText.school_categories.History[4],
+      comViewText.school_categories.History[5],
+      comViewText.school_categories.History[6],
+      comViewText.school_categories.History[7],
+      comViewText.school_categories.History[8],
+      comViewText.school_categories.History[9],
     ],
-    Geography: [
-      "Maps",
-      "Countries",
-      "Capitals",
-      "Climate",
-      "Landforms",
-      "Physical Geography",
-      "Urbanization",
-      "Migration",
-      "Natural Resources",
-      "Time Zones",
+    [comViewText.categories.Geography]: [
+      comViewText.school_categories.Geography[0],
+      comViewText.school_categories.Geography[1],
+      comViewText.school_categories.Geography[2],
+      comViewText.school_categories.Geography[3],
+      comViewText.school_categories.Geography[4],
+      comViewText.school_categories.Geography[5],
+      comViewText.school_categories.Geography[6],
+      comViewText.school_categories.Geography[7],
+      comViewText.school_categories.Geography[8],
+      comViewText.school_categories.Geography[9],
     ],
-    "Foreign Languages": [
-      "Spanish",
-      "French",
-      "German",
-      "Italian",
-      "Chinese",
-      "Japanese",
-      "Vocabulary",
-      "Grammar",
-      "Pronunciation",
-      "Language Exchange",
+    [comViewText.categories["Foreign Languages"]]: [
+      comViewText.school_categories["Foreign Languages"][0],
+      comViewText.school_categories["Foreign Languages"][1],
+      comViewText.school_categories["Foreign Languages"][2],
+      comViewText.school_categories["Foreign Languages"][3],
+      comViewText.school_categories["Foreign Languages"][4],
+      comViewText.school_categories["Foreign Languages"][5],
+      comViewText.school_categories["Foreign Languages"][6],
+      comViewText.school_categories["Foreign Languages"][7],
+      comViewText.school_categories["Foreign Languages"][8],
+      comViewText.school_categories["Foreign Languages"][9],
     ],
-    Art: [
-      "Painting",
-      "Sculpture",
-      "Drawing",
-      "Digital Art",
-      "Art History",
-      "Canvas",
-      "Portraits",
-      "Abstract",
-      "Artists",
-      "Creativity",
+    [comViewText.categories.Art]: [
+      comViewText.school_categories.Art[0],
+      comViewText.school_categories.Art[1],
+      comViewText.school_categories.Art[2],
+      comViewText.school_categories.Art[3],
+      comViewText.school_categories.Art[4],
+      comViewText.school_categories.Art[5],
+      comViewText.school_categories.Art[6],
+      comViewText.school_categories.Art[7],
+      comViewText.school_categories.Art[8],
+      comViewText.school_categories.Art[9],
     ],
-    Music: [
-      "Instruments",
-      "Composers",
-      "Genres",
-      "Music Theory",
-      "Choir",
-      "Band",
-      "Symphony",
-      "Singing",
-      "Sheet Music",
-      "Rhythm",
+    [comViewText.categories.Music]: [
+      comViewText.school_categories.Music[0],
+      comViewText.school_categories.Music[1],
+      comViewText.school_categories.Music[2],
+      comViewText.school_categories.Music[3],
+      comViewText.school_categories.Music[4],
+      comViewText.school_categories.Music[5],
+      comViewText.school_categories.Music[6],
+      comViewText.school_categories.Music[7],
+      comViewText.school_categories.Music[8],
+      comViewText.school_categories.Music[9],
     ],
-    "Physical Education": [
-      "Sports",
-      "Fitness",
-      "Exercises",
-      "Health",
-      "Endurance",
-      "Teamwork",
-      "Running",
-      "Strength Training",
-      "Flexibility",
-      "Physical Health",
+    [comViewText.categories["Physical Education"]]: [
+      comViewText.school_categories["Physical Education"][0],
+      comViewText.school_categories["Physical Education"][1],
+      comViewText.school_categories["Physical Education"][2],
+      comViewText.school_categories["Physical Education"][3],
+      comViewText.school_categories["Physical Education"][4],
+      comViewText.school_categories["Physical Education"][5],
+      comViewText.school_categories["Physical Education"][6],
+      comViewText.school_categories["Physical Education"][7],
+      comViewText.school_categories["Physical Education"][8],
+      comViewText.school_categories["Physical Education"][9],
     ],
-    Technology: [
-      "Coding",
-      "Software",
-      "Hardware",
-      "Programming",
-      "Artificial Intelligence",
-      "Web Development",
-      "Robotics",
-      "Cybersecurity",
-      "Databases",
-      "Machine Learning",
+    [comViewText.categories.Technology]: [
+      comViewText.school_categories.Technology[0],
+      comViewText.school_categories.Technology[1],
+      comViewText.school_categories.Technology[2],
+      comViewText.school_categories.Technology[3],
+      comViewText.school_categories.Technology[4],
+      comViewText.school_categories.Technology[5],
+      comViewText.school_categories.Technology[6],
+      comViewText.school_categories.Technology[7],
+      comViewText.school_categories.Technology[8],
+      comViewText.school_categories.Technology[9],
     ],
-    "Business Studies": [
-      "Economics",
-      "Finance",
-      "Marketing",
-      "Entrepreneurship",
-      "Accounting",
-      "Management",
-      "Business Plans",
-      "Investment",
-      "Trade",
-      "Corporations",
+    [comViewText.categories["Business Studies"]]: [
+      comViewText.school_categories["Business Studies"][0],
+      comViewText.school_categories["Business Studies"][1],
+      comViewText.school_categories["Business Studies"][2],
+      comViewText.school_categories["Business Studies"][3],
+      comViewText.school_categories["Business Studies"][4],
+      comViewText.school_categories["Business Studies"][5],
+      comViewText.school_categories["Business Studies"][6],
+      comViewText.school_categories["Business Studies"][7],
+      comViewText.school_categories["Business Studies"][8],
+      comViewText.school_categories["Business Studies"][9],
     ],
-    Philosophy: [
-      "Ethics",
-      "Logic",
-      "Metaphysics",
-      "Epistemology",
-      "Plato",
-      "Aristotle",
-      "Morality",
-      "Knowledge",
-      "Free Will",
-      "Political Philosophy",
+    [comViewText.categories.Philosophy]: [
+      comViewText.school_categories.Philosophy[0],
+      comViewText.school_categories.Philosophy[1],
+      comViewText.school_categories.Philosophy[2],
+      comViewText.school_categories.Philosophy[3],
+      comViewText.school_categories.Philosophy[4],
+      comViewText.school_categories.Philosophy[5],
+      comViewText.school_categories.Philosophy[6],
+      comViewText.school_categories.Philosophy[7],
+      comViewText.school_categories.Philosophy[8],
+      comViewText.school_categories.Philosophy[9],
     ],
-    Psychology: [
-      "Behavior",
-      "Cognition",
-      "Mental Health",
-      "Emotions",
-      "Motivation",
-      "Perception",
-      "Social Psychology",
-      "Developmental Psychology",
-      "Therapy",
-      "Neuroscience",
+    [comViewText.categories.Psychology]: [
+      comViewText.school_categories.Psychology[0],
+      comViewText.school_categories.Psychology[1],
+      comViewText.school_categories.Psychology[2],
+      comViewText.school_categories.Psychology[3],
+      comViewText.school_categories.Psychology[4],
+      comViewText.school_categories.Psychology[5],
+      comViewText.school_categories.Psychology[6],
+      comViewText.school_categories.Psychology[7],
+      comViewText.school_categories.Psychology[8],
+      comViewText.school_categories.Psychology[9],
     ],
-    Sociology: [
-      "Society",
-      "Culture",
-      "Social Change",
-      "Inequality",
-      "Groups",
-      "Socialization",
-      "Deviance",
-      "Families",
-      "Education Systems",
-      "Race & Ethnicity",
+    [comViewText.categories.Sociology]: [
+      comViewText.school_categories.Sociology[0],
+      comViewText.school_categories.Sociology[1],
+      comViewText.school_categories.Sociology[2],
+      comViewText.school_categories.Sociology[3],
+      comViewText.school_categories.Sociology[4],
+      comViewText.school_categories.Sociology[5],
+      comViewText.school_categories.Sociology[6],
+      comViewText.school_categories.Sociology[7],
+      comViewText.school_categories.Sociology[8],
+      comViewText.school_categories.Sociology[9],
     ],
-    Economics: [
-      "Supply and Demand",
-      "Inflation",
-      "GDP",
-      "Trade",
-      "Markets",
-      "Microeconomics",
-      "Macroeconomics",
-      "Economic Systems",
-      "Resources",
-      "Taxes",
+    [comViewText.categories.Economics]: [
+      comViewText.school_categories.Economics[0],
+      comViewText.school_categories.Economics[1],
+      comViewText.school_categories.Economics[2],
+      comViewText.school_categories.Economics[3],
+      comViewText.school_categories.Economics[4],
+      comViewText.school_categories.Economics[5],
+      comViewText.school_categories.Economics[6],
+      comViewText.school_categories.Economics[7],
+      comViewText.school_categories.Economics[8],
+      comViewText.school_categories.Economics[9],
     ],
-    "Health Education": [
-      "Nutrition",
-      "Mental Health",
-      "Wellness",
-      "Exercise",
-      "Hygiene",
-      "Diseases",
-      "Prevention",
-      "Vaccines",
-      "Sexual Health",
-      "First Aid",
+    [comViewText.categories["Health Education"]]: [
+      comViewText.school_categories["Health Education"][0],
+      comViewText.school_categories["Health Education"][1],
+      comViewText.school_categories["Health Education"][2],
+      comViewText.school_categories["Health Education"][3],
+      comViewText.school_categories["Health Education"][4],
+      comViewText.school_categories["Health Education"][5],
+      comViewText.school_categories["Health Education"][6],
+      comViewText.school_categories["Health Education"][7],
+      comViewText.school_categories["Health Education"][8],
+      comViewText.school_categories["Health Education"][9],
     ],
-    "Home Economics": [
-      "Cooking",
-      "Sewing",
-      "Budgeting",
-      "Interior Design",
-      "Childcare",
-      "Household Management",
-      "Nutrition",
-      "Textiles",
-      "Family Planning",
-      "Sustainability",
+    [comViewText.categories["Home Economics"]]: [
+      comViewText.school_categories["Home Economics"][0],
+      comViewText.school_categories["Home Economics"][1],
+      comViewText.school_categories["Home Economics"][2],
+      comViewText.school_categories["Home Economics"][3],
+      comViewText.school_categories["Home Economics"][4],
+      comViewText.school_categories["Home Economics"][5],
+      comViewText.school_categories["Home Economics"][6],
+      comViewText.school_categories["Home Economics"][7],
+      comViewText.school_categories["Home Economics"][8],
+      comViewText.school_categories["Home Economics"][9],
     ],
-    "Public Speaking": [
-      "Presentations",
-      "Rhetoric",
-      "Speech Writing",
-      "Communication Skills",
-      "Confidence",
-      "Debates",
-      "Persuasion",
-      "Audience",
-      "Body Language",
-      "Speech Delivery",
+    [comViewText.categories["Public Speaking"]]: [
+      comViewText.school_categories["Public Speaking"][0],
+      comViewText.school_categories["Public Speaking"][1],
+      comViewText.school_categories["Public Speaking"][2],
+      comViewText.school_categories["Public Speaking"][3],
+      comViewText.school_categories["Public Speaking"][4],
+      comViewText.school_categories["Public Speaking"][5],
+      comViewText.school_categories["Public Speaking"][6],
+      comViewText.school_categories["Public Speaking"][7],
+      comViewText.school_categories["Public Speaking"][8],
+      comViewText.school_categories["Public Speaking"][9],
     ],
-    "Technology & Engineering": [
-      "Robotics",
-      "Engineering Design",
-      "CAD (Computer-Aided Design)",
-      "Prototyping",
-      "Electronics",
-      "Renewable Energy",
-      "Structural Engineering",
-      "Computer Engineering",
-      "3D Printing",
-      "Programming",
+    [comViewText.categories["Technology & Engineering"]]: [
+      comViewText.school_categories["Technology & Engineering"][0],
+      comViewText.school_categories["Technology & Engineering"][1],
+      comViewText.school_categories["Technology & Engineering"][2],
+      comViewText.school_categories["Technology & Engineering"][3],
+      comViewText.school_categories["Technology & Engineering"][4],
+      comViewText.school_categories["Technology & Engineering"][5],
+      comViewText.school_categories["Technology & Engineering"][6],
+      comViewText.school_categories["Technology & Engineering"][7],
+      comViewText.school_categories["Technology & Engineering"][8],
+      comViewText.school_categories["Technology & Engineering"][9],
     ],
-    Debate: [
-      "Argumentation",
-      "Persuasion",
-      "Logical Fallacies",
-      "Evidence",
-      "Counterarguments",
-      "Rhetorical Strategies",
-      "Public Speaking",
-      "Research",
-      "Debating Styles",
-      "Cross-examination",
+    [comViewText.categories.Debate]: [
+      comViewText.school_categories.Debate[0],
+      comViewText.school_categories.Debate[1],
+      comViewText.school_categories.Debate[2],
+      comViewText.school_categories.Debate[3],
+      comViewText.school_categories.Debate[4],
+      comViewText.school_categories.Debate[5],
+      comViewText.school_categories.Debate[6],
+      comViewText.school_categories.Debate[7],
+      comViewText.school_categories.Debate[8],
+      comViewText.school_categories.Debate[9],
     ],
-    "Environmental Science": [
-      "Ecosystems",
-      "Conservation",
-      "Climate Change",
-      "Pollution",
-      "Sustainability",
-      "Renewable Energy",
-      "Biodiversity",
-      "Recycling",
-      "Environmental Policy",
-      "Environmental Impact",
+    [comViewText.categories["Environmental Science"]]: [
+      comViewText.school_categories["Environmental Science"][0],
+      comViewText.school_categories["Environmental Science"][1],
+      comViewText.school_categories["Environmental Science"][2],
+      comViewText.school_categories["Environmental Science"][3],
+      comViewText.school_categories["Environmental Science"][4],
+      comViewText.school_categories["Environmental Science"][5],
+      comViewText.school_categories["Environmental Science"][6],
+      comViewText.school_categories["Environmental Science"][7],
+      comViewText.school_categories["Environmental Science"][8],
+      comViewText.school_categories["Environmental Science"][9],
     ],
-    Theatre: [
-      "Acting",
-      "Stage Design",
-      "Directing",
-      "Playwriting",
-      "Auditions",
-      "Performances",
-      "Costumes",
-      "Set Construction",
-      "Lighting",
-      "Rehearsals",
+    [comViewText.categories.Theatre]: [
+      comViewText.school_categories.Theatre[0],
+      comViewText.school_categories.Theatre[1],
+      comViewText.school_categories.Theatre[2],
+      comViewText.school_categories.Theatre[3],
+      comViewText.school_categories.Theatre[4],
+      comViewText.school_categories.Theatre[5],
+      comViewText.school_categories.Theatre[6],
+      comViewText.school_categories.Theatre[7],
+      comViewText.school_categories.Theatre[8],
+      comViewText.school_categories.Theatre[9],
     ],
-    Law: [
-      "Legal Studies",
-      "Constitutional Law",
-      "Criminal Law",
-      "Civil Law",
-      "Contracts",
-      "Courts",
-      "Lawyers",
-      "Law Enforcement",
-      "Legal Systems",
-      "Human Rights",
+    [comViewText.categories.Law]: [
+      comViewText.school_categories.Law[0],
+      comViewText.school_categories.Law[1],
+      comViewText.school_categories.Law[2],
+      comViewText.school_categories.Law[3],
+      comViewText.school_categories.Law[4],
+      comViewText.school_categories.Law[5],
+      comViewText.school_categories.Law[6],
+      comViewText.school_categories.Law[7],
+      comViewText.school_categories.Law[8],
+      comViewText.school_categories.Law[9],
     ],
-    Education: [
-      "Pedagogy",
-      "Classroom Management",
-      "Learning Styles",
-      "Curriculum Development",
-      "Assessment",
-      "Special Education",
-      "Teaching Strategies",
-      "Technology in Education",
-      "Teacher Training",
-      "Online Learning",
+    [comViewText.categories.Education]: [
+      comViewText.school_categories.Education[0],
+      comViewText.school_categories.Education[1],
+      comViewText.school_categories.Education[2],
+      comViewText.school_categories.Education[3],
+      comViewText.school_categories.Education[4],
+      comViewText.school_categories.Education[5],
+      comViewText.school_categories.Education[6],
+      comViewText.school_categories.Education[7],
+      comViewText.school_categories.Education[8],
+      comViewText.school_categories.Education[9],
     ],
-    "Career Development": [
-      "Job Search",
-      "Internships",
-      "Networking",
-      "Resumes",
-      "Interviews",
-      "Professional Skills",
-      "Career Pathways",
-      "Entrepreneurship",
-      "Certifications",
-      "Personal Branding",
+    [comViewText.categories["Career Development"]]: [
+      comViewText.school_categories["Career Development"][0],
+      comViewText.school_categories["Career Development"][1],
+      comViewText.school_categories["Career Development"][2],
+      comViewText.school_categories["Career Development"][3],
+      comViewText.school_categories["Career Development"][4],
+      comViewText.school_categories["Career Development"][5],
+      comViewText.school_categories["Career Development"][6],
+      comViewText.school_categories["Career Development"][7],
+      comViewText.school_categories["Career Development"][8],
+      comViewText.school_categories["Career Development"][9],
     ],
-  }
+  };
+
 
   // Theme and responsive breakpoints
   const theme = useTheme()
@@ -2554,21 +2556,21 @@ export default function CommunityView() {
                             },
                             {
                               id: 2,
-                              name: "Multiple Choice Quiz",
+                              name:  comViewText.communityView.templateOptions.multiple_choice,
                               type: "multiple_choice",
                               icon: FileText,
                               content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
                             },
                             {
                               id: 3,
-                              name: "Fill in the Blank",
+                              name: comViewText.communityView.templateOptions.fill_in_blank,
                               type: "fill_in_blank",
                               icon: FileText,
                               content: [{ text: "", answer: "" }],
                             },
                             {
                               id: 4,
-                              name: "Matching Exercise",
+                              name: comViewText.communityView.templateOptions.matching,
                               type: "matching",
                               icon: FileText,
                               content: [{ left: "", right: "" }],
@@ -2593,17 +2595,17 @@ export default function CommunityView() {
 
                         <div className="flex justify-between">
                           <button
-                              className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                              className={`bg-[#97C7F1] hover:bg-[#C5EDFD]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={() => setCurrentStep(3)}
                               disabled={!selectedTemplate}
                           >
-                            Next
+                            {comViewText.drBubbles.buttons.next}
                           </button>
                         </div>
                       </div>
@@ -2622,7 +2624,7 @@ export default function CommunityView() {
                                 onClick={handleAddItem}
                             >
                               <Plus size={isMobile ? 14 : 16} className="mr-1" />
-                              Add Item
+                              {comViewText.communityView.buttons.addItem}
                             </button>
                           </div>
 
@@ -2633,7 +2635,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Card {index + 1}
+                                          {comViewText.communityView.dialogSteps.card} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2645,7 +2647,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Front (Question)
+                                          {comViewText.communityView.dialogSteps.front}
                                         </label>
                                         <input
                                             type="text"
@@ -2656,7 +2658,7 @@ export default function CommunityView() {
                                       </div>
                                       <div>
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Back (Answer)
+                                          {comViewText.communityView.dialogSteps.back}
                                         </label>
                                         <input
                                             type="text"
@@ -2677,7 +2679,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Question {index + 1}
+                                          {comViewText.communityView.dialogSteps.Question}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2689,7 +2691,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Question
+                                          {comViewText.communityView.dialogSteps.Question}
                                         </label>
                                         <input
                                             type="text"
@@ -2700,7 +2702,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Options
+                                          {comViewText.communityView.dialogSteps.Options}
                                         </label>
                                         {item.options.map((option, optIndex) => (
                                             <div key={optIndex} className="flex items-center mb-2">
@@ -2716,12 +2718,12 @@ export default function CommunityView() {
                                                   className={`flex-1 p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
                                                   value={option}
                                                   onChange={(e) => handleUpdateItem(index, `options.${optIndex}`, e.target.value)}
-                                                  placeholder={`Option ${optIndex + 1}`}
+                                                  placeholder={`${comViewText.communityView.dialogSteps.Options + " " + 1}`}
                                               />
                                             </div>
                                         ))}
                                         <p className={`text-[${isMobile ? "10px" : "12px"}] text-[#1D1D20]/70`}>
-                                          Select the radio button next to the correct answer
+                                          {comViewText.communityView.dialogSteps.Answer}
                                         </p>
                                       </div>
                                     </div>
@@ -2736,7 +2738,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Sentence {index + 1}
+                                          {comViewText.communityView.dialogSteps.Sentence} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2748,19 +2750,20 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Text (use ___ for the blank)
+                                          {comViewText.communityView.dialogSteps.blank}
                                         </label>
                                         <input
                                             type="text"
                                             className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
                                             value={item.text}
                                             onChange={(e) => handleUpdateItem(index, "text", e.target.value)}
-                                            placeholder="Example: The sky is ___."
+                                            placeholder={comViewText.communityView.dialogSteps.example}
                                         />
                                       </div>
+                                      //
                                       <div>
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Answer
+                                          {comViewText.communityView.dialogSteps.Answer}
                                         </label>
                                         <input
                                             type="text"
@@ -2781,7 +2784,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Pair {index + 1}
+                                          {comViewText.communityView.dialogSteps.Pair} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2794,7 +2797,7 @@ export default function CommunityView() {
                                       <div className={`grid grid-cols-${isMobile ? "1" : "2"} gap-4`}>
                                         <div>
                                           <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                            Left Item
+                                            {comViewText.communityView.dialogSteps.left}
                                           </label>
                                           <input
                                               type="text"
@@ -2805,7 +2808,7 @@ export default function CommunityView() {
                                         </div>
                                         <div>
                                           <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                            Right Item
+                                            {comViewText.communityView.dialogSteps.Right}
                                           </label>
                                           <input
                                               type="text"
@@ -2826,14 +2829,14 @@ export default function CommunityView() {
                               className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={() => setCurrentStep(4)}
                               disabled={templateContent.length === 0}
                           >
-                            Next
+                            {comViewText.drBubbles.buttons.next}
                           </button>
                         </div>
                       </div>
@@ -2844,7 +2847,7 @@ export default function CommunityView() {
                       <div>
                         <div className="mb-6">
                           <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>Add Tags</h3>
+                            <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>{comViewText.communityView.dialogSteps.tagsStep}</h3>
                           </div>
 
                           <div className="max-h-[50vh] overflow-y-auto">
@@ -2865,13 +2868,13 @@ export default function CommunityView() {
                               className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={createStudySet}
                           >
-                            Create Study Set
+                            {comViewText.communityView.buttons.createStudySet}
                           </button>
                         </div>
                       </div>

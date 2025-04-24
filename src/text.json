@@ -19,6 +19,7 @@
       "instructionSelectCategories": "Select Categories (up to 3)",
       "selectedCategoriesCount": "Selected: {{count}}/3",
       "instructionSelectTags": "Select Tags (up to 5)",
+      "categoriesHeader" : "Categories",
       "categoryTagLabel": "{{category}} Tags:",
       "selectedTagsCount": "Selected: {{count}}/5",
       "posting": "Posting...",
@@ -34,6 +35,34 @@
       "buttonSeePost": "See post in community"
     },
     "school_categories": {
+      "categories": [
+        "Math",
+        "Science",
+        "Literature",
+        "History",
+        "Geography",
+        "Foreign Languages",
+        "Art",
+        "Music",
+        "Physical Education",
+        "Technology",
+        "Business Studies",
+        "Philosophy",
+        "Psychology",
+        "Sociology",
+        "Economics",
+        "Health Education",
+        "Home Economics",
+        "Public Speaking",
+        "Technology & Engineering",
+        "Debate",
+        "Environmental Science",
+        "Theatre",
+        "Law",
+        "Education",
+        "Career Development"
+      ],
+
       "Math": [
         "Algebra",
         "Geometry",
@@ -94,7 +123,7 @@
         "Natural Resources",
         "Time Zones"
       ],
-      "Foreign Languages": [
+      "Foreign_Languages": [
         "Spanish",
         "French",
         "German",
@@ -345,11 +374,12 @@
       "type_fill_in_blank": "Fill In Blank",
       "type_matching": "Matching",
       "type_multiple_choice": "Multiple Choice",
+      "type_multiple_choice_quiz": "Multiple Choice Quiz",
       "labelTemplateName": "Template Name",
       "buttonSaveTemplate": "Save Template",
       "previewTitle": "Preview",
       "labelCategories": "Categories:",
-      "labelTags": "Tags:",
+      "labelTags": "Tags",
       "buttonUseTemplate": "Use Template",
       "buttonAddFlashcard": "Add Flashcard",
       "buttonAddPair": "Add Pair",
@@ -375,8 +405,8 @@
       "embedded": {
         "headerCategories": "Categories",
         "headerTags": "Tags",
-        "categoriesSelected": "{{selectedCategories.length}}/{{maxCategories}} categories selected",
-        "tagsSelected": "{{selectedTags.length}}/5 tags selected"
+        "categoriesSelected": "categories selected",
+        "tagsSelected": "tags selected"
       },
       "full": {
         "title": "Add Categories & Tags",
@@ -787,7 +817,19 @@
         "nameStep": "Name Your Study Set",
         "templateStep": "Select a Template",
         "contentStep": "Customize Your Content",
-        "tagsStep": "Add Tags"
+        "tagsStep": "Add Tags",
+        "front": "Front (Question)",
+        "back" : "Back (Answer)",
+        "card" : "Card",
+        "Question": "Question",
+        "Options" : "Options",
+        "Sentence" : "Sentence",
+        "Answer" : "Mark the correct answer with the blue icon",
+        "blank": "Text (use ___ for the blank)",
+        "example" : "Example: The sky is ___.",
+        "Pair" : "Pair",
+        "left": "Left Item",
+        "Right": "Right Item"
       },
       "stepLabels": {
         "step1": "1. Name",
@@ -1521,6 +1563,7 @@
       "labelSelectCommunity": "Seleccione una comunidad",
       "studySetUploadedTo": "El colección de estudio se subirá a: {{communityName}}",
       "accessControlTitle": "Control de acceso",
+      "categoriesHeader" : "Categorías",
       "questionWhoCanView": "¿Quién puede ver este colección de estudio?",
       "optionEveryone": "Todos - Conjunto de estudio visible para todos usuarios",
       "optionAllMembers": "Solo miembros de la comunidad - Solo visible para quienes están en la comunidad",
@@ -1546,6 +1589,26 @@
       "buttonSeePost": "Ver publicación en la comunidad"
     },
     "school_categories": {
+      "categories": {
+        "Math": "Matemáticas",
+        "Science": "Ciencias",
+        "Literature": "Literatura",
+        "History": "Historia",
+        "Geography": "Geografía",
+        "Foreign Languages": "Idiomas extranjeros",
+        "Art": "Arte",
+        "Music": "Música",
+        "Physical Education": "Educación física",
+        "Technology": "Tecnología",
+        "Business Studies": "Estudios de negocios",
+        "Philosophy": "Filosofía",
+        "Psychology": "Psicología",
+        "Sociology": "Sociología",
+        "Economics": "Economía",
+        "Health Education": "Educación para la salud",
+        "Home Economics": "Economía doméstica"
+      } ,
+
       "Math": [
         "Álgebra",
         "Geometría",
@@ -1861,7 +1924,7 @@
       "buttonSaveTemplate": "Guardar plantilla",
       "previewTitle": "Vista previa",
       "labelCategories": "Categorías:",
-      "labelTags": "Etiquetas:",
+      "labelTags": "Etiquetas",
       "buttonUseTemplate": "Usar plantilla",
       "buttonAddFlashcard": "Agregar tarjeta",
       "buttonAddPair": "Agregar par",
@@ -1887,8 +1950,8 @@
       "embedded": {
         "headerCategories": "Categorías",
         "headerTags": "Etiquetas",
-        "categoriesSelected": "{{selectedCategories.length}}/{{maxCategories}} categorías seleccionadas",
-        "tagsSelected": "{{selectedTags.length}}/5 etiquetas seleccionadas"
+        "categoriesSelected": "categorías seleccionadas",
+        "tagsSelected": "etiquetas seleccionadas"
       },
       "full": {
         "title": "Agregar categorías y etiquetas",
@@ -2299,7 +2362,19 @@
         "nameStep": "Nombra tu colección de estudio",
         "templateStep": "Selecciona una plantilla",
         "contentStep": "Personaliza tu contenido",
-        "tagsStep": "Agrega etiquetas"
+        "tagsStep": "Agrega etiquetas",
+        "front": "Frente (Pregunta)",
+        "back" : "Atrás (Respuesta)",
+        "card" : "Tarjeta",
+        "Question": "Pregunta",
+        "Options" : "Opciones",
+        "Answer" : "Marque la respuesta correcta con el icono azul",
+        "blank": "Texto (use ___ para el espacio vacío)",
+        "example" : "Ejemplo: El cielo es ___.",
+        "Pair" : "Pareja",
+        "left": "Elemento izquierdo",
+        "Right": "Elemento correcto"
+
       },
 
       "header": {
@@ -2316,7 +2391,7 @@
         "flashcards": "Tarjetas básicas",
         "multiple_choice": "Opción múltiple",
         "fill_in_blank": "Rellenar espacio",
-        "matching": "Pareo"
+        "matching": "Pareja"
       },
       "accessControl": {
         "label": "Control de acceso",
@@ -2329,7 +2404,7 @@
         "viewAll": "Ver todo",
         "flashcards": "Tarjetas",
         "fillInBlank": "Rellenar espacio",
-        "matching": "Pareo",
+        "matching": "Pareja",
         "multipleChoice": "Opción múltiple"
       },
       "errors": {
@@ -2476,7 +2551,7 @@
       "successSave": "¡Preferencias guardadas correctamente!"
     },
     "categories": {
-      "Math": "Tienda",
+      "Math": "Matemáticas",
       "Science": "Ciencias",
       "Literature": "Literatura",
       "History": "Historia",
