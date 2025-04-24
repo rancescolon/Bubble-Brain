@@ -612,14 +612,7 @@
       "activeUsers": "Active Users",
       "noActiveUsers": "No users active in the last 30 minutes. Be the first to engage with the community!",
       "bubbleAchievers": "Bubble Achievers",
-      "achieversSubtitle": "Remarkable feats across study categories.",
-      "members": "members",
-      "achievementDescriptions": {
-        "marathon": "Longest continuous study session",
-        "studySessions": "Highest number of study sessions",
-        "todaySessions": "Most study sessions completed today",
-        "default": "Outstanding achievement"
-      }
+      "achieversSubtitle": "Remarkable feats across study categories."
     },
     "groups": {
       "joinTitle": "Join a Group!"
@@ -769,11 +762,9 @@
       "buttons": {
         "back": "Back",
         "addStudyMaterial": "Add Study Material",
-        "add" : "add",
         "message": "Message",
         "members": "Members",
         "deleteCommunity": "Delete Community",
-        "deleteCommunityM": "Delete",
         "send": "Send",
         "chooseTemplate": "Choose Template",
         "createStudySet": "Create Study Set",
@@ -795,11 +786,6 @@
         "step3": "3. Content",
         "step4": "4. Tags"
       },
-
-      "header": {
-        "name": "Enter a name for your study set"
-      },
-
       "templateOptions": {
         "flashcards": "Basic Flashcards",
         "multiple_choice": "Multiple Choice",
@@ -907,8 +893,7 @@
       "join": "Join",
       "copied": "Copied!",
       "searchPlaceholder": "Search communities by name...",
-      "maxCharsReached": "Maximum of 30 characters reached.",
-      "noDescription": "No description available"
+      "maxCharsReached": "Maximum of 30 characters reached."
     },
     "loading": {
       "communities": "Loading communities...",
@@ -2124,14 +2109,7 @@
       "activeUsers": "Usuarios activos",
       "noActiveUsers": "Ningún usuario activo en los últimos 30 minutos. ¡Sé el primero en participar!",
       "bubbleAchievers": "Dr Bubbles ",
-      "achieversSubtitle": "Logros notables en categorías de estudio.",
-      "members": "miembros",
-      "achievementDescriptions": {
-        "marathon": "La sesión de estudio más larga",
-        "studySessions": "Mayor número de sesiones de estudio",
-        "todaySessions": "El número de sesiones de estudio completadas hoy.",
-        "default": "logro sobresaliente"
-      }
+      "achieversSubtitle": "Logros notables en categorías de estudio."
     },
     "groups": {
       "joinTitle": "¡Participar a un grupo!"
@@ -2281,11 +2259,9 @@
       "buttons": {
         "back": "Volver",
         "addStudyMaterial": "Agregar material de estudio",
-        "add": "Agregar",
         "message": "Mensaje",
         "members": "Miembros",
         "deleteCommunity": "Eliminar comunidad",
-        "deleteCommunityM": "Eliminar",
         "send": "Enviar",
         "chooseTemplate": "Elegir plantilla",
         "createStudySet": "Crear colección de estudio",
@@ -2301,11 +2277,6 @@
         "contentStep": "Personaliza tu contenido",
         "tagsStep": "Agrega etiquetas"
       },
-
-      "header": {
-        "name": "Entrar un nombre para su colección de estudios"
-      },
-
       "stepLabels": {
         "step1": "1. Nombre",
         "step2": "2. Plantilla",
@@ -2419,8 +2390,7 @@
       "join": "Participar",
       "copied": "¡Copiado!",
       "searchPlaceholder": "Buscar comunidades por nombre...",
-      "maxCharsReached": "Máximo de 30 caracteres alcanzado.",
-      "noDescription": "No hay descripción disponible"
+      "maxCharsReached": "Máximo de 30 caracteres alcanzado."
     },
     "loading": {
       "communities": "Cargando comunidades...",

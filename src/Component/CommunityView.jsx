@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import {useState, useEffect, useRef, useContext} from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
   MessageSquare,
@@ -16,7 +16,7 @@ import {
   FileText,
   BookOpen,
 } from "lucide-react"
-import { socket } from "../App"
+import {BackgroundContext, socket} from "../App"
 import { useMediaQuery, useTheme } from "@mui/material"
 import {
   Box,
@@ -38,11 +38,16 @@ import {
   Chip,
 } from "@mui/material"
 import TagSelector from "./tag-selector"
+import text from "../text.json";
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function CommunityView() {
+  const { currentBackground, language } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const comViewText = text[langKey]
+
   const { id } = useParams()
   const navigate = useNavigate()
   const [community, setCommunity] = useState(null)
@@ -394,32 +399,35 @@ export default function CommunityView() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
 
+
+
   // Define template options
   const templateOptions = [
     {
       id: 1,
-      name: "Basic Flashcards",
+      name: [comViewText.communityView.templateOptions.flashcards],
       type: "flashcards",
       icon: BookOpen,
       content: [{ front: "", back: "" }],
     },
     {
       id: 2,
-      name: "Multiple Choice",
+      name: [comViewText.communityView.templateOptions.matching],
       type: "multiple_choice",
       icon: FileText,
       content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
     },
     {
       id: 3,
-      name: "Fill in the Blank",
+      name:       [comViewText.communityView.templateOptions.fill_in_blank],
       type: "fill_in_blank",
       icon: FileText,
       content: [{ text: "", answer: "" }],
     },
     {
       id: 4,
-      name: "Matching",
+      name: [comViewText.communityView.templateOptions.multiple_choice],
+      // Define template options
       type: "matching",
       icon: FileText,
       content: [{ left: "", right: "" }],
@@ -1913,17 +1921,17 @@ export default function CommunityView() {
                 >
                   <ArrowLeft size={isMobile ? 16 : 20} />
                 </button>
-                <h2 className={`${isMobile ? "text-[24px]" : "text-[32px]"} font-semibold text-[#1D1D20]`}>Study Sets</h2>
+                <h2 className={`${isMobile ? "text-[24px]" : "text-[32px]"} font-semibold text-[#1D1D20]`}>{comViewText.communityView.titles.studySets}</h2>
                 <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
                     className={`bg-white rounded-xl p-${isMobile ? "1" : "2"} text-[#1D1D20] border border-[#E9D0CE] text-[${isMobile ? "12px" : "14px"}]`}
                 >
-                  <option value="all">View All</option>
-                  <option value="flashcards">Flashcards</option>
-                  <option value="fill_in_blank">Fill in the Blank</option>
-                  <option value="matching">Matching</option>
-                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="all">{comViewText.communityView.filters.viewAll}</option>
+                  <option value="flashcards">{comViewText.communityView.filters.flashcards}</option>
+                  <option value="fill_in_blank">{comViewText.communityView.filters.fillInBlank}</option>
+                  <option value="matching">{comViewText.communityView.filters.matching}</option>
+                  <option value="multiple_choice">{comViewText.communityView.filters.multipleChoice}</option>
                 </select>
               </div>
 
@@ -1933,7 +1941,7 @@ export default function CommunityView() {
                     onClick={handleAddStudyMaterial}
                 >
                   <Plus size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>{isMobile ? "Add" : "Add Study Material"}</span>
+                  <span>{isMobile ? comViewText.communityView.buttons.add: comViewText.communityView.buttons.addStudyMaterial}</span>
                 </button>
 
                 <button
@@ -1941,7 +1949,7 @@ export default function CommunityView() {
                     onClick={handleOpenChatRoom}
                 >
                   <MessageSquare size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Message</span>
+                  <span>{comViewText.communityView.buttons.message}</span>
                 </button>
 
                 <button
@@ -1949,7 +1957,7 @@ export default function CommunityView() {
                     onClick={toggleMembers}
                 >
                   <Users size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Members</span>
+                  <span>{comViewText.communityView.buttons.members}</span>
                 </button>
 
                 <button
@@ -1957,7 +1965,7 @@ export default function CommunityView() {
                     onClick={handleDeleteCommunity}
                 >
                   <Trash2 size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Delete Community</span>
+                  <span>{isMobile ? comViewText.communityView.buttons.deleteCommunityM:comViewText.communityView.buttons.deleteCommunity}</span>
                 </button>
               </div>
             </div>
@@ -2109,7 +2117,7 @@ export default function CommunityView() {
                 </div>
             ) : (
                 <div className={`text-center py-${isMobile ? "4" : "8"} bg-white/80 rounded-xl`}>
-                  <p className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]/70`}>No study sets available.</p>
+                  <p className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]/70`}>{comViewText.communityView.emptyStates.noStudySets}</p>
                 </div>
             )}
           </div>
@@ -2195,12 +2203,13 @@ export default function CommunityView() {
                   <div className="flex justify-between items-center mb-4 md:mb-6">
                     <h2 className="text-xl md:text-2xl font-semibold text-[#1D1D20]">
                       {currentStep === 1
-                          ? "Name Your Study Set"
+                          ? comViewText.communityView.dialogSteps.nameStep
                           : currentStep === 2
-                              ? "Select a Template"
+                              ?  comViewText.communityView.dialogSteps.templateStep
                               : currentStep === 3
-                                  ? "Customize Your Content"
-                                  : "Add Categories & Tags"}
+                                  ?  comViewText.communityView.dialogSteps.contentStep
+                                  : comViewText.communityView.dialogSteps.tagsStep
+                      }
                     </h2>
                     <button
                         className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-2 rounded-full"
@@ -2223,22 +2232,22 @@ export default function CommunityView() {
                     <div
                         className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
                     >
-                      1. Name
+                      {comViewText.communityView.stepLabels.step1}
                     </div>
                     <div
                         className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
                     >
-                      2. Template
+                      {comViewText.communityView.stepLabels.step2}
                     </div>
                     <div
                         className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
                     >
-                      3. Content
+                      {comViewText.communityView.stepLabels.step3}
                     </div>
                     <div
                         className={`flex-1 p-2 text-center ${currentStep === 4 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
                     >
-                      4. Tags
+                      {comViewText.communityView.stepLabels.step4}
                     </div>
                   </div>
 
@@ -2252,12 +2261,12 @@ export default function CommunityView() {
                               mb: 2,
                             }}
                         >
-                          Study Set Name
+                          {comViewText.upload.labelStudySetName}
                         </Typography>
                         <TextField
                             fullWidth
                             variant="outlined"
-                            placeholder="Enter a name for your study set"
+                            placeholder={comViewText.communityView.header.name}
                             value={studySetName}
                             onChange={(e) => setStudySetName(e.target.value)}
                             sx={{
@@ -2335,12 +2344,12 @@ export default function CommunityView() {
                               mt: 4,
                             }}
                         >
-                          Access Control
+                          {comViewText.upload.accessControlTitle}
                         </Typography>
 
                         <FormControl component="fieldset" sx={{ width: "100%" }}>
                           <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px" }}>
-                            Who can view this study set?
+                            {comViewText.upload.questionWhoCanView}
                           </Typography>
                           <Grid container direction="column" spacing={1}>
                             <Grid item>
@@ -2361,7 +2370,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Unlock size={16} />
                                       <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Everyone - Study set visible to all users
+                                        {comViewText.upload.optionEveryone}
                                       </Typography>
                                     </Box>
                                   }
@@ -2391,7 +2400,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Lock size={16} />
                                       <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Community Members Only - Only visible to anyone who joined the community
+                                        {comViewText.upload.optionAllMembers}
                                       </Typography>
                                     </Box>
                                   }
@@ -2420,7 +2429,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Users size={16} />
                                       <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Specific Members - Choose exactly who can see this study set
+                                        {comViewText.upload.optionSpecificMembers}
                                       </Typography>
                                     </Box>
                                   }
@@ -2438,7 +2447,7 @@ export default function CommunityView() {
                         {accessType === "specificMembers" && (
                             <FormControl fullWidth sx={{ mt: 2 }}>
                               <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                Select Members
+                                {comViewText.communityView.accessControl.memberSelectLabel}
                               </InputLabel>
                               <Select
                                   labelId="member-selection-label"
@@ -2507,7 +2516,7 @@ export default function CommunityView() {
                                   variant="caption"
                                   sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", display: "block" }}
                               >
-                                Only selected members will be able to view this study set
+                                {comViewText.upload.infoOnlySelectedMembers}
                               </Typography>
                             </FormControl>
                         )}
@@ -2525,7 +2534,7 @@ export default function CommunityView() {
                                 fontFamily: "SourGummy, sans-serif",
                               }}
                           >
-                            Choose Template
+                            {comViewText.communityView.buttons.chooseTemplate}
                           </Button>
                         </Box>
                       </Box>
@@ -2538,7 +2547,7 @@ export default function CommunityView() {
                           {[
                             {
                               id: 1,
-                              name: "Basic Flashcards",
+                              name:  comViewText.communityView.templateOptions.flashcards,
                               type: "flashcards",
                               icon: BookOpen,
                               content: [{ front: "", back: "" }],
