@@ -1954,7 +1954,9 @@ const HomePage = () => {
                   boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
                   position: "relative",
                   overflow: "hidden",
-                  height: "100%",
+                  // height: "100%", // Remove height
+                  // display: 'flex', // Remove flex
+                  // flexDirection: 'column', // Remove flex direction
                   width: { xs: '100%', md: 'auto' }, // Explicitly set width on xs
                   mx: { xs: 0 }, // Ensure mx is 0 on xs
                   boxSizing: 'border-box', // Added box-sizing
@@ -2034,6 +2036,7 @@ const HomePage = () => {
                       <Card
                         key={user.id}
                         sx={{
+                          minHeight: { md: '120px' }, // Add consistent minHeight
                           width: "100%",
                           background: "#FFFFFF",
                           backdropFilter: "blur(10px)",
@@ -2314,7 +2317,9 @@ const HomePage = () => {
                   boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
                   position: "relative",
                   overflow: "hidden",
-                  height: "100%",
+                  // height: "100%", // Remove height
+                  // display: 'flex', // Remove flex
+                  // flexDirection: 'column', // Remove flex direction
                   width: { xs: '100%', md: 'auto' }, // Explicitly set width on xs
                   mx: { xs: 0 }, // Ensure mx is 0 on xs
                   boxSizing: 'border-box', // Added box-sizing
@@ -2402,14 +2407,15 @@ const HomePage = () => {
                       display: "flex",
                       flexDirection: "column",
                       gap: 2,
+                      // flexGrow: 1, // Remove flex grow
+                      // overflowY: 'auto', // Remove overflow
                       maxHeight: "unset",
                       padding: 1,
-                      paddingRight: 2, // Keep right padding
-                      width: '100%', // Ensure container takes full width
-                       [theme.breakpoints.down('sm')]: {
-                         // Remove specific pl/pr adjustments here
-                         boxSizing: 'border-box',
-                       }
+                      paddingRight: 2, // Keep right padding for potential scrollbar space if needed later
+                      [theme.breakpoints.down('sm')]: {
+                        // Remove specific pl/pr adjustments here
+                        boxSizing: 'border-box',
+                      }
                       // Remove scrollbar styles
                     }}
                   >
@@ -2417,6 +2423,7 @@ const HomePage = () => {
                       <Card
                         key={`${stat.id}-${index}`}
                         sx={{
+                          minHeight: { md: '120px' }, // Add consistent minHeight
                           width: "100%",
                           background: "#FFFFFF",
                           backdropFilter: "blur(10px)",
@@ -2493,7 +2500,7 @@ const HomePage = () => {
                             },
                           }}
                         >
-                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", transform: 'translateY(3px)' }}> {/* Increased transform */}
                             {getStatIcon(stat.statType)}
                           </Box>
                         </Box>
@@ -2501,27 +2508,26 @@ const HomePage = () => {
                         <CardContent sx={{ 
                           pt: 1, 
                           pb: 1, 
-                          pl: { xs: '38px', md: 6 }, // Reduced pl on xs to bring content closer to rank
+                          pl: { xs: '38px', md: 4 }, // Reduced md padding from 6 to 4
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
                           display: "flex",
                           flexDirection: "column",
-                          justifyContent: "center",
-                          // Add height and overflow control for md breakpoint
-                          height: { md: "80px" }, 
-                          overflow: { md: 'hidden' },
+                          justifyContent: "space-between",
                           [theme.breakpoints.down('sm')]: {
                             padding: '0 4px', // Reduced internal padding slightly on xs
                             // Reduce mobile pl override
                             pl: '38px', // Match the pl adjustment
                           }
                         }}>
-                          {/* Remove gap for mobile */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, md: 2 } }}> {/* Slightly increased gap on xs */}
+                          {/* Main content area wrapper (Avatar + Text details) */}
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: { xs: 0.5, md: 2 } }}> {/* Changed alignItems */}
+                            {/* Avatar reinstated */}
                             <Avatar
                               alt={stat.name}
                               sx={{
+                                mt: 1, // Increased top margin
                                 width: { xs: 40, md: 50 },
                                 height: { xs: 40, md: 50 },
                                 background: `linear-gradient(135deg, ${
@@ -2554,79 +2560,82 @@ const HomePage = () => {
                               )}
                             </Avatar>
 
-                            {/* Apply negative margin on mobile */}
+                            {/* Text content wrapper (Title, User/Stat, Caption) */}
                             <Box sx={{
                                 flexGrow: 1,
-                                marginLeft: { xs: '-2px', md: 0 }, // Revert to old marginLeft
-                                display: 'flex', // Keep flex
-                                flexDirection: 'column', // Keep column direction
-                                justifyContent: 'center' // Keep vertical centering
+                                marginLeft: { xs: '-2px', md: 0 },
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between', 
+                                height: '100%' 
                             }}>
-                              {/* Title and caption container */}
-                              <Typography
-                                  variant="h5"
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    fontWeight: 600,
-                                    fontSize: { xs: "14px", md: "18px" },
-                                    color: "#1D1D20",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    mb: 0.5, // Keep mb from old structure
-                                    lineHeight: 1.2,
-                                    textAlign: { xs: 'left', md: 'center' }, // Align left on xs, center on md
-                                    // width: '100%' // Remove width: 100%
-                                  }}
-                                >
-                                  {getStatTitle(stat.statType)}
-                                </Typography>
+                              {/* Top Content Wrapper (Badge Title + User/Stat) */}
+                              <Box>
+                                <Typography
+                                    variant="h5"
+                                    sx={{
+                                      fontFamily: "SourGummy, sans-serif",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "14px", md: "18px" },
+                                      color: "#1D1D20",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      mb: .5, // Keep mb from old structure
+                                      lineHeight: 1.2,
+                                      textAlign: 'left', // Always align left
+                                      // pl: { md: 2 }, // Remove left padding
+                                      // width: '100%' // Remove width: 100%
+                                    }}
+                                  >
+                                    {getStatTitle(stat.statType)}
+                                  </Typography>
 
-                              {/* User name and stat value - Stacked Vertically on xs */}
-                              <Box sx={{
-                                  display: "flex",
-                                  alignItems: { xs: 'flex-start' }, // Keep mobile alignment
-                                  flexDirection: { xs: 'column', md: 'row' }, // Keep mobile stacking
-                                  justifyContent: { md: 'space-between' }, // Keep mobile justification
-                                  // Removed flexDirection
-                                  mt: { xs: 0.5, md: 1.5 }, // Revert mt
-                                  // width: '100%' // Remove width
-                                  width: '100%' // Keep width 100%
-                              }}>
-                                {/* Wrap username and icon */}
-                                <Tooltip title={stat.name} placement="top" arrow>
+                                {/* User name and stat value - Stacked Vertically on xs */}
+                                <Box sx={{
+                                    display: "flex",
+                                    alignItems: 'flex-start', // Keep mobile alignment
+                                    flexDirection: 'column', // Keep mobile stacking (now applies to md too)
+                                    // justifyContent: { md: 'space-between' }, // Remove justification
+                                    mt: { xs: 0.5, md: 0.5 }, // Adjust margin-top
+                                    width: '100%' // Keep width 100%
+                                }}>
+                                  {/* Wrap username and icon */}
+                                  <Tooltip title={stat.name} placement="top" arrow>
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "SourGummy, sans-serif",
+                                        color: "#1D1D20",
+                                        fontWeight: 600,
+                                        fontSize: { xs: "12px", md: "14px" },
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        lineHeight: 1.1,
+                                        maxWidth: { xs: "80px", md: "140px" }, // Restore original max width
+                                      }}
+                                    >
+                                      {truncateText(stat.name, isMobile ? 8 : 10)} 
+                                    </Typography>
+                                  </Tooltip>
                                   <Typography
                                     sx={{
                                       fontFamily: "SourGummy, sans-serif",
-                                      color: "#1D1D20",
-                                      fontWeight: 600,
-                                      fontSize: { xs: "12px", md: "14px" },
+                                      color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
+                                             index === 1 ? "#5B8C5A" : // Sea 2 from style guide
+                                             index === 2 ? "#1D6EF1" : // Sea 1 from style guide
+                                             "#48BB78",
+                                      fontSize: { xs: "10px", md: "12px" },
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
                                       lineHeight: 1.1,
-                                      maxWidth: { xs: "80px", md: "140px" }, // Restore original max width
+                                      mt: 0.25 // Add small margin-top under username
                                     }}
                                   >
-                                    {truncateText(stat.name, isMobile ? 8 : 10)} 
+                                    {formatStatValue(stat.statType, stat.statValue)}
                                   </Typography>
-                                </Tooltip>
-                                <Typography
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
-                                           index === 1 ? "#5B8C5A" : // Sea 2 from style guide
-                                           index === 2 ? "#1D6EF1" : // Sea 1 from style guide
-                                           "#48BB78",
-                                    fontSize: { xs: "10px", md: "12px" },
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    lineHeight: 1.1,
-                                  }}
-                                >
-                                  {formatStatValue(stat.statType, stat.statValue)}
-                                </Typography>
+                                </Box>
                               </Box>
                               {/* Caption text positioned normally below - Add back */}
                               <Typography
@@ -2635,14 +2644,16 @@ const HomePage = () => {
                                   textAlign: "center",
                                   fontFamily: "SourGummy, sans-serif",
                                   color: "#555",
-                                  fontSize: { xs: "8px", md: "10px" },
+                                  fontSize: { xs: "8px", sm: "10px", md: "10px" }, // Adjusted font size for sm/md
                                   lineHeight: 1.1, // Keep slightly larger mobile line height
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
+                                  whiteSpace: "normal", // Allow wrapping
                                   opacity: 0.9,
                                   display: { xs: "block", sm: "block" }, // Ensure display block on mobile
-                                  mt: { xs: 0.5, md: 1 }, // Add margin-top for spacing
+                                  mt: 'auto', // Push to bottom via margin auto
+                                  pt: 0.5, // Add padding top for spacing from content above
+                                  // pl: { md: 2 } // Remove left padding
                                 }}
                               >
                                 {getStatCaption(stat.statType)}
