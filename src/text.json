@@ -123,7 +123,7 @@
         "Natural Resources",
         "Time Zones"
       ],
-      "Foreign_Languages": [
+      "Foreign Languages": [
         "Spanish",
         "French",
         "German",
@@ -887,7 +887,7 @@
       },
       "emptyStates": {
         "noMembers": "No members yet.",
-        "noStudySets": "No study sets available."
+        "noStudySets": "Loading study sets..."
       }
     },
     "communityMessaging": {
@@ -1032,6 +1032,35 @@
       "Education": "Education",
       "Career Development": "Career Development"
     },
+
+    "categoriesTranslation": {
+        "Matemáticas": "Math",
+        "Ciencias": "Science",
+        "Literatura": "Literature",
+        "Historia": "History",
+        "Geografía": "Geography",
+        "Idiomas extranjeros": "Foreign Languages",
+        "Arte": "Art",
+        "Música": "Music",
+        "Educación física": "Physical Education",
+        "Tecnología": "Technology",
+        "Estudios de negocios": "Business Studies",
+        "Filosofía": "Philosophy",
+        "Psicología": "Psychology",
+        "Sociología": "Sociology",
+        "Economía": "Economics",
+        "Educación para la salud": "Health Education",
+        "Economía doméstica": "Home Economics",
+        "Presentaciones orales": "Public Speaking",
+        "Tecnología e Ingeniería": "Technology & Engineering",
+        "Debate": "Debate",
+        "Ciencia Ambiental": "Environmental Science",
+        "Teatro": "Theatre",
+        "Ley": "Law",
+        "Educación": "Education",
+        "Desarrollo Profesional": "Career Development"
+      },
+
     "teamMembers": [
       {
         "id": "rances",
@@ -2738,6 +2767,34 @@
       "successSave": "¡Preferencias guardadas correctamente!"
     },
     "categories": {
+      "Math": "Matemáticas",
+      "Science": "Ciencias",
+      "Literature": "Literatura",
+      "History": "Historia",
+      "Geography": "Geografía",
+      "Foreign Languages": "Idiomas extranjeros",
+      "Art": "Arte",
+      "Music": "Música",
+      "Physical Education": "Educación física",
+      "Technology": "Tecnología",
+      "Business Studies": "Estudios empresariales",
+      "Philosophy": "Filosofía",
+      "Psychology": "Psicología",
+      "Sociology": "Sociología",
+      "Economics": "Economía",
+      "Health Education": "Educación de salud",
+      "Home Economics": "Economía doméstica",
+      "Public Speaking": "Oratoria",
+      "Technology & Engineering": "Tecnología e ingeniería",
+      "Debate": "Debate",
+      "Environmental Science": "Ciencias ambientales",
+      "Theatre": "Teatro",
+      "Law": "Ley",
+      "Education": "Educación",
+      "Career Development": "Desarrollo profesional"
+    },
+
+    "categoriesTranslation": {
       "Math": "Matemáticas",
       "Science": "Ciencias",
       "Literature": "Literatura",

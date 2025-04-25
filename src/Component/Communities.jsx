@@ -1164,7 +1164,7 @@ const Communities = () => {
                           <div className="bg-white rounded-xl p-6 md:p-8 text-center">
                             <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#1D6EF1] mx-auto mb-4"></div>
                             <p className="text-[#1D1D20] text-lg md:text-xl" style={fontStyle}>
-                              Loading communities...
+                              {comText.groupList.loading}
                             </p>
                           </div>
                       ) : error ? (

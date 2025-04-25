@@ -381,6 +381,7 @@ export default function CommunityView() {
       comViewText.school_categories.Education[8],
       comViewText.school_categories.Education[9],
     ],
+
     [comViewText.categories["Career Development"]]: [
       comViewText.school_categories["Career Development"][0],
       comViewText.school_categories["Career Development"][1],
@@ -2050,7 +2051,7 @@ export default function CommunityView() {
                                                 : "bg-[#1D6EF1] text-[#F4FDFF]"
                                         } px-3 py-1 rounded-xl flex items-center h-8 cursor-pointer`}
                                     >
-                                      {category}
+                                      {comViewText.categoriesTranslation[category] || category}
                                       {userCategories.includes(category) && <span className="ml-1 text-xs">★</span>}
                                     </span>
 
