@@ -34,7 +34,7 @@ import StudySetView from "./Component/StudySetView"
 import socketService from './services/socketService'
 import Feed from './pages/Feed'
 import Shop from './Component/Shop'
-import { ShopProvider } from './Context/ShopContext'
+import { ShopProvider, useShop as useShopContextHook } from './Context/ShopContext'
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 // Import default background and other backgrounds you want to use
@@ -352,6 +352,9 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
   const [refreshPosts, setRefreshPosts] = useState(false)
   const [hasSeenAnimation, setHasSeenAnimation] = useState(false)
 
+  // Access context values including setters
+  const { clearUserData, refreshUserData, setUserId, setToken } = useShopContextHook(); 
+
   useEffect(() => {
     const hasLoggedInBefore = localStorage.getItem("hasLoggedInBefore")
     setHasSeenAnimation(!!hasLoggedInBefore)
@@ -386,42 +389,45 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
       }
     }
     
-    // If we have a userId, clear the user-specific localStorage keys
+    // Clear user-specific localStorage keys
     if (userId) {
-      // Clear fisherman cooldown
-      const fishermanCooldownKey = `lastFishermanClickTime_${userId}`;
-      localStorage.removeItem(fishermanCooldownKey);
-      
-     
-      localStorage.removeItem('lastEquippedSkinId');
+      const keysToRemove = [
+        `lastFishermanClickTime_${userId}`,
+        `lastKnownBubbleBucks_${userId}`,
+        `lastKnownPurchasedSkins_${userId}`,
+        `lastEquippedSkinId_${userId}`,
+        `sessionPurchasedSkins_${userId}`, // Also clear session storage specific key
+        `lastSyncedStudyTime_${userId}`
+      ];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      sessionStorage.removeItem(`sessionPurchasedSkins_${userId}`); // Ensure session key is cleared too
+      console.log(`Cleared user-specific local and session storage for userId: ${userId}`);
     }
     
-    // Try to access ShopContext and clear data
-    try {
-      // Import and use the ShopContext directly
-      const { clearUserData } = require('../Context/ShopContext').useShop();
-      if (typeof clearUserData === 'function') {
-        clearUserData();
-        console.log("Shop data cleared during logout");
-      }
-    } catch (err) {
-      console.warn("Could not clear shop data:", err);
+    // Call clearUserData from context if available
+    if (clearUserData) {
+      clearUserData();
+      console.log("Shop data cleared during logout via context");
+    } else {
+      console.warn("clearUserData function not available from context during logout");
     }
     
-    // Clear session storage as before
+    // Clear general session storage items
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("activeRoomID")
     sessionStorage.removeItem("activeCommunityID")
     sessionStorage.removeItem("activeCommunityRoomID")
+    // Add other general session items if needed
+    
     setLoggedIn(false)
-    window.location.reload()
+    window.location.reload() // Force reload to ensure clean state
   }
 
   const login = (e) => {
-    e.preventDefault()
-    setRefreshPosts(true)
-    setLoggedIn(true)
+    e.preventDefault();
+    setRefreshPosts(true);
+    setLoggedIn(true);
   }
 
   const doRefreshPosts = () => {
@@ -452,7 +458,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
               />
               <Route
                 path="/login"
-                element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
+                element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} setShopUserId={setUserId} setShopToken={setToken} /> : <Navigate to="/" replace />}
               />
               <Route path="/select-categories" element={<CategorySelection />} />
               <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
@@ -583,25 +589,6 @@ function App() {
     localStorage.setItem('selectedBackground', backgroundOption.id);
   };
 
-  // Get user ID from sessionStorage to use as key
-  // This should re-render App when login/logout happens, assuming login/logout triggers a state change in App or a parent
-  const userStr = sessionStorage.getItem("user");
-  let userIdKey = null;
-  if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        userIdKey = (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
-      } catch (e) {
-        userIdKey = userStr; // Fallback if not JSON but potentially an ID
-      }
-  }
-  
-  // Add timestamp to force re-render when re-logging in as the same user
-  const timestamp = sessionStorage.getItem("loginTimestamp") || Date.now().toString();
-  
-  // Use a fallback like 'logged_out' if userIdKey is null/undefined to ensure key changes
-  const shopProviderKey = userIdKey !== null && userIdKey !== undefined ? `${String(userIdKey)}_${timestamp}` : 'logged_out';
-
   return (
     <BackgroundContext.Provider value={{ backgroundOptions, currentBackground, changeBackground }}>
       <ThemeProvider theme={theme}>
@@ -620,7 +607,7 @@ function App() {
           }}
         >
           <Router basename={process.env.PUBLIC_URL}>
-            <ShopProvider key={shopProviderKey}>
+            <ShopProvider>
               <AppContent 
                 backgroundOptions={backgroundOptions}
                 currentBackground={currentBackground}

@@ -7,7 +7,7 @@ import BubbleTrapAnimation from "./BubbleTrapAnimation"
 import Frame from "../assets/Frame.png"
 import background from "../assets/image3.png"
 
-const LoginForm = ({ setLoggedIn }) => {
+const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [sessionToken, setSessionToken] = useState("")
@@ -62,18 +62,30 @@ const LoginForm = ({ setLoggedIn }) => {
                 sessionStorage.setItem("token", result.token)
                 sessionStorage.setItem("user", result.userID)
                 setLoginResult(result)
+                
+                // Call context setters to update context state
+                if (setShopUserId) {
+                    console.log("[LoginForm] Calling setShopUserId.");
+                    setShopUserId(result.userID);
+                }
+                if (setShopToken) {
+                    console.log("[LoginForm] Calling setShopToken.");
+                    setShopToken(result.token);
+                }
 
-                // Check if this is the first login
+                // Check if this is the first login - determines animation or direct login completion
                 const isFirstLogin = !localStorage.getItem("hasLoggedInBefore")
                 console.log("Is first login:", isFirstLogin)
 
                 if (isFirstLogin) {
                     console.log("Showing animation")
+                    // Store flag AFTER confirming first login
+                    localStorage.setItem("hasLoggedInBefore", "true") 
                     setShowAnimation(true)
-                    localStorage.setItem("hasLoggedInBefore", "true")
+                    // Note: completeLogin(result) will be called by BubbleTrapAnimation onComplete
                 } else {
                     console.log("Skipping animation, not first login")
-                    completeLogin(result)
+                    completeLogin(result) // Proceed directly to final steps
                 }
             })
             .catch((err) => {
@@ -88,44 +100,48 @@ const LoginForm = ({ setLoggedIn }) => {
     }
 
     const completeLogin = (result) => {
-        console.log("Completing login")
+        console.log("Completing login flow (fetching name, setting loggedIn, navigating)")
         if (!result && loginResult) {
-            result = loginResult
+            result = loginResult // Use stored result if needed (e.g., from animation)
         }
 
-        if (result) {
-            // Fetch user details to get name
-            fetch(`${process.env.REACT_APP_API_PATH}/users/${result.userID}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${result.token}`,
-                },
-            })
-                .then((res) => res.json())
-                .then((userData) => {
-                    console.log("User data:", userData)
-                    // Store name in session storage
-                    if (userData.attributes?.name) {
-                        sessionStorage.setItem("name", userData.attributes.name)
-                    }
-
-                    // Complete login process
-                    setLoggedIn(true)
-                    setSessionToken(result.token)
-                    navigate("/")
-                })
-                .catch((err) => {
-                    console.error("Error fetching user data:", err)
-                    // Still complete login even if user data fetch fails
-                    setLoggedIn(true)
-                    setSessionToken(result.token)
-                    navigate("/")
-                })
-        } else {
-            console.error("No login result available")
-            navigate("/login")
+        if (!result) {
+            console.error("No login result available for completeLogin")
+            navigate("/login") // Should not happen ideally
+            return;
         }
+
+        // Fetch user details (like name) - This is secondary to the main shop data fetch
+        fetch(`${process.env.REACT_APP_API_PATH}/users/${result.userID}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${result.token}`,
+            },
+        })
+        .then(res => {
+            if (!res.ok) console.warn("Failed to fetch user name, continuing login...");
+            return res.json();
+        })
+        .then(userData => {
+            console.log("User name data fetched (or fetch attempted):", userData);
+            if (userData?.attributes?.name) {
+                sessionStorage.setItem("name", userData.attributes.name);
+            }
+        })
+        .catch(err => {
+            console.error("Error fetching user name:", err);
+            // Don't stop login if name fetch fails
+        })
+        .finally(() => {
+            // Set loggedIn state in App AFTER name fetch attempt
+            console.log("[LoginForm] Setting loggedIn state to true.");
+            setLoggedIn(true);
+            
+            // Navigate to home page as the final step
+            console.log("[LoginForm] Navigating to home page.");
+            navigate("/");
+        });
     }
 
     const handleCloseSnackbar = (event, reason) => {
