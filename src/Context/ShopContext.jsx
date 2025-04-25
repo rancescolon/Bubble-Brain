@@ -198,81 +198,49 @@ export const ShopProvider = ({ children }) => {
   const [purchasedSkins, setPurchasedSkins] = useState([]);
   const [equippedSkinId, setEquippedSkinId] = useState(defaultSkin.id);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
-  const [token, setToken] = useState(null);
-
-  // Effect to get user ID and token from session storage
-  useEffect(() => {
-    const storedToken = sessionStorage.getItem('token');
+  
+  // Initialize userId and token directly from sessionStorage
+  const [userId, setUserId] = useState(() => {
     const userStr = sessionStorage.getItem('user');
-    let sessionUserId = null;
-
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        // Extract user ID from user object or string
-        sessionUserId = (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
-      } catch (e) {
-        // Handle cases where userStr might not be JSON but a plain ID
-        if (userStr && !isNaN(Number(userStr))) { 
-          sessionUserId = Number(userStr);
-        } else if (userStr) {
-            sessionUserId = userStr; // Keep as string if not parseable or numeric
-        } else {
-        console.error("Error parsing user from sessionStorage:", e);
-            sessionUserId = null; // Ensure null on error
-        }
-      }
-    } else {
-        sessionUserId = null; // Ensure null if userStr is null/empty
+    if (!userStr) return null;
+    try {
+      const user = JSON.parse(userStr);
+      return (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
+    } catch (e) {
+      return userStr; // Fallback if not JSON
     }
+  });
+  const [token, setToken] = useState(() => sessionStorage.getItem('token'));
 
-    // Update state with session data
-    setToken(storedToken); 
-    setUserId(sessionUserId); 
-
-  }); // No dependency array - runs on each render to keep token fresh
-
-  // Effect to fetch user-specific shop data when userId or token changes
+  // Effect to fetch user-specific shop data when userId or token state changes
   useEffect(() => {
-    // Track the last user ID we've loaded data for
-    const lastUserId = sessionStorage.getItem("lastLoadedUserID");
-    const loginTimestamp = sessionStorage.getItem("loginTimestamp");
-    
-    // If this is a different user than before, reset everything completely
-    if (lastUserId !== userId) {
-      console.log(`[ShopContext] User changed from ${lastUserId || 'none'} to ${userId || 'none'}`);
-      
-      // Store current user ID for next comparison
-      if (userId) {
-        sessionStorage.setItem("lastLoadedUserID", userId);
-      } else {
-        sessionStorage.removeItem("lastLoadedUserID");
-      }
-      
-      // Reset state when user changes
+    console.log("[ShopContext] Fetch Effect Triggered. Checking state...");
+    console.log(`[ShopContext] Current state: UserID=${userId}, Token=${token ? 'Exists' : 'Missing'}`);
+
+    // Check for userId and token state
+    if (!userId || !token) {
+      console.log("[ShopContext] No userId or token in state, skipping fetch.");
+      setIsLoading(false); 
+      // Reset state if we run without credentials (e.g., logout)
       setBubbleBucks(0);
       setPurchasedSkins([]);
       setEquippedSkinId(defaultSkin.id);
-      
-      // If no user is logged in, stop here
-      if (!userId || !token) {
-        setIsLoading(false);
-        console.log("[ShopContext] User logged out or ID/token invalid, resetting state.");
-        return;
-      }
+      return; 
     }
-    
-    // Only set loading - don't clear data between refreshes
-    setIsLoading(true);
-    console.log("[ShopContext] userId/token changed, about to fetch shop data...");
 
+    // Proceed to fetch data
+    console.log(`[ShopContext] UserId/Token found in state, proceeding to fetch.`);
+    setIsLoading(true);
+
+    // Define the async fetch function
     const fetchShopData = async () => {
-      // Reset the equipped skin immediately when fetching data for a new user
-      // This ensures we don't show the previous user's skin while loading
-      setEquippedSkinId(defaultSkin.id);
+      console.log(`[ShopContext] fetchShopData called for UserID: ${userId}`);
+      // Reset the equipped skin immediately when fetching data for a new user?
+      // setEquippedSkinId(defaultSkin.id);
       
-      console.log(`[ShopContext] Fetching shop data for userId: ${userId}`);
+      const fetchUrl = `${process.env.REACT_APP_API_PATH}/users/${userId}?_=${Date.now()}`;
+      console.log(`[ShopContext] Fetching URL: ${fetchUrl}`);
+
       try {
         // First, check localStorage for cached data to use as fallback
         const lastKnownBucksKey = `lastKnownBubbleBucks_${userId}`;
@@ -301,18 +269,27 @@ export const ShopProvider = ({ children }) => {
         }
         
         // Fetch user data including bubbleBucks
-        const response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}?_=${Date.now()}`, {
+        const response = await fetch(fetchUrl, {
           headers: { Authorization: `Bearer ${token}` }
         });
+        console.log(`[ShopContext] Fetch response status: ${response.status}`);
 
         if (!response.ok) {
            let errorData = null;
-           try { errorData = await response.json(); } catch(e) { /* ignore */ }
+           try { 
+             errorData = await response.json(); 
+             console.error("[ShopContext] Fetch error response body:", errorData);
+           } catch(e) { 
+             const textError = await response.text();
+             console.error("[ShopContext] Fetch error response text:", textError);
+             errorData = textError; 
+           } 
            console.error(`[ShopContext] Failed to fetch user data: ${response.status}`, errorData);
            throw new Error(`Failed to fetch user data: ${response.status}`);
         }
 
         const userData = await response.json();
+        console.log("[ShopContext] Raw user data received:", userData);
         const attributes = userData.attributes || {};
 
         // Log the raw data received from the server
@@ -414,8 +391,11 @@ export const ShopProvider = ({ children }) => {
           skins: finalSkins,
           equipped: finalEquippedSkin,
         });
+
+        console.log("[ShopContext] State updated successfully after fetch.");
+
       } catch (error) {
-        console.error("Error during fetchShopData execution:", error);
+        console.error("[ShopContext] Error caught during fetchShopData execution:", error);
         
         // On error, try to recover from cache with user-specific keys
         const lastKnownBucksKey = `lastKnownBubbleBucks_${userId}`;
@@ -454,18 +434,35 @@ export const ShopProvider = ({ children }) => {
           setEquippedSkinId(cachedEquippedSkinId);
         }
       } finally {
+        // Ensure loading is set to false regardless of success or failure
+        console.log("[ShopContext] fetchShopData finally block reached, setting loading to false.");
         setIsLoading(false);
       }
     };
 
+    // Call the fetch function
     fetchShopData();
-  }, [userId, token]);
+
+    // Run when userId or token state changes
+  }, [userId, token]); // Dependency array includes userId and token state
 
   // Function to manually refresh user data
-  const refreshUserData = async () => {
-    console.log("[ShopContext] Manual refresh of user data requested");
-    
-    // If already loading, don't start another fetch
+  const refreshUserData = async (explicitUserId = null, explicitToken = null) => {
+    console.log("[ShopContext] Manual refresh requested.", { explicitUserId, explicitToken: explicitToken ? 'Yes' : 'No' });
+
+    // Determine effective credentials: use explicit args if provided, else fallback to state
+    const effectiveUserId = explicitUserId ?? userId;
+    const effectiveToken = explicitToken ?? token;
+    console.log(`[ShopContext] Effective credentials for refresh: UserID=${effectiveUserId}, Token=${effectiveToken ? 'Exists' : 'Missing'}`);
+
+    // Use effective credentials for the check
+    if (!effectiveUserId || !effectiveToken) {
+      console.error("[ShopContext] Cannot fetch shop data: effective userId or token missing.", { effectiveUserId, hasEffectiveToken: !!effectiveToken });
+      setIsLoading(false); // Ensure loading is false if we abort early
+      return Promise.resolve(false);
+    }
+
+    // If already loading, don't start another fetch (use internal isLoading state)
     if (isLoading) {
       console.log("[ShopContext] Already loading data, skipping refresh request");
       return Promise.resolve(false);
@@ -475,18 +472,13 @@ export const ShopProvider = ({ children }) => {
     setIsLoading(true);
     
     try {
-      if (!userId || !token) {
-        console.error("[ShopContext] Cannot fetch shop data: userId or token missing.", { userId, hasToken: !!token });
-        return Promise.resolve(false);
-      }
-
-      console.log(`[ShopContext] Fetching shop data for userId: ${userId}`);
+      console.log(`[ShopContext] Fetching shop data for UserID: ${effectiveUserId}`);
       
-      // Fetch user data including bubbleBucks
+      // Fetch user data using effective credentials
       let response;
       try {
-        response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}?_=${Date.now()}`, {
-          headers: { Authorization: `Bearer ${token}` }
+        response = await fetch(`${process.env.REACT_APP_API_PATH}/users/${effectiveUserId}?_=${Date.now()}`, {
+          headers: { Authorization: `Bearer ${effectiveToken}` }
         });
       } catch (fetchError) {
         console.error("[ShopContext] Network error during fetch:", fetchError);
@@ -574,6 +566,8 @@ export const ShopProvider = ({ children }) => {
       console.error("[ShopContext] Failed to refresh user data:", error);
       return Promise.resolve(false);
     } finally {
+      // Ensure loading is set to false after refresh attempt
+      console.log("[ShopContext] refreshUserData finally block reached, setting loading to false.");
       setIsLoading(false);
     }
   };
@@ -766,15 +760,13 @@ export const ShopProvider = ({ children }) => {
 
   // Function to clear all user-specific data (called during logout)
   const clearUserData = () => {
-    console.log("[ShopContext] Clearing user-specific data");
-    
-    // Reset state to defaults
+    console.log("[ShopContext] Clearing user state (not storage)");
     setBubbleBucks(0);
     setPurchasedSkins([]);
     setEquippedSkinId(defaultSkin.id);
-    
-    // We don't clear localStorage here - that's user-specific and should persist
-    // between sessions for the same user
+    setUserId(null); // Clear userId state
+    setToken(null); // Clear token state
+    setIsLoading(false); // Ensure loading is false after clearing
   };
 
   // Context value with all state and functions
@@ -796,6 +788,12 @@ export const ShopProvider = ({ children }) => {
     token,
     refreshUserData,
     clearUserData, // Add the new function to the context
+    // Expose state setters
+    setUserId, 
+    setToken,
+    // Expose missing state setters
+    setBubbleBucks,
+    setEquippedSkinId,
   };
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>;

@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useShop, availableSkins, rarityLevels as importedRarityLevels } from '../Context/ShopContext';
+import { useShop, availableSkins, rarityLevels as importedRarityLevels, setBubbleBucks, setPurchasedSkins as setContextPurchasedSkins, setEquippedSkinId } from '../Context/ShopContext';
 import { BackgroundContext } from '../App';
 import bubbleBuckImage from '../assets/bubblebuck.png'; // Import buck image
 import actualBuyButtonImage from '../assets/actualbuybutton.png'; // Add this import
@@ -64,7 +64,9 @@ const Shop = () => {
     updateBackendUserData, 
     userId,
     refreshUserData,
-    setPurchasedSkins
+    setPurchasedSkins: setContextPurchasedSkins,
+    setBubbleBucks: setContextBubbleBucks,
+    setEquippedSkinId: setContextEquippedSkinId,
   } = useShop();
 
   const { currentBackground } = useContext(BackgroundContext);
@@ -143,7 +145,12 @@ const Shop = () => {
 
   // New useEffect to sync bubble bucks with study time
   useEffect(() => {
-    // Skip if still loading or no user ID
+    // *** ADD CHECK: Don't run if shop is loading ***
+    if (isShopLoading) {
+      console.log("[Shop] Skipping study time sync because shop is loading.");
+      return;
+    }
+    // Skip if still loading study time or no user ID or no study time data
     if (loadingStudyTime || !userId || !totalStudyTimeSeconds) return;
     
     // Create user-specific localStorage key for tracking last synced time
@@ -198,7 +205,7 @@ const Shop = () => {
       // No new minutes, but still update last synced time to current total
       localStorage.setItem(LAST_SYNCED_KEY, totalStudyTimeSeconds.toString());
     }
-  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks]);
+  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks, isShopLoading]);
 
   // Load fisherman click time from localStorage when userId becomes available
   useEffect(() => {
@@ -232,12 +239,15 @@ const Shop = () => {
     localStorage.setItem(userSpecificKey, lastFishermanClickTime.toString());
   }, [lastFishermanClickTime, userId]); // Run when either changes
 
-  // Handle clicking the fisherman - UPDATED LOGIC
-  const handleFishermanClick = async () => { // Make async for backend update
+  // Handle clicking the fisherman - ADDED LOGGING
+  const handleFishermanClick = async () => {
+    console.log("[Fisherman] Click handler entered. Current state:", { userId, isMachineShaking });
+
     // Make sure user is logged in
     if (!userId) {
-            setSnackbar({ 
-              open: true, 
+      console.log("[Fisherman] Exiting: No userId.");
+      setSnackbar({ 
+        open: true, 
         message: 'Please log in to use this feature.',
         severity: 'warning' 
       });
@@ -266,6 +276,7 @@ const Shop = () => {
     if (timeSinceLastClick < cooldownDuration) {
       const remainingTime = cooldownDuration - timeSinceLastClick;
       const remainingMinutes = Math.ceil(remainingTime / (60 * 1000));
+      console.log(`[Fisherman] Exiting: Cooldown active. Remaining: ${remainingMinutes}m`);
       setSnackbar({ 
         open: true, 
         message: `The fishing line snapped! Try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`,
@@ -275,11 +286,15 @@ const Shop = () => {
     }
 
     // Prevent double-click during animation
-    if (isMachineShaking) return;
+    console.log("[Fisherman] Checking if machine is shaking:", isMachineShaking);
+    if (isMachineShaking) {
+        console.log("[Fisherman] Exiting: Machine is already shaking.");
+        return;
+    }
 
-      setIsMachineShaking(true); 
-    setLastFishermanClickTime(currentTime); // Update state
-    localStorage.setItem(userSpecificKey, currentTime.toString()); // Update localStorage directly
+    setIsMachineShaking(true); 
+    setLastFishermanClickTime(currentTime);
+    localStorage.setItem(userSpecificKey, currentTime.toString());
 
     // 1. Optimistic UI update
     const optimisticSuccess = addBubbleBucks(amountToAdd);
@@ -288,22 +303,29 @@ const Shop = () => {
        const newBucksTotal = bubbleBucks + amountToAdd; // Calculate new total for backend
        
        // 2. Update backend
+       console.log("[Fisherman] Attempting backend update with new total:", newBucksTotal);
        const backendSuccess = await updateBackendUserData({ bubbleBucks: newBucksTotal });
+       console.log("[Fisherman] Backend update result:", backendSuccess); // Log backend success
 
        if (backendSuccess) {
+          // DEBUG: Log before setting snackbar
+          const snackbarParams = { open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' };
+          console.log("[Fisherman] Backend successful, setting snackbar:", snackbarParams);
           // Show success message after backend confirmation
-          setSnackbar({ open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' });
+          setSnackbar(snackbarParams);
         } else {
+          console.error("[Fisherman] Backend update failed. Reverting optimistic update.");
           // Revert optimistic update if backend fails
-          addBubbleBucks(-amountToAdd); // Subtract the added amount
-          setLastFishermanClickTime(null); // Reset cooldown if backend failed
-          localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+          addBubbleBucks(-amountToAdd); 
+          setLastFishermanClickTime(null); 
+          localStorage.removeItem(userSpecificKey); 
           setSnackbar({ open: true, message: 'Failed to save Bubble Bucks. Try again.', severity: 'error' });
        }
     } else {
-       // This case should be rare (e.g., invalid amount), but handle it
-       setLastFishermanClickTime(null); // Reset cooldown if optimistic update failed
-       localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+       console.error("[Fisherman] Optimistic update failed.");
+       // Handle optimistic failure (unchanged)
+       setLastFishermanClickTime(null); 
+       localStorage.removeItem(userSpecificKey); 
        setSnackbar({ open: true, message: 'Error adding Bubble Bucks.', severity: 'error' });
     }
 
@@ -313,18 +335,17 @@ const Shop = () => {
     }, 1200); 
   };
 
+  // REFACTORED handleBuy
   const handleBuy = async (skin) => {
-    console.log("[Shop] Before buying: bubbleBucks =", bubbleBucks, "purchasedSkins =", [...purchasedSkins]);
+    console.log("[Shop] handleBuy started for skin:", skin.id);
     
-    // If we already own this skin, just equip it
+    // 1. Pre-checks (unchanged)
     if (purchasedSkins.includes(skin.id)) {
-      console.log("[Shop] Skin already owned, equipping instead of buying");
-      await equipSkin(skin.id);
+      console.log("[Shop] Skin already owned, equipping instead.");
+      await handleEquip(skin.id); // Call the existing handleEquip function
       return;
     }
-    
-    // Check if user can afford the skin
-      if (bubbleBucks < skin.price) {
+    if (bubbleBucks < skin.price) {
       setSnackbar({ 
         open: true, 
         message: `Not enough Bubble Bucks (need ${skin.price}) to buy ${skin.name}.`, 
@@ -332,85 +353,84 @@ const Shop = () => {
       });
       return;
     }
-    
-    // Show loading message
+
+    // 2. Show "Purchasing..." Snackbar (unchanged)
     setSnackbar({ 
       open: true, 
       message: `Purchasing ${skin.name}...`, 
       severity: 'info' 
     });
-    
+
+    // 3. Prepare updated data
+    const newBucks = bubbleBucks - skin.price;
+    const newPurchasedSkins = [...purchasedSkins, skin.id];
+    // Automatically equip the purchased skin
+    const newEquippedSkinId = skin.id; 
+
+    console.log("[Shop] Preparing backend update:", {
+      bubbleBucks: newBucks,
+      purchasedSkins: newPurchasedSkins,
+      equippedSkinId: newEquippedSkinId
+    });
+
     try {
-      // Step 1: Update backend FIRST with direct API call
-      const newBucks = bubbleBucks - skin.price;
-      const newPurchasedSkins = [...purchasedSkins, skin.id];
-      
-      console.log("[Shop] Updating backend with purchase:", {
-        bubbleBucks: newBucks,
-        purchasedSkins: newPurchasedSkins,
-        equippedSkinId: skin.id
-      });
-      
+      // 4. Update backend FIRST
       const updateSuccess = await updateBackendUserData({
         bubbleBucks: newBucks,
         purchasedSkins: newPurchasedSkins,
-        equippedSkinId: skin.id
+        equippedSkinId: newEquippedSkinId // Update equipped skin in the same call
       });
-      
+
       if (!updateSuccess) {
+        console.error("[Shop] Backend update failed during purchase for skin:", skin.id);
         throw new Error("Backend update failed");
       }
       
-      // Step 2: Call buySkin to update local state
-      const buySuccess = await buySkin(skin.id);
+      console.log("[Shop] Backend update successful for purchase.");
+
+      // 5. Update local context state DIRECTLY after successful backend update
+      console.log("[Shop] Updating local context state directly after purchase.");
+      if (setContextBubbleBucks) setContextBubbleBucks(newBucks);
+      if (setContextPurchasedSkins) setContextPurchasedSkins(newPurchasedSkins);
+      if (setContextEquippedSkinId) setContextEquippedSkinId(newEquippedSkinId);
       
-      // Step 3: Refresh user data to ensure consistency
-      await refreshUserData();
-      
-      // Step 4: Verify purchase was successful
-      if (!purchasedSkins.includes(skin.id)) {
-        console.error("[Shop] Purchase verification failed - skin not in purchasedSkins after refresh");
-        
-        // One more attempt to fix it
-        await updateBackendUserData({
-          purchasedSkins: [...purchasedSkins, skin.id]
-        });
-        
-        await refreshUserData();
-      }
-      
-      // Step 5: Equip the skin
-      await equipSkin(skin.id);
-      
-      // Show success message
+      // 6. Show final success message (unchanged)
       setSnackbar({ 
         open: true, 
-        message: `Successfully purchased ${skin.name}!`, 
+        message: `Successfully purchased and equipped ${skin.name}!`, 
         severity: 'success' 
       });
+
+      console.log("[Shop] Purchase and equip completed locally for skin:", skin.id);
       
-      console.log("[Shop] Purchase completed. Current state:", {
-        bubbleBucks,
-        purchasedSkins: [...purchasedSkins],
-        equippedSkinId
-      });
+      // --- Optional: Log final state for verification ---
+      // Note: Context state updates might be async, so logging 'bubbleBucks' here
+      // might still show the old value immediately after the setter call.
+      // Rely on the UI reflecting the change.
+      // console.log("[Shop] Final context state likely updated (async):", {
+      //   newBucks, newPurchasedSkins, newEquippedSkinId
+      // });
+
     } catch (error) {
-      console.error("[Shop] Error during purchase:", error);
-      
+      console.error("[Shop] Error during purchase transaction:", error);
+      // Revert optimistic "Purchasing..." snackbar with error message
       setSnackbar({ 
         open: true, 
         message: `Failed to purchase ${skin.name}. Please try again.`, 
         severity: 'error' 
       });
+      
+      // Optional: Refresh data to try and sync with potential partial backend changes
+      // await refreshUserData(); 
     }
   };
 
+  // UNCHANGED handleEquip
   const handleEquip = async (skinId) => {
-    console.log("[Shop] Before equipping: skinId =", skinId, "equippedSkinId =", equippedSkinId, "purchasedSkins =", [...purchasedSkins]);
-    
+    console.log("[Shop] handleEquip called for skin:", skinId);
     // Default skin can always be equipped
     if (skinId === defaultSkin.id) {
-      await equipSkin(skinId);
+      await equipSkin(skinId); // Use the original equipSkin from context here
       setSnackbar({ 
         open: true, 
         message: "Default skin equipped!", 
@@ -444,21 +464,27 @@ const Shop = () => {
     }
     
     try {
-      // Call equipSkin function to update local state
-      await equipSkin(skinId);
+      // Call equipSkin function from context to update state and backend
+      await equipSkin(skinId); 
       
-      // Make sure this skin is in the purchased skins array
+      // Add robust check/fix: Ensure equipped skin is in purchased list *after* equipSkin call
       if (!purchasedSkins.includes(skinId)) {
-        console.log("[Shop] Adding equipped skin to purchased skins list");
+        console.warn("[Shop] Equipped skin still not in purchased list after equipSkin. Forcing update.");
+        const updatedSkins = [...purchasedSkins, skinId];
         
-        // Update backend directly
-        await updateBackendUserData({
-          purchasedSkins: [...purchasedSkins, skinId],
-          equippedSkinId: skinId
+        // Force backend update
+        const fixSuccess = await updateBackendUserData({
+          purchasedSkins: updatedSkins,
+          equippedSkinId: skinId // Ensure equipped ID is also sent
         });
         
-        // Refresh to ensure consistency
-        await refreshUserData();
+        if (fixSuccess) {
+          // Update local state directly
+          if (setContextPurchasedSkins) setContextPurchasedSkins(updatedSkins);
+          console.log("[Shop] Successfully forced equipped skin into purchased list.");
+        } else {
+          console.error("[Shop] Failed to force equipped skin into purchased list.");
+        }
       }
       
       const currentSkin = availableSkins.find(s => s.id === skinId) || { name: "skin" };
@@ -505,7 +531,6 @@ const Shop = () => {
   // --- End Sorting Logic ---
 
   const equippedSkin = getEquippedSkin();
-  const isLoading = isShopLoading; // Only need shop loading state now
 
   // --- DEBUG LOG --- 
   console.log("[Shop.jsx] Purchased Skins:", purchasedSkins);
@@ -517,7 +542,7 @@ const Shop = () => {
   console.log("[Shop] Current skin from getEquippedSkin():", getEquippedSkin());
   // --- END DEBUG LOG ---
 
-  // Enhance the useEffect for handling purchased skins to make it more reliable between navigations
+  // Enhance the useEffect for handling purchased skins
   useEffect(() => {
     // Don't do anything if not logged in
     if (!userId) return;
@@ -595,25 +620,21 @@ const Shop = () => {
       if (bestSkinData && bestSkinData.length > 0) {
         // If current state is empty or has fewer skins, restore from storage
         if (purchasedSkins.length < bestSkinData.length) {
-          console.log("[Shop] After navigation: restoring skins from storage", {
-            current: purchasedSkins.length,
-            storage: bestSkinData.length
-          });
-          
-          // First update state
-          setPurchasedSkins(bestSkinData);
-          
-          // Then update backend to ensure data consistency
+          console.log("[Shop] Restoring skins from storage", { current: purchasedSkins.length, storage: bestSkinData.length });
+          // Update state DIRECTLY using the context setter
+          if (setContextPurchasedSkins) setContextPurchasedSkins(bestSkinData); 
+
+          // Update backend (unchanged logic, but ensures consistency)
           updateBackendUserData({
             purchasedSkins: bestSkinData,
-            // Include current equipped skin to ensure it's not lost
             equippedSkinId: equippedSkinId !== defaultSkin.id ? equippedSkinId : undefined
           }).then(success => {
             if (success) {
-              console.log("[Shop] Successfully restored skins after navigation");
-              refreshUserData(); // Refresh to ensure everything is in sync
+              console.log("[Shop] Successfully synced restored skins to backend");
+              // Optional: Refresh might still be useful here IF backend sync has side effects
+              // refreshUserData(); 
             } else {
-              console.error("[Shop] Failed to restore skins after navigation");
+              console.error("[Shop] Failed to sync restored skins to backend");
             }
           });
         } else {
@@ -629,7 +650,7 @@ const Shop = () => {
         }
       }
     }
-  }, [userId, isShopLoading, purchasedSkins, equippedSkinId, defaultSkin.id]);
+  }, [userId, isShopLoading, purchasedSkins, equippedSkinId, defaultSkin.id, setContextPurchasedSkins, updateBackendUserData]); // Added setters and backend update to dependency array
   
   // Add an event listener for page visibility changes to handle tab switching
   useEffect(() => {
@@ -847,7 +868,7 @@ const Shop = () => {
     };
     
     syncEquippedSkin();
-  }, [userId, equippedSkinId, purchasedSkins]);
+  }, [userId, equippedSkinId, purchasedSkins, updateBackendUserData, refreshUserData, setContextPurchasedSkins]); // Added context setters/funcs
 
   // Add a one-time effect to save and restore bubble bucks between sessions
   useEffect(() => {
@@ -884,7 +905,7 @@ const Shop = () => {
       localStorage.setItem(STORAGE_KEY, bubbleBucks.toString());
     }
     
-  }, [userId, bubbleBucks]);
+  }, [userId, bubbleBucks, updateBackendUserData, refreshUserData, setContextBubbleBucks]); // Added context setters/funcs
 
   // Add a safe one-time load effect with a strict mounting check
   useEffect(() => {
@@ -892,6 +913,12 @@ const Shop = () => {
     let isMounted = true;
     
     const loadInitialData = async () => {
+      // *** ADD CHECK: Only run if context is still in initial loading phase ***
+      if (!isShopLoading && !isRefreshing) {
+        console.log("[Shop] Skipping loadInitialData because context/shop is already loaded/refreshing.");
+        return; 
+      }
+
       // Skip if no user data is available
       if (!userId || !refreshUserData) return;
       
@@ -929,7 +956,7 @@ const Shop = () => {
             console.log("[Shop] No skins loaded from backend, restoring from cache");
             
             // Update state optimistically
-            setPurchasedSkins(cachedSkins);
+            if (setContextPurchasedSkins) setContextPurchasedSkins(cachedSkins);
             
             // Update backend to ensure data is saved
             const updateSuccess = await updateBackendUserData({
@@ -962,7 +989,20 @@ const Shop = () => {
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array ensures this runs only on mount
+  }, [userId, isShopLoading, refreshUserData, updateBackendUserData, setContextPurchasedSkins]); // Added context setters/funcs
+
+  // --- Moved Loading Check Higher --- 
+  // This check now happens BEFORE the main Box is defined
+  if (isShopLoading) {
+    // Return ONLY the loading indicator, not nested in the styled Box
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)', bgcolor: 'rgba(255, 255, 255, 0.7)' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2, fontFamily: 'SourGummy, sans-serif', fontSize: '1.5rem' }}>Loading Shop...</Typography>
+      </Box>
+    );
+  }
+  // --- End Loading Check ---
 
   return (
     <Box
@@ -991,453 +1031,393 @@ const Shop = () => {
             overflow: 'hidden' 
           }}
         >
-          {/* Add relative positioning to the title container */}
+          {/* <<< Fisherman Image moved back inside this Box >>> */}
+          {/* Title container */}
           <Box sx={{ position: 'relative', textAlign: 'center', mb: 4 }}>
             {/* Positioned Fisherman Image */}
             <Box
               component="img"
               src={sittingFishermanImage}
               alt="Click for Bucks!"
-              onClick={handleFishermanClick} 
+              onClick={() => {
+                console.log("<<< FISHERMAN IMAGE CLICKED IN JSX >>>"); 
+                handleFishermanClick(); 
+              }}
               sx={{
+                // <<< RESTORED Original Positioning >>>
                 position: 'absolute',
                 // Default styles for different width breakpoints
                 top: { xs: '135px', sm: '62px', md: '62px' }, 
                 left: { xs: 'calc(50% + 11px)', sm: 'calc(50% + 113px)', md: 'calc(50% + 113px)' }, 
                 width: '70px',
                 height: 'auto',
-                zIndex: 2, 
+                zIndex: 2, // Original zIndex
                 pointerEvents: 'auto',
                 cursor: 'pointer',    
                 filter: 'none',       
                 transition: 'transform 0.2s ease-in-out, filter 0.3s ease-in-out',
                 '&:hover': {
-                  // Apply red glow universally on hover
-                  filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', // CHANGED: Apply universally
-                  // Apply scaling transform on hover for everyone
+                  filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))',
                   transform: 'scale(1.05)', 
                 },
-                // Media query specifically for devices with aspect ratio = 3/4 (like Surface Duo portrait)
                 '@media (aspect-ratio: 3/4)': {
-                  // Only apply these overrides if the aspect ratio matches exactly
-                  top: '60px',          // Adjusted top for Surface Duo
-                  left: 'calc(50% + 113px)', // Adjusted left for Surface Duo
+                  top: '60px',
+                  left: 'calc(50% + 113px)', 
                 },
               }}
             />
+            
             <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
               Bubble Shop
             </Typography>
-            
-            {/* Refresh button */}
-            <IconButton
-              onClick={handleRefreshData}
-              disabled={isRefreshing || isLoading}
-              sx={{
-                position: 'absolute',
-                top: { xs: '-12px', md: '-12px' }, // Adjusted xs top value
-                right: { xs: '8px', md: '12px' },
-                bgcolor: 'rgba(255, 255, 255, 0.8)',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.95)',
-                },
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                // Media query specifically for devices with aspect ratio = 3/4
-                '@media (aspect-ratio: 3/4)': {
-                  top: '-20px', // Adjust top position for Surface Duo
-                },
-              }}
-              aria-label="Refresh shop data"
-            >
-              <RefreshCw size={24} className={isRefreshing ? 'spin' : ''} />
-            </IconButton>
           </Box>
 
-          {/* --- Re-add Main Loading Indicator --- */}
-          {isLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 5 }}>
-              <CircularProgress />
-              <Typography sx={{ ml: 2, fontFamily: 'SourGummy, sans-serif' }}>Loading Shop...</Typography>
-            </Box>
-          ) : (
-            <> {/* Render content only when not loading */} 
-              {/* User Stats Section - MODIFIED */} 
-              <Paper elevation={2} sx={{ 
-                p: 3, 
-                mb: 4, 
-                mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
-                borderRadius: '16px', 
-                bgcolor: 'rgba(244, 253, 255, 0.6)', 
-                backdropFilter: 'blur(2px)' 
-              }}>
-                <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
-                  {/* Stats Display */}
-                  <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
-                    <Typography variant="h5" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mb: 2 }}>
-                        Your Stats
-                    </Typography>
-                    {/* Bubble Bucks Display with Tooltip */}
-                    <Tooltip title="Earn Bubble Bucks from studying!" arrow>
-                      <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
-                      <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
-                      <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
-                        <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
-                        <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
-                      </Box>
-                    </Box>
-                    </Tooltip>
-                    
-                    {/* Add study time to bubble bucks conversion subtitle */}
-                    <Typography variant="body2" sx={{ 
-                      fontFamily: 'SourGummy, sans-serif', 
-                      color: 'text.secondary', 
-                      mt: -1, 
-                      mb: 2,
-                      textAlign: 'center' 
-                    }}>
-                      1 minute of study time = 1 Bubble Buck
-                    </Typography>
-                    
-                    {/* Show refresh message if bubble bucks are 0 */}
-                    {bubbleBucks === 0 && purchasedSkins.length === 0 && (
-                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-                        <RefreshCw size={18} style={{ marginRight: '8px' }} />
-                        <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
-                          If your data isn't showing, refresh the page
-                    </Typography>
-                      </Box>
-                    )}
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* Available Skins Section */}
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
-                <Typography variant="h4" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, color: '#1D1D20' }}>
-                  Skins Store
+          {/* User Stats Section - MODIFIED */} 
+          <Paper elevation={2} sx={{ 
+            p: 3, 
+            mb: 4, 
+            mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
+            borderRadius: '16px', 
+            bgcolor: 'rgba(244, 253, 255, 0.6)', 
+            backdropFilter: 'blur(2px)' 
+          }}>
+            <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
+              {/* Stats Display */}
+              <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
+                <Typography variant="h5" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mb: 2 }}>
+                    Your Stats
                 </Typography>
-                {/* Sorting Dropdown */}
-                <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
-                  <InputLabel id="sort-by-label" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Sort By</InputLabel>
-                  <Select
-                    labelId="sort-by-label"
-                    id="sort-by-select"
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => setSortBy(e.target.value)}
-                    sx={{ fontFamily: 'SourGummy, sans-serif' }}
-                  >
-                    <MenuItem value="default" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Default</MenuItem>
-                    <MenuItem value="rarityAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: Low to High</MenuItem>
-                    <MenuItem value="rarityDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: High to Low</MenuItem>
-                    <MenuItem value="priceAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: Low to High</MenuItem>
-                    <MenuItem value="priceDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: High to Low</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Grid container spacing={3}>
-                {sortedSkins.map((skin, index) => {
-                  const isOwned = purchasedSkins.includes(skin.id);
-                  const isEquipped = equippedSkinId === skin.id;
-                  const canAfford = bubbleBucks >= skin.price;
-                  const rarity = rarityMap[skin.rarityId];
-                  const isMythic = skin.rarityId === 'mythic';
-
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={skin.id}>
-                      <div
-                        className="skin-item"
-                        style={{ 
-                          animationDelay: `${index * 0.1}s`,
-                          opacity: 0,
-                          transform: 'translateY(20px)',
-                          animation: 'fadeInUp 0.3s ease forwards'
-                        }}
-                      >
-                        <Card sx={{ 
-                          height: '100%', 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          borderRadius: '16px', 
-                          boxShadow: 3,
-                          bgcolor: 'rgba(255, 255, 255, 0.9)',
-                          border: '2px solid transparent',
-                        }}>
-                          <CardMedia
-                            component="img"
-                            sx={{ 
-                              height: 180, 
-                              objectFit: 'contain', 
-                              pt: 2, 
-                              backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
-                            }}
-                            image={skin.image} 
-                            alt={skin.name}
-                            onError={(e) => { // Basic error handling for missing images
-                              e.target.onerror = null; 
-                              e.target.style.display='none'; 
-                              // Optionally show a placeholder text or icon
-                              const placeholder = e.target.parentNode.querySelector('.image-placeholder');
-                              if(placeholder) placeholder.style.display='block';
-                            }}
-                          />
-                          {/* Placeholder for missing image */}
-                          <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
-                             <HelpCircle size={48} style={{marginTop: '30px'}}/>
-                             <Typography variant="caption">Image not found</Typography>
-                          </Box>
-                          <CardContent sx={{ flexGrow: 1 }}>
-                            <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
-                              {skin.name}
-                            </Typography>
-                            {rarity && (
-                              <Typography variant="body2" sx={{
-                                fontFamily: 'SourGummy, sans-serif',
-                                fontWeight: 'bold',
-                                color: rarity.textColor || '#000000',
-                                mb: 1,
-                                // Removed textShadow
-                                textShadow: 'none' 
-                              }}>
-                                {rarity.name}
-                              </Typography>
-                            )}
-                            <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
-                              <img 
-                                src={bubbleBuckImage} 
-                                alt="" 
-                                style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
-                              />
-                              <Typography 
-                                variant="h6" // Slightly larger variant
-                                sx={{ 
-                                  fontFamily: 'SourGummy, sans-serif', 
-                                  fontWeight: 600, // Bolder 
-                                  color: '#000000' // Theme black color
-                                }}
-                              >
-                                {skin.price}
-                              </Typography>
-                            </Box>
-
-                            {/* Button/Status Display (Moved Here) */}
-                            <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
-                              {isEquipped ? (
-                                <Box
-                                  component="img"
-                                  src={finalEquippedButtonImage}
-                                  alt="Equipped"
-                                  sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
-                                />
-                              ) : isOwned ? (
-                                <Box
-                                  component="img"
-                                  src={actualOwnedButtonImage}
-                                  alt="Owned"
-                                  sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
-                                />
-                              ) : (
-                                // Buy Button
-                                <Box
-                                  component="img"
-                                  src={actualBuyButtonImage}
-                                  alt="Buy"
-                                  onClick={() => handleBuy(skin)}
-                                  sx={{
-                                    width: 'auto',
-                                    height: '100%',
-                                    maxHeight: '45px', // Matched to Owned button height
-                                    cursor: canAfford ? 'pointer' : 'not-allowed',
-                                    opacity: canAfford ? 1 : 0.6,
-                                    display: 'block',
-                                    transition: 'transform 0.1s ease',
-                                    '&:hover': {
-                                      transform: canAfford ? 'scale(1.05)' : 'none',
-                                    }
-                                  }}
-                                />
-                              )}
-                            </Box>
-                            {/* Not enough bucks message */}
-                            {!isOwned && !canAfford && (
-                              <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
-                                Need {skin.price} Bucks!
-                              </Typography>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </div>
-                    </Grid>
-                  );
-                })}
-              </Grid> { /* Closing Available Skins Grid */ }
-
-              {/* ADDED Owned Skins Section */}
-              <Typography variant="h4" gutterBottom sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mt: 6, mb: 2, color: '#1D1D20' }}>
-                Your Wardrobe
-              </Typography>
-              <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
+                {/* Bubble Bucks Display with Tooltip */}
+                <Tooltip title="Earn Bubble Bucks from studying!" arrow>
+                  <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
+                  <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
+                  <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
+                    <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
+                    <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
+                  </Box>
+                </Box>
+                </Tooltip>
                 
+                {/* Add study time to bubble bucks conversion subtitle */}
+                <Typography variant="body2" sx={{ 
+                  fontFamily: 'SourGummy, sans-serif', 
+                  color: 'text.secondary', 
+                  mt: -1, 
+                  mb: 2,
+                  textAlign: 'center' 
+                }}>
+                  1 minute of study time = 1 Bubble Buck
+                </Typography>
                 
-                <Grid container spacing={2}> 
-                  {/* Include default skin and purchased skins only */}
-                  {[
-                    defaultSkin,
-                    // Always include the equipped skin if it's not the default and not already in the list
-                    ...(equippedSkinId !== defaultSkin.id && !purchasedSkins.includes(equippedSkinId) && availableSkins.find(s => s.id === equippedSkinId) 
-                      ? [availableSkins.find(s => s.id === equippedSkinId)] 
-                      : []),
-                    // Filter purchased skins that aren't the default (already included)
-                    ...availableSkins.filter(skin => 
-                      purchasedSkins.includes(skin.id) && 
-                      skin.id !== defaultSkin.id
-                    )
-                  ].filter(Boolean).map((skin) => {
-                    // Always treat currently equipped skin as purchased to avoid display issues
-                    const isCurrentlyEquipped = equippedSkinId === skin.id;
-                    const isPurchasedOrEquipped = purchasedSkins.includes(skin.id) || skin.id === defaultSkin.id || isCurrentlyEquipped;
-                    
-                    return (
-                      <Grid item xs={6} sm={4} md={3} lg={2} key={`owned-${skin.id}`}>
-                        <Card 
-                          sx={{ 
-                            height: '100%', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            borderRadius: '12px', 
-                            boxShadow: isCurrentlyEquipped ? '0 0 15px rgba(29, 110, 241, 0.7)' : 2, 
-                            border: isCurrentlyEquipped ? '2px solid #1D6EF1' : '2px solid transparent',
-                            overflow: 'hidden', 
-                            bgcolor: 'rgba(255, 255, 255, 0.95)'
-                          }}
-                        >
-                          <CardMedia
-                            component="img"
-                            sx={{ height: 100, objectFit: 'contain', pt: 1, backgroundColor: '#eee' }}
-                            image={skin.image} 
-                            alt={skin.name}
-                            onError={(e) => { 
-                              e.target.onerror = null; 
-                              e.target.style.display='none'; 
-                              const placeholder = e.target.parentNode.querySelector('.image-placeholder-owned');
-                              if(placeholder) placeholder.style.display='block';
-                            }}
-                          />
-                          <Box className="image-placeholder-owned" sx={{ display: 'none', height: 100, pt: 1, backgroundColor: '#eee', textAlign: 'center', color: '#999'}}>
-                            <HelpCircle size={32} style={{marginTop: '15px'}}/>
-                            <Typography variant="caption">Image missing</Typography>
-                          </Box>
-                          <CardContent sx={{ flexGrow: 1, p: 1, textAlign: 'center', display: 'flex', flexDirection: 'column' }}> 
-                            <Typography gutterBottom variant="body2" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, lineHeight: 1.2 }}>
-                              {skin.name}
-                            </Typography>
-                            
-                            {/* 
-                              Never show "Buy to keep" message - equipped skins are auto-purchased
-                              by our fixed handleEquip function
-                            */}
-                            {false && !purchasedSkins.includes(skin.id) && isCurrentlyEquipped && skin.id !== defaultSkin.id && (
-                              <Typography variant="caption" sx={{ color: 'orange', mb: 1, fontFamily: 'SourGummy, sans-serif' }}>
-                                Currently equipped! Buy to keep
-                              </Typography>
-                            )}
-                            
-                            {/* Button/Status Display - Add negative mt */}
-                            <Box sx={{ mt: -0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> 
-                              {isCurrentlyEquipped ? (
-                                <Box
-                                  component="img"
-                                  src={finalEquippedButtonImage}
-                                  alt="Equipped"
-                                  sx={{
-                                    width: 'auto',
-                                    height: '100px',
-                                    display: 'block',
-                                    mx: 'auto'
-                                  }}
-                                />
-                              ) : (
-                                <Box
-                                  component="img"
-                                  src={updatedEquipButtonImage}
-                                  alt="Equip"
-                                  onClick={() => handleEquip(skin.id)}
-                                  sx={{
-                                    width: 'auto',
-                                    height: '70px',
-                                    cursor: 'pointer',
-                                    display: 'block',
-                                    mx: 'auto',
-                                    transition: 'transform 0.1s ease',
-                                    '&:hover': {
-                                      transform: 'scale(1.05)',
-                                    }
-                                  }}
-                                />
-                              )}
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-                
-                {/* No skins message */}
-                {(purchasedSkins.length === 0 && !isLoading) && (
-                  <Typography sx={{textAlign: 'center', fontFamily: 'SourGummy, sans-serif', color: 'text.secondary', mt: 2}}>
-                    Buy some skins from the store to see them here!
-                  </Typography>
+                {/* Show refresh message if bubble bucks are 0 AND NOT LOADING */}
+                {bubbleBucks === 0 && purchasedSkins.length === 0 && !isShopLoading && (
+                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+                    <RefreshCw size={18} style={{ marginRight: '8px' }} />
+                    <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
+                      If your data isn't showing, refresh the page
+                    </Typography>
+                  </Box>
                 )}
-              </Paper> { /* Closing Wardrobe Paper */ }
+              </Grid>
+            </Grid>
+          </Paper>
 
-            </>
-          )}
-          {/* --- End Content Wrapper --- */}
+          {/* Available Skins Section */}
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
+            <Typography variant="h4" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, color: '#1D1D20' }}>
+              Skins Store
+            </Typography>
+            {/* Sorting Dropdown */}
+            <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
+              <InputLabel id="sort-by-label" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Sort By</InputLabel>
+              <Select
+                labelId="sort-by-label"
+                id="sort-by-select"
+                value={sortBy}
+                label="Sort By"
+                onChange={(e) => setSortBy(e.target.value)}
+                sx={{ fontFamily: 'SourGummy, sans-serif' }}
+              >
+                <MenuItem value="default" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Default</MenuItem>
+                <MenuItem value="rarityAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: Low to High</MenuItem>
+                <MenuItem value="rarityDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: High to Low</MenuItem>
+                <MenuItem value="priceAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: Low to High</MenuItem>
+                <MenuItem value="priceDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: High to Low</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-          {/* Snackbar for feedback */}
-          <Snackbar 
-            open={snackbar.open} 
-            autoHideDuration={4000} 
-            onClose={handleCloseSnackbar} 
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
+          <Grid container spacing={3}>
+            {sortedSkins.map((skin, index) => {
+              const isOwned = purchasedSkins.includes(skin.id);
+              const isEquipped = equippedSkinId === skin.id;
+              const canAfford = bubbleBucks >= skin.price;
+              const rarity = rarityMap[skin.rarityId];
+              const isMythic = skin.rarityId === 'mythic';
 
-          {/* Keyframes for animation */}
-          <style>{`
-            @keyframes shake {
-              10%, 90% {
-                transform: translate3d(-1px, 0, 0);
-              }
-              20%, 80% {
-                transform: translate3d(2px, 0, 0);
-              }
-              30%, 50%, 70% {
-                transform: translate3d(-3px, 0, 0);
-              }
-              40%, 60% {
-                transform: translate3d(3px, 0, 0);
-              }
-            }
-          `}</style>
+              return (
+                <Grid item xs={12} sm={6} md={4} key={skin.id}>
+                  <div
+                    className="skin-item"
+                    style={{ 
+                      animationDelay: `${index * 0.1}s`,
+                      opacity: 0,
+                      transform: 'translateY(20px)',
+                      animation: 'fadeInUp 0.3s ease forwards'
+                    }}
+                  >
+                    <Card sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      borderRadius: '16px', 
+                      boxShadow: 3,
+                      bgcolor: 'rgba(255, 255, 255, 0.9)',
+                      border: '2px solid transparent',
+                    }}>
+                      <CardMedia
+                        component="img"
+                        sx={{ 
+                          height: 180, 
+                          objectFit: 'contain', 
+                          pt: 2, 
+                          backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
+                        }}
+                        image={skin.image} 
+                        alt={skin.name}
+                        onError={(e) => { // Basic error handling for missing images
+                          e.target.onerror = null; 
+                          e.target.style.display='none'; 
+                          // Optionally show a placeholder text or icon
+                          const placeholder = e.target.parentNode.querySelector('.image-placeholder');
+                          if(placeholder) placeholder.style.display='block';
+                        }}
+                      />
+                      {/* Placeholder for missing image */}
+                      <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
+                         <HelpCircle size={48} style={{marginTop: '30px'}}/>
+                         <Typography variant="caption">Image not found</Typography>
+                      </Box>
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
+                          {skin.name}
+                        </Typography>
+                        {rarity && (
+                          <Typography variant="body2" sx={{
+                            fontFamily: 'SourGummy, sans-serif',
+                            fontWeight: 'bold',
+                            color: rarity.textColor || '#000000',
+                            mb: 1,
+                            // Removed textShadow
+                            textShadow: 'none' 
+                          }}>
+                            {rarity.name}
+                          </Typography>
+                        )}
+                        <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
+                          <img 
+                            src={bubbleBuckImage} 
+                            alt="" 
+                            style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
+                          />
+                          <Typography 
+                            variant="h6" // Slightly larger variant
+                            sx={{ 
+                              fontFamily: 'SourGummy, sans-serif', 
+                              fontWeight: 600, // Bolder 
+                              color: '#000000' // Theme black color
+                            }}
+                          >
+                            {skin.price}
+                          </Typography>
+                        </Box>
 
-          {/* Keyframes for refresh animation */}
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            .spin {
-              animation: spin 1s linear infinite;
-            }
-          `}</style>
+                        {/* Button/Status Display (Moved Here) */}
+                        <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
+                          {isEquipped ? (
+                            <Box
+                              component="img"
+                              src={finalEquippedButtonImage}
+                              alt="Equipped"
+                              sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
+                            />
+                          ) : isOwned ? (
+                            <Box
+                              component="img"
+                              src={actualOwnedButtonImage}
+                              alt="Owned"
+                              sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
+                            />
+                          ) : (
+                            // Buy Button
+                            <Box
+                              component="img"
+                              src={actualBuyButtonImage}
+                              alt="Buy"
+                              onClick={() => handleBuy(skin)}
+                              sx={{
+                                width: 'auto',
+                                height: '100%',
+                                maxHeight: '45px', // Matched to Owned button height
+                                cursor: canAfford ? 'pointer' : 'not-allowed',
+                                opacity: canAfford ? 1 : 0.6,
+                                display: 'block',
+                                transition: 'transform 0.1s ease',
+                                '&:hover': {
+                                  transform: canAfford ? 'scale(1.05)' : 'none',
+                                }
+                              }}
+                            />
+                          )}
+                        </Box>
+                        {/* Not enough bucks message */}
+                        {!isOwned && !canAfford && (
+                          <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
+                            Need {skin.price} Bucks!
+                          </Typography>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </Grid>
+              );
+            })}
+          </Grid> { /* Closing Available Skins Grid */ }
+
+          {/* ADDED Owned Skins Section */}
+          <Typography variant="h4" gutterBottom sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mt: 6, mb: 2, color: '#1D1D20' }}>
+            Your Wardrobe
+          </Typography>
+          <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
+            
+            
+            <Grid container spacing={2}> 
+              {/* Include default skin and purchased skins only */}
+              {[
+                defaultSkin,
+                // Always include the equipped skin if it's not the default and not already in the list
+                ...(equippedSkinId !== defaultSkin.id && !purchasedSkins.includes(equippedSkinId) && availableSkins.find(s => s.id === equippedSkinId) 
+                  ? [availableSkins.find(s => s.id === equippedSkinId)] 
+                  : []),
+                // Filter purchased skins that aren't the default (already included)
+                ...availableSkins.filter(skin => 
+                  purchasedSkins.includes(skin.id) && 
+                  skin.id !== defaultSkin.id
+                )
+              ].filter(Boolean).map((skin) => {
+                // Always treat currently equipped skin as purchased to avoid display issues
+                const isCurrentlyEquipped = equippedSkinId === skin.id;
+                const isPurchasedOrEquipped = purchasedSkins.includes(skin.id) || skin.id === defaultSkin.id || isCurrentlyEquipped;
+                
+                return (
+                  <Grid item xs={6} sm={4} md={3} lg={2} key={`owned-${skin.id}`}>
+                    <Card 
+                      sx={{ 
+                        height: '100%', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        borderRadius: '12px', 
+                        boxShadow: isCurrentlyEquipped ? '0 0 15px rgba(29, 110, 241, 0.7)' : 2, 
+                        border: isCurrentlyEquipped ? '2px solid #1D6EF1' : '2px solid transparent',
+                        overflow: 'hidden', 
+                        bgcolor: 'rgba(255, 255, 255, 0.95)'
+                      }}
+                    >
+                      <CardMedia
+                        component="img"
+                        sx={{ height: 100, objectFit: 'contain', pt: 1, backgroundColor: '#eee' }}
+                        image={skin.image} 
+                        alt={skin.name}
+                        onError={(e) => { 
+                          e.target.onerror = null; 
+                          e.target.style.display='none'; 
+                          const placeholder = e.target.parentNode.querySelector('.image-placeholder-owned');
+                          if(placeholder) placeholder.style.display='block';
+                        }}
+                      />
+                      <Box className="image-placeholder-owned" sx={{ display: 'none', height: 100, pt: 1, backgroundColor: '#eee', textAlign: 'center', color: '#999'}}>
+                        <HelpCircle size={32} style={{marginTop: '15px'}}/>
+                        <Typography variant="caption">Image missing</Typography>
+                      </Box>
+                      <CardContent sx={{ flexGrow: 1, p: 1, textAlign: 'center', display: 'flex', flexDirection: 'column' }}> 
+                        <Typography gutterBottom variant="body2" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, lineHeight: 1.2 }}>
+                          {skin.name}
+                        </Typography>
+                        
+                        {/* 
+                          Never show "Buy to keep" message - equipped skins are auto-purchased
+                          by our fixed handleEquip function
+                        */}
+                        {false && !purchasedSkins.includes(skin.id) && isCurrentlyEquipped && skin.id !== defaultSkin.id && (
+                          <Typography variant="caption" sx={{ color: 'orange', mb: 1, fontFamily: 'SourGummy, sans-serif' }}>
+                            Currently equipped! Buy to keep
+                          </Typography>
+                        )}
+                        
+                        {/* Button/Status Display - Add negative mt */}
+                        <Box sx={{ mt: -0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> 
+                          {isCurrentlyEquipped ? (
+                            <Box
+                              component="img"
+                              src={finalEquippedButtonImage}
+                              alt="Equipped"
+                              sx={{
+                                width: 'auto',
+                                height: '100px',
+                                display: 'block',
+                                mx: 'auto'
+                              }}
+                            />
+                          ) : (
+                            <Box
+                              component="img"
+                              src={updatedEquipButtonImage}
+                              alt="Equip"
+                              onClick={() => handleEquip(skin.id)}
+                              sx={{
+                                width: 'auto',
+                                height: '70px',
+                                cursor: 'pointer',
+                                display: 'block',
+                                mx: 'auto',
+                                transition: 'transform 0.1s ease',
+                                '&:hover': {
+                                  transform: 'scale(1.05)',
+                                }
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+            
+            {/* No skins message */}
+            {(purchasedSkins.length === 0 && !isShopLoading) && (
+              <Typography sx={{textAlign: 'center', fontFamily: 'SourGummy, sans-serif', color: 'text.secondary', mt: 2}}>
+                Buy some skins from the store to see them here!
+              </Typography>
+            )}
+          </Paper> { /* Closing Wardrobe Paper */ }
+
         </Paper> {/* Close main content Paper */} 
       </Container> 
+      
+      {/* <<< ADDED MISSING SNACKBAR COMPONENT >>> */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
     </Box> // Close outer Box
   );
 };

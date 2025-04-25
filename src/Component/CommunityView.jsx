@@ -2228,22 +2228,22 @@ export default function CommunityView() {
                   {/* Step indicators */}
                   <div className="flex mb-4 md:mb-6 rounded-xl overflow-hidden">
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
                       1. Name
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
                       2. Template
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
                       3. Content
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 4 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 4 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
                       4. Tags
                     </div>
@@ -2367,7 +2367,7 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Unlock size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "black" }}>
                                         Everyone - Study set visible to all users
                                       </Typography>
                                     </Box>
@@ -2397,7 +2397,7 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Lock size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "black" }}>
                                         Community Members Only - Only visible to anyone who joined the community
                                       </Typography>
                                     </Box>
@@ -2426,7 +2426,7 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Users size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "black" }}>
                                         Specific Members - Choose exactly who can see this study set
                                       </Typography>
                                     </Box>

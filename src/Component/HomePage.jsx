@@ -90,21 +90,22 @@ const HomePage = () => {
     
     // Only run once when component mounts and we have a logged-in user
     if (token && userId && !hasRefreshedDataRef.current) {
-      console.log("[HomePage] First load after login, refreshing skin data");
+      console.log("[HomePage] First load after login detected. Context should be loading/loaded.");
       
       // Set ref to prevent multiple refreshes
       hasRefreshedDataRef.current = true;
       
-      // Force refresh shop data (same as what happens in the Shop page)
-      refreshUserData().then(success => {
-        if (success) {
-          console.log("[HomePage] Successfully refreshed skin data on login");
-        } else {
-          console.warn("[HomePage] Failed to refresh skin data on login");
-        }
-      });
+      // COMMENTED OUT: Explicit refresh might be causing conflict/flicker
+      // console.log("[HomePage] First load after login, refreshing skin data");
+      // refreshUserData().then(success => {
+      //   if (success) {
+      //     console.log("[HomePage] Successfully refreshed skin data on login");
+      //   } else {
+      //     console.warn("[HomePage] Failed to refresh skin data on login");
+      //   }
+      // });
     }
-  }, [refreshUserData, userId]);
+  }, [refreshUserData, userId]); // Keep dependencies for effect logic
 
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
