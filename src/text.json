@@ -879,7 +879,8 @@
         "chatFailed": "Chat server connection failed. Please try again.",
         "studySetCreated": "Study set created successfully!",
         "studySetCreateError": "Failed to create study set: {{message}}",
-        "communityDeleted": "Community deleted successfully"
+        "communityDeleted": "Community deleted successfully",
+        "communityDeleteCheck": "Are you sure you want to delete this community? This action cannot be undone."
       },
       "messages": {
         "welcome": "Welcome to the community chat!",
@@ -887,7 +888,8 @@
       },
       "emptyStates": {
         "noMembers": "No members yet.",
-        "noStudySets": "Loading study sets..."
+        "noStudySets": "Loading study sets...",
+        "noTags" : "No tags for this category"
       }
     },
     "communityMessaging": {
@@ -940,7 +942,8 @@
       "alreadyMember": "You are already a member of this community",
       "notLoggedIn": "You must be logged in to perform this action",
       "copySuccess": "Community link copied to clipboard!",
-      "copyError": "Failed to copy link. Please try again."
+      "copyError": "Failed to copy link. Please try again.",
+      "deletePost" : "Are you sure you want to delete this post?"
     },
     "common": {
       "cancel": "Cancel",
@@ -2640,7 +2643,8 @@
         "chatFailed": "Error de conexión al chat. Por favor, inténtalo de nuevo.",
         "studySetCreated": "¡Colección de estudio creado correctamente!",
         "studySetCreateError": "Error en creando colección de estudio: {{message}}",
-        "communityDeleted": "Comunidad eliminada con éxito"
+        "communityDeleted": "Comunidad eliminada con éxito",
+        "communityDeleteCheck": "¿Estás seguro de que quieres eliminar esta comunidad? Esta acción no se puede deshacer?"
       },
       "messages": {
         "welcome": "¡Bienvenido al chat de la comunidad!",
@@ -2648,7 +2652,8 @@
       },
       "emptyStates": {
         "noMembers": "Aún no hay miembros.",
-        "noStudySets": "No hay colección de estudio."
+        "noStudySets": "No hay colección de estudio.",
+        "noTags" : "No hay etiquetas para esta categoría"
       }
     },
     "communityMessaging": {
@@ -2701,7 +2706,8 @@
       "alreadyMember": "Ya eres miembro de esta comunidad",
       "notLoggedIn": "Debes iniciar sesión para realizar esta acción",
       "copySuccess": "¡Copiado link para la comunidad!",
-      "copyError": "Error en copiando link. Por favor, inténtalo de nuevo."
+      "copyError": "Error en copiando link. Por favor, inténtalo de nuevo.",
+      "deletePost" : "Are you sure you want to delete this post?"
     },
     "common": {
       "cancel": "Cancelar",

@@ -415,7 +415,7 @@ export default function CommunityView() {
     },
     {
       id: 2,
-      name: [comViewText.communityView.templateOptions.matching],
+      name: [comViewText.communityView.templateOptions.multiple_choice],
       type: "multiple_choice",
       icon: FileText,
       content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
@@ -429,9 +429,9 @@ export default function CommunityView() {
     },
     {
       id: 4,
-      name: [comViewText.communityView.templateOptions.multiple_choice],
+      name: [comViewText.communityView.templateOptions.matching],
       // Define template options
-      type: "matching",
+      type: [comViewText.communityView.templateOptions.matching],
       icon: FileText,
       content: [{ left: "", right: "" }],
     },
@@ -1360,7 +1360,7 @@ export default function CommunityView() {
         fetchStudySets()
       }, 1000)
 
-      setCustomPopup({ show: true, message: "Study set created successfully!", type: "success" })
+      setCustomPopup({ show: true, message: [comViewText.communityView.notifications.studySetCreated], type: "success" })
     } catch (error) {
       console.error("Error creating study set:", error)
       setCustomPopup({ show: true, message: `Failed to create study set: ${error.message}`, type: "error" })
@@ -1705,7 +1705,7 @@ export default function CommunityView() {
   const handleDeleteCommunity = async () => {
     setCustomPopup({
       show: true,
-      message: "Are you sure you want to delete this community? This action cannot be undone.",
+      message: [comViewText.communityView.notifications.communityDeleteCheck],
       type: "warning",
       onConfirm: async () => {
         const token = sessionStorage.getItem("token")
@@ -2052,7 +2052,7 @@ export default function CommunityView() {
                                         } px-3 py-1 rounded-xl flex items-center h-8 cursor-pointer`}
                                     >
                                       {comViewText.categoriesTranslation[category] || category}
-                                      {userCategories.includes(category) && <span className="ml-1 text-xs">★</span>}
+                                      {userCategories.includes(category || comViewText.categoriesTranslation[category]) && <span className="ml-1 text-xs">★</span>}
                                     </span>
 
                                                 {/* Tags that appear on hover - fixed positioning */}
@@ -2071,7 +2071,7 @@ export default function CommunityView() {
                                                             ))}
                                                         {studySet.tags.filter((tag) => school_categories[category]?.includes(tag))
                                                             .length === 0 && (
-                                                            <span className="text-[14px] text-gray-500">No tags for this category</span>
+                                                            <span className="text-[14px] text-gray-500">{comViewText.communityView.emptyStates.noTags}</span>
                                                         )}
                                                       </div>
                                                     </div>
@@ -2093,11 +2093,11 @@ export default function CommunityView() {
                                           onClick={() => handleShareStudySet(studySet.id)}
                                       >
                                         {copiedSetId === studySet.id ? (
-                                            <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Copied!</span>
+                                            <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{comViewText.common.copied}</span>
                                         ) : (
                                             <>
                                               <Share2 size={isMobile ? 14 : 16} className="mr-1" />
-                                              <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Share</span>
+                                              <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{comViewText.communityView.buttons.share}</span>
                                             </>
                                         )}
                                       </button>
@@ -2105,7 +2105,7 @@ export default function CommunityView() {
                                           className="bg-black text-white py-1 px-3 rounded-xl flex items-center"
                                           onClick={() => handleDeleteStudySet(studySet.id, studySet.creator)}
                                       >
-                                        <span className="text-[14px]">Delete</span>
+                                        <span className="text-[14px]">{comViewText.communityView.buttons.delete}</span>
                                       </button>
                                     </div>
                                     <div className={`flex-shrink-0 ${isMobile ? "" : "ml-4"}`}>
@@ -2133,7 +2133,7 @@ export default function CommunityView() {
             >
               <div className={`p-${isMobile ? "3" : "6"}`}>
                 <div className={`flex items-center justify-between mb-${isMobile ? "3" : "6"}`}>
-                  <h2 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>Members</h2>
+                  <h2 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>{comViewText.communityView.buttons.members}</h2>
                   <div className="flex items-center gap-2">
                     <button
                         className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-1 rounded-full"
@@ -2937,7 +2937,7 @@ export default function CommunityView() {
                           }}
                           className="mr-2 px-2 py-1 text-xs bg-yellow-200 hover:bg-yellow-300 rounded-md"
                       >
-                        Confirm
+                        {comViewText.communityView.buttons.confirm}
                       </button>
                   )}
                   <button
