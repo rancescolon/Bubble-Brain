@@ -27,6 +27,9 @@ import { LogOut, Save, Upload, Users, UserCircle } from "lucide-react"
 import { BackgroundContext } from "../App"
 import brainToggleOn from '../assets/braintoggleon.png'; // Import ON image
 import brainToggleOff from '../assets/braintoggleoff.png'; // Import OFF image
+import text from "../text.json"
+import LanguageContext from "./../App"
+import { getSelectedLanguage } from "../App";
 
 // Custom styled components following style guide
 const StyledTextField = styled(TextField)(({ theme }) => ({
@@ -90,7 +93,9 @@ const DeleteAccountButton = styled(Button)({
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function Profile({ setLoggedIn }) {
-  const { currentBackground } = useContext(BackgroundContext);
+    const { currentBackground, language } = useContext(BackgroundContext);
+    const langKey = language === "English" ? "en" : "es";
+    const profileText = text[langKey].profilePage;
   const [profilePic, setProfilePic] = useState("")
   const [username, setUsername] = useState("")
   // eslint-disable-next-line no-unused-vars
@@ -462,7 +467,7 @@ export default function Profile({ setLoggedIn }) {
       if (!username.trim()) {
         setNotification({
           open: true,
-          message: "Username cannot be empty",
+          message: profileText.errorEmptyUsername,
           severity: "error",
         })
         return
@@ -496,14 +501,14 @@ export default function Profile({ setLoggedIn }) {
 
       setNotification({
         open: true,
-        message: "Username updated successfully",
+        message: profileText.successUsernameUpdated,
         severity: "success",
       })
     } catch (error) {
       console.error("Error updating username:", error)
       setNotification({
         open: true,
-        message: "Failed to update username",
+        message: profileText.errorUsernameUpdateFailed,
         severity: "error",
       })
     }
@@ -533,7 +538,7 @@ export default function Profile({ setLoggedIn }) {
       if (file.size > MAX_SIZE_BYTES) {
         setNotification({
           open: true,
-          message: `File size exceeds the ${MAX_SIZE_KB}KB limit.`,
+          message: `${profileText.errorFileTooLarge} (${MAX_SIZE_KB}KB)`,
           severity: "error",
         });
         return; // Stop processing if file is too large
@@ -596,7 +601,7 @@ export default function Profile({ setLoggedIn }) {
 
       setNotification({
         open: true,
-        message: "Profile picture updated successfully",
+        message: profileText.successPicUpdated,
         severity: "success",
       })
 
@@ -610,7 +615,7 @@ export default function Profile({ setLoggedIn }) {
       console.error("Error updating profile picture:", error)
       setNotification({
         open: true,
-        message: `Failed to update profile picture: ${error.message}`,
+        message: `${profileText.errorPicUpdateFailed}: ${error.message}`,
         severity: "error",
       })
     }
@@ -932,7 +937,7 @@ export default function Profile({ setLoggedIn }) {
                         textAlign: "center",
                       }}
                     >
-                      Profile Information
+                      {profileText.profileInformation}
                     </Typography>
                     <Box
                       sx={{
@@ -961,7 +966,7 @@ export default function Profile({ setLoggedIn }) {
                             textAlign: { xs: "center", sm: "left" },
                           }}
                         >
-                          Current Username:
+                          {profileText.currentUsername}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -992,7 +997,7 @@ export default function Profile({ setLoggedIn }) {
                             textAlign: { xs: "center", sm: "left" },
                           }}
                         >
-                          Email:
+                          {profileText.emailLabel}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -1014,7 +1019,7 @@ export default function Profile({ setLoggedIn }) {
                           mt: { xs: 1, sm: 0 },
                         }}
                       >
-                        Logout
+                        {profileText.logout}
                       </LogoutButton>
                       <DeleteAccountButton
                         onClick={() => setShowDeleteConfirm(true)}
@@ -1025,7 +1030,7 @@ export default function Profile({ setLoggedIn }) {
                           mt: 1,
                         }}
                       >
-                        Delete Account
+                        {profileText.deleteAccount}
                       </DeleteAccountButton>
                     </Box>
                   </Box>
@@ -1053,7 +1058,7 @@ export default function Profile({ setLoggedIn }) {
                     textAlign: "center",
                   }}
                 >
-                  Profile Actions
+                  {profileText.profileActions}
                 </Typography>
                 <Box
                   sx={{
@@ -1080,7 +1085,7 @@ export default function Profile({ setLoggedIn }) {
                         textAlign: { xs: "center", sm: "left" },
                       }}
                     >
-                      New Username:
+                      {profileText.newUsername}
                     </Typography>
                     <StyledTextField
                       value={username}
@@ -1104,7 +1109,7 @@ export default function Profile({ setLoggedIn }) {
                       mt: { xs: 1, sm: 0 },
                     }}
                   >
-                    Save
+                    {profileText.save}
                   </SaveButton>
                 </Box>
                 {/* --- Add Profile Picture Toggle Action Inside Profile Actions --- */}
@@ -1119,17 +1124,25 @@ export default function Profile({ setLoggedIn }) {
                       textAlign: "center",
                     }}
                   >
-                    Show Profile Pictures
+                    {profileText.showProfilePictures}
                   </Typography>
                   <IconButton onClick={handleToggleProfilePics} aria-label="toggle profile picture visibility">
                     <img
                       src={showProfilePics ? brainToggleOn : brainToggleOff}
-                      alt={showProfilePics ? "Profile pictures on" : "Profile pictures off"}
+                      alt={showProfilePics ? profileText.picsOn : profileText.picsOff}
                       style={{ width: '100px', height: '100px' }}
                     />
                   </IconButton>
                 </Box>
                 {/* --- End of Added Section --- */}
+                <Box sx={{ mt: 3, textAlign: "center" }}>
+                     <ActionButton
+                       onClick={() => navigate("/languageSelection")}
+                       sx={{ fontSize: { xs: "0.9rem", sm: "1.1rem" } }}
+                     >
+                       {profileText.changeLanguage}
+                     </ActionButton>
+                   </Box>
               </CardContent>
             </Card>
 
@@ -1154,7 +1167,7 @@ export default function Profile({ setLoggedIn }) {
                     textAlign: "center",
                   }}
                 >
-                  Current Streak
+                  {profileText.currentStreak}
                 </Typography>
                 <Box sx={{ textAlign: "center", py: 0.5 }}>
                 <Typography
@@ -1164,7 +1177,9 @@ export default function Profile({ setLoggedIn }) {
                       color: "#1D6EF1",
                     }}
                   >
-                    {studyStats.streak ?? 0} day{studyStats.streak === 1 ? "" : "s"}
+                    {studyStats.streak ?? 0}{" "}
+                    {profileText.dayLabel}
+                    {studyStats.streak === 1 ? "" : profileText.dayPlural}
                     {studyStats.streak >= 5 && "🔥".repeat(Math.floor(studyStats.streak / 5))}
                   </Typography>
                   <Typography
@@ -1174,7 +1189,7 @@ export default function Profile({ setLoggedIn }) {
                       mt: 0.5,
                     }}
                   >
-                    Keep it up!
+                    {profileText.keepItUp}
                   </Typography>
 
                 </Box>
@@ -1217,7 +1232,7 @@ export default function Profile({ setLoggedIn }) {
                       textAlign: { xs: "center", sm: "left" },
                     }}
                   >
-                    Quick Actions
+                    {profileText.quickActions}
                   </Typography>
                   <Box
                     sx={{
@@ -1238,7 +1253,7 @@ export default function Profile({ setLoggedIn }) {
                         fontSize: { xs: "0.9rem", sm: "1.1rem" },
                       }}
                     >
-                      Upload Study Set
+                      {profileText.uploadedMaterials}
                     </ActionButton>
                     <ActionButton
                       startIcon={<Users size={isMobile ? 16 : 20} />}
@@ -1249,7 +1264,7 @@ export default function Profile({ setLoggedIn }) {
                         fontSize: { xs: "0.9rem", sm: "1.1rem" },
                       }}
                     >
-                      Join Community
+                      {profileText.studyGroups}
                     </ActionButton>
                   </Box>
                 </CardContent>
@@ -1274,7 +1289,7 @@ export default function Profile({ setLoggedIn }) {
                       textAlign: "center",
                     }}
                   >
-                    My Communities
+                    {profileText.myCommunities}
                   </Typography>
                   
                   {myCommunities.length > 0 ? (
@@ -1340,7 +1355,7 @@ export default function Profile({ setLoggedIn }) {
                               }}
                               onClick={() => navigate(`/community/view/${community.id}`)}
                             >
-                              View
+                              {profileText.view}
                             </Button>
                           </Box>
                         ))}
@@ -1348,7 +1363,7 @@ export default function Profile({ setLoggedIn }) {
                     </Box>
                   ) : (
                     <Typography align="center" color="text.secondary" fontSize="0.9rem">
-                      You’re not part of any communities yet.
+                      {profileText.noCommunitiesJoined}
                     </Typography>
                   )}
                 </CardContent>
@@ -1376,7 +1391,7 @@ export default function Profile({ setLoggedIn }) {
                     textAlign: { xs: "center", sm: "left" },
                   }}
                 >
-                  Study Statistics
+                  {profileText.studyStatistics}
                 </Typography>
                 {studyStats.loading ? (
                   <Box
@@ -1429,7 +1444,7 @@ export default function Profile({ setLoggedIn }) {
                           textAlign: { xs: "center", sm: "left" },
                         }}
                       >
-                        Total Study Time
+                        {profileText.totalStudyTime}
                       </Typography>
                       <Typography
                         sx={{
@@ -1452,7 +1467,7 @@ export default function Profile({ setLoggedIn }) {
                             textAlign: { xs: "center", sm: "left" },
                           }}
                         >
-                          Recently Studied Sets
+                          {profileText.recentlyStudiedSets}
                         </Typography>
                         <Stack spacing={1}>
                           {studyStats.recentSets.map((set) => (
@@ -1496,7 +1511,7 @@ export default function Profile({ setLoggedIn }) {
                                     color: "#1D1D20",
                                   }}
                                 >
-                                  Time: {formatTime(set.totalTime)}
+                                  {profileText.timeLabel}: {formatTime(set.totalTime)}
                                 </Typography>
                                 <Typography
                                   sx={{
@@ -1504,7 +1519,7 @@ export default function Profile({ setLoggedIn }) {
                                     color: "#1D1D20",
                                   }}
                                 >
-                                  Last: {formatDate(set.lastStudied)}
+                                  {profileText.lastLabel}: {formatDate(set.lastStudied)}
                                 </Typography>
                               </Box>
                             </Box>
@@ -1516,6 +1531,7 @@ export default function Profile({ setLoggedIn }) {
                 )}
               </CardContent>
             </Card>
+
           </Box>
         </Stack>
       </Container>
@@ -1556,21 +1572,20 @@ export default function Profile({ setLoggedIn }) {
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
       >
-        <DialogTitle>Delete Account</DialogTitle>
+        <DialogTitle>{profileText.deleteAccountTitle}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete your account? This action cannot be undone.
-            All your study sets and data will be permanently deleted.
+          {profileText.deleteAccountWarning}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          <Button onClick={() => setShowDeleteConfirm(false)}>{profileText.cancel}</Button>
           <Button
             onClick={handleDeleteAccount}
             color="error"
             disabled={isDeleting}
           >
-            {isDeleting ? "Deleting..." : "Delete Account"}
+            {isDeleting ? profileText.deleting : profileText.deleteAccount}
           </Button>
         </DialogActions>
       </Dialog>
