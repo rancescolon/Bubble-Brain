@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {useState, useEffect, useContext} from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Box, Typography, Button, useMediaQuery, IconButton } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
 import { X } from "lucide-react"
 import { useShop } from "../Context/ShopContext"
+import {BackgroundContext} from "../App";
+import text from "../text.json";
 
 const DrBubbles = ({ onClose }) => {
   const { getEquippedSkin, equippedSkinId, defaultSkin, userId } = useShop()
@@ -15,6 +17,9 @@ const DrBubbles = ({ onClose }) => {
   const [currentSkin, setCurrentSkin] = useState(getEquippedSkin())
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
+  const { currentBackground, language } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const DrBubblesViewText = text[langKey].drBubbles
 
   // Add an effect to handle skin updates and persistence
   useEffect(() => {
@@ -66,50 +71,50 @@ const DrBubbles = ({ onClose }) => {
   const guideSteps = [
     {
       element: "nav-start",
-      message: "Welcome! I'm Dr. Bubbles, and I'll help you navigate around. Let's start with the Home button!",
+      message: DrBubblesViewText.guideSteps.navStart,
       position: { x: 15, y: 40 },
     },
     {
       element: "nav-home",
-      message: "Return to this page at anytime here!",
-      position: { x: 15, y: 115 },
+      message: DrBubblesViewText.guideSteps.navHome,
+      position: { x: 14, y: 40 },
     },
     {
       element: "nav-friends",
-      message: "Here you can connect with others and make new friends!",
-      position: { x: 15, y: 170 },
+      message: DrBubblesViewText.guideSteps.navFriends,
+      position: { x: 15, y: 115 },
     },
     {
       element: "nav-upload",
-      message: "Upload your own study sets and share with others!",
-      position: { x: 15, y: 225 },
+      message: DrBubblesViewText.guideSteps.navUpload,
+      position: { x: 15, y: 170 },
     },
     {
       element: "nav-community",
-      message: "Join exciting communities and view study sets!",
-      position: { x: 15, y: 280 },
+      message: DrBubblesViewText.guideSteps.navCommunity,
+      position: { x: 15, y: 225 },
     },
     {
       element: "nav-profile",
-      message: "View and manage your profile and progress here!",
-      position: { x: 15, y: 330 },
+      message: DrBubblesViewText.guideSteps.navProfile,
+      position: { x: 15, y: 280 },
     },
     {
       element: "nav-style-guide",
-      message: "Check out our style guide to understand the design system!",
-      position: { x: 15, y: 390 },
+      message: DrBubblesViewText.guideSteps.navStyleGuide,
+      position: { x: 15, y: 330 },
     },
 
     {
       element: "nav-feed",
-      message: "View your feed and see what others are up to!",
-      position: { x: 15, y: 440 },
+      message: DrBubblesViewText.guideSteps.navFeed,
+      position: { x: 15, y: 390 },
     },
 
     {
       element: "nav-shop",
-      message: "Buy new icons for Dr.Bubbles in the shop!",
-      position: { x: 15, y: 500 },
+      message: DrBubblesViewText.guideSteps.navShop,
+      position: { x: 15, y: 440 },
     },
   ]
 
@@ -313,7 +318,7 @@ const DrBubbles = ({ onClose }) => {
                   },
                 }}
               >
-                {step < guideSteps.length - 1 ? "Next" : "Got it!"}
+                {step < guideSteps.length - 1 ? DrBubblesViewText.buttons.next: DrBubblesViewText.buttons.gotIt}
               </Button>
             </Box>
           </Box>
