@@ -26,21 +26,9 @@ import {
 import { BookOpen, CheckCircle2, Lock, Unlock, Users } from "lucide-react"
 import { BackgroundContext } from "../App"
 import TemplateManager from "./TemplateManager"
-import text from "../text.json";
+import text from "../text.json"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
-
-// Style for the multiselect dropdown
-const ITEM_HEIGHT = 48
-const ITEM_PADDING_TOP = 8
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-}
 
 const Upload = () => {
   const { currentBackground, language } = useContext(BackgroundContext)
@@ -51,24 +39,16 @@ const Upload = () => {
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
   const [selectedCommunity, setSelectedCommunity] = useState("")
   const [communities, setCommunities] = useState([])
   const [showTemplateManager, setShowTemplateManager] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [templateType, setTemplateType] = useState("")
-  const [templateContent, setTemplateContent] = useState("")
-  const [templateName, setTemplateName] = useState("")
-
   const [membersOnly, setMembersOnly] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
   const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
   const [communityMembers, setCommunityMembers] = useState([])
-
-  const [currentStep, setCurrentStep] = useState(1) // 1: Name, 2: Template, 3: Content, 4: Tags
   const [selectedCategories, setSelectedCategories] = useState([])
   const [selectedTags, setSelectedTags] = useState([])
-  const isMobile = window.innerWidth <= 768
 
   // Add a new state for custom popups
   const [customPopup, setCustomPopup] = useState({
@@ -106,20 +86,6 @@ const Upload = () => {
     [text[langKey].school_categories.categories[22]]: text[langKey].school_categories.Law,
     [text[langKey].school_categories.categories[23]]: text[langKey].school_categories.Education,
     [text[langKey].school_categories.categories[24]]: text[langKey].school_categories["Career Development"],
-  }
-
-  // Add this function to get the base URL
-  const getBaseUrl = () => {
-    // Check if we're in production by looking for the specific domain
-    const isProduction = window.location.hostname.includes("webdev.cse.buffalo.edu")
-
-    if (isProduction) {
-      // In production, include the full path
-      return `${window.location.origin}/hci/teams/droptable`
-    } else {
-      // In development, just use the origin
-      return window.location.origin
-    }
   }
 
   // Fetch communities when component mounts
@@ -238,18 +204,8 @@ const Upload = () => {
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template)
-    setTemplateType(template.type)
-    setTemplateContent(template.content)
-    setTemplateName(template.name)
-
-    // Extract categories and tags from the template if they exist
-    if (template.categories && Array.isArray(template.categories)) {
-      setSelectedCategories(template.categories)
-    }
-
-    if (template.tags && Array.isArray(template.tags)) {
-      setSelectedTags(template.tags)
-    }
+    setSelectedCategories(template.categories || [])
+    setSelectedTags(template.tags || [])
   }
 
   const createPost = async () => {
@@ -393,7 +349,6 @@ const Upload = () => {
       const result = await createPost()
       console.log("Study set created successfully:", result)
 
-      setSuccess(true)
       // Reset form
       setStudySetName("")
       setSelectedCommunity("")
@@ -403,11 +358,9 @@ const Upload = () => {
       setAccessType("everyone")
       setSelectedCategories([])
       setSelectedTags([])
-      setCurrentStep(1)
 
-      // Replace the setTimeout block in handleUpload with this updated code
+      // Show success popup with a button to view the post
       setTimeout(() => {
-        // Show success popup with a button to view the post
         setCustomPopup({
           show: true,
           message: uploadText.successStudySetCreated,
@@ -456,18 +409,6 @@ const Upload = () => {
     } else {
       setError("You can select up to 5 tags")
       setTimeout(() => setError(null), 3000)
-    }
-  }
-
-  const handleNextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const handleBackStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
     }
   }
 

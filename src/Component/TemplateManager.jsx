@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import text from "../text.json"
+import { getSelectedLanguage } from "../App"
 import {
   Box,
   Typography,
@@ -31,313 +32,10 @@ import TagSelector from "./tag-selector"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
-// School categories and tags for study sets
-const school_categories = {
-  Math: [
-    "Algebra",
-    "Geometry",
-    "Calculus",
-    "Trigonometry",
-    "Statistics",
-    "Probability",
-    "Functions",
-    "Matrices",
-    "Equations",
-    "Graphs",
-  ],
-  Science: [
-    "Physics",
-    "Chemistry",
-    "Biology",
-    "Earth Science",
-    "Astronomy",
-    "Genetics",
-    "Ecology",
-    "Laboratory",
-    "Periodic Table",
-    "Experiments",
-  ],
-  Literature: [
-    "Novels",
-    "Poetry",
-    "Shakespeare",
-    "Analysis",
-    "Short Stories",
-    "Fiction",
-    "Non-fiction",
-    "Literary Devices",
-    "Themes",
-    "Book Reviews",
-  ],
-  History: [
-    "Ancient Civilizations",
-    "World Wars",
-    "U.S. History",
-    "Revolutions",
-    "Geography",
-    "Historical Figures",
-    "Wars",
-    "Presidents",
-    "Political Movements",
-    "Artifacts",
-  ],
-  Geography: [
-    "Maps",
-    "Countries",
-    "Capitals",
-    "Climate",
-    "Landforms",
-    "Physical Geography",
-    "Urbanization",
-    "Migration",
-    "Natural Resources",
-    "Time Zones",
-  ],
-  "Foreign Languages": [
-    "Spanish",
-    "French",
-    "German",
-    "Italian",
-    "Chinese",
-    "Japanese",
-    "Vocabulary",
-    "Grammar",
-    "Pronunciation",
-    "Language Exchange",
-  ],
-  Art: [
-    "Painting",
-    "Sculpture",
-    "Drawing",
-    "Digital Art",
-    "Art History",
-    "Canvas",
-    "Portraits",
-    "Abstract",
-    "Artists",
-    "Creativity",
-  ],
-  Music: [
-    "Instruments",
-    "Composers",
-    "Genres",
-    "Music Theory",
-    "Choir",
-    "Band",
-    "Symphony",
-    "Singing",
-    "Sheet Music",
-    "Rhythm",
-  ],
-  "Physical Education": [
-    "Sports",
-    "Fitness",
-    "Exercises",
-    "Health",
-    "Endurance",
-    "Teamwork",
-    "Running",
-    "Strength Training",
-    "Flexibility",
-    "Physical Health",
-  ],
-  Technology: [
-    "Coding",
-    "Software",
-    "Hardware",
-    "Programming",
-    "Artificial Intelligence",
-    "Web Development",
-    "Robotics",
-    "Cybersecurity",
-    "Databases",
-    "Machine Learning",
-  ],
-  "Business Studies": [
-    "Economics",
-    "Finance",
-    "Marketing",
-    "Entrepreneurship",
-    "Accounting",
-    "Management",
-    "Business Plans",
-    "Investment",
-    "Trade",
-    "Corporations",
-  ],
-  Philosophy: [
-    "Ethics",
-    "Logic",
-    "Metaphysics",
-    "Epistemology",
-    "Plato",
-    "Aristotle",
-    "Morality",
-    "Knowledge",
-    "Free Will",
-    "Political Philosophy",
-  ],
-  Psychology: [
-    "Behavior",
-    "Cognition",
-    "Mental Health",
-    "Emotions",
-    "Motivation",
-    "Perception",
-    "Social Psychology",
-    "Developmental Psychology",
-    "Therapy",
-    "Neuroscience",
-  ],
-  Sociology: [
-    "Society",
-    "Culture",
-    "Social Change",
-    "Inequality",
-    "Groups",
-    "Socialization",
-    "Deviance",
-    "Families",
-    "Education Systems",
-    "Race & Ethnicity",
-  ],
-  Economics: [
-    "Supply and Demand",
-    "Inflation",
-    "GDP",
-    "Trade",
-    "Markets",
-    "Microeconomics",
-    "Macroeconomics",
-    "Economic Systems",
-    "Resources",
-    "Taxes",
-  ],
-  "Health Education": [
-    "Nutrition",
-    "Mental Health",
-    "Wellness",
-    "Exercise",
-    "Hygiene",
-    "Diseases",
-    "Prevention",
-    "Vaccines",
-    "Sexual Health",
-    "First Aid",
-  ],
-  "Home Economics": [
-    "Cooking",
-    "Sewing",
-    "Budgeting",
-    "Interior Design",
-    "Childcare",
-    "Household Management",
-    "Nutrition",
-    "Textiles",
-    "Family Planning",
-    "Sustainability",
-  ],
-  "Public Speaking": [
-    "Presentations",
-    "Rhetoric",
-    "Speech Writing",
-    "Communication Skills",
-    "Confidence",
-    "Debates",
-    "Persuasion",
-    "Audience",
-    "Body Language",
-    "Speech Delivery",
-  ],
-  "Technology & Engineering": [
-    "Robotics",
-    "Engineering Design",
-    "CAD (Computer-Aided Design)",
-    "Prototyping",
-    "Electronics",
-    "Renewable Energy",
-    "Structural Engineering",
-    "Computer Engineering",
-    "3D Printing",
-    "Programming",
-  ],
-  Debate: [
-    "Argumentation",
-    "Persuasion",
-    "Logical Fallacies",
-    "Evidence",
-    "Counterarguments",
-    "Rhetorical Strategies",
-    "Public Speaking",
-    "Research",
-    "Debating Styles",
-    "Cross-examination",
-  ],
-  "Environmental Science": [
-    "Ecosystems",
-    "Conservation",
-    "Climate Change",
-    "Pollution",
-    "Sustainability",
-    "Renewable Energy",
-    "Biodiversity",
-    "Recycling",
-    "Environmental Policy",
-    "Environmental Impact",
-  ],
-  Theatre: [
-    "Acting",
-    "Stage Design",
-    "Directing",
-    "Playwriting",
-    "Auditions",
-    "Performances",
-    "Costumes",
-    "Set Construction",
-    "Lighting",
-    "Rehearsals",
-  ],
-  Law: [
-    "Legal Studies",
-    "Constitutional Law",
-    "Criminal Law",
-    "Civil Law",
-    "Contracts",
-    "Courts",
-    "Lawyers",
-    "Law Enforcement",
-    "Legal Systems",
-    "Human Rights",
-  ],
-  Education: [
-    "Pedagogy",
-    "Classroom Management",
-    "Learning Styles",
-    "Curriculum Development",
-    "Assessment",
-    "Special Education",
-    "Teaching Strategies",
-    "Technology in Education",
-    "Teacher Training",
-    "Online Learning",
-  ],
-  "Career Development": [
-    "Job Search",
-    "Internships",
-    "Networking",
-    "Resumes",
-    "Interviews",
-    "Professional Skills",
-    "Career Pathways",
-    "Entrepreneurship",
-    "Certifications",
-    "Personal Branding",
-  ],
-}
-
 const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) => {
   const langKey = language === "English" ? "en" : "es"
   const templateText = text[langKey].templateManager
+  const school_categories = text[langKey].school_categories
   
   const [templates, setTemplates] = useState([])
   const [selectedType, setSelectedType] = useState("flashcards")
@@ -499,7 +197,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
     }
   }
 
-  // Update the completeTemplateSave function to support multiple categories
+  // Update the completeTemplateSave function to use the result
   const completeTemplateSave = async () => {
     try {
       const token = sessionStorage.getItem("token")
@@ -528,10 +226,6 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
           throw new Error(templateText.errorInvalidTemplateType)
       }
 
-      // Limit categories to max 3 and tags to max 5
-      const limitedCategories = selectedCategories.slice(0, 3)
-      const limitedTags = selectedTags.slice(0, 5)
-
       const response = await fetch(`${API_BASE_URL}/posts`, {
         method: "POST",
         headers: {
@@ -544,37 +238,29 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
             type: selectedType,
             content: content,
             name: templateName,
-            categories: limitedCategories,
-            tags: limitedTags,
+            categories: selectedCategories,
+            tags: selectedTags,
           }),
           type: "template",
           authorID: userId,
           attributes: {
             description: "Study set created in template manager",
-            categories: limitedCategories.join(","),
-            tags: limitedTags.join(","),
+            categories: selectedCategories,
+            tags: selectedTags,
           },
         }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        throw new Error(templateText.errorSaveTemplate)
       }
 
-      const result = await response.json()
-      
+      const savedTemplate = await response.json()
       setSuccess(true)
-      setTemplateName("") // Reset template name
-      setSelectedCategories([])
-      setSelectedTags([])
       setShowTagsDialog(false)
-      fetchTemplates() // Refresh the templates list
+      fetchTemplates() // Refresh templates after saving
+      return savedTemplate
 
-      // On mobile, switch to saved templates view after saving
-      if (isMobile) {
-        setMobileView("saved")
-      }
     } catch (err) {
       console.error("Error saving template:", err)
       setError(err.message || templateText.errorSaveTemplate)
@@ -915,7 +601,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Front"
+                              label={templateText.formFields.front}
                               value={card.front}
                               onChange={(e) => handleFlashcardChange(index, "front", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -926,7 +612,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Back"
+                              label={templateText.formFields.back}
                               value={card.back}
                               onChange={(e) => handleFlashcardChange(index, "back", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -999,10 +685,10 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                           </Box>
                           <TextField
                               fullWidth
-                              label="Question"
+                              label={templateText.formFields.question}
                               value={item.question}
                               onChange={(e) => handleFillInBlankChange(index, "question", e.target.value)}
-                              placeholder="Example: The capital of France is _____"
+                              placeholder={templateText.placeholderQuestionExample}
                               multiline
                               rows={isMobile ? 1 : 2}
                               sx={{
@@ -1018,10 +704,10 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12}>
                           <TextField
                               fullWidth
-                              label="Correct Answer"
+                              label={templateText.formFields.answer}
                               value={item.answer}
                               onChange={(e) => handleFillInBlankChange(index, "answer", e.target.value)}
-                              placeholder="Example: Paris"
+                              placeholder={templateText.placeholderAnswerExample}
                               sx={{
                                 ...fontStyle,
                                 "& .MuiOutlinedInput-root": {
@@ -1033,56 +719,6 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                           />
                         </Grid>
                       </Grid>
-                      {item.question && (
-                          <Box sx={{ mt: 2, p: 2, bgcolor: "#F8F9FA", borderRadius: 1 }}>
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                  color: "text.secondary",
-                                  mb: 1,
-                                  ...fontStyle,
-                                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                                }}
-                            >
-                              {templateText.preview}
-                            </Typography>
-                            <Typography
-                                sx={{
-                                  ...fontStyle,
-                                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                                }}
-                            >
-                              {item.question.split("_____").map((part, i, arr) => (
-                                  <span key={i}>
-                            {part}
-                                    {i < arr.length - 1 && (
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                              display: "inline-block",
-                                              minWidth: { xs: "80px", sm: "150px" },
-                                              height: { xs: "20px", sm: "24px" },
-                                              borderBottom: "2px dashed #1D6EF1",
-                                              mx: 1,
-                                              verticalAlign: "middle",
-                                              position: "relative",
-                                              "&::after": {
-                                                content: '""',
-                                                position: "absolute",
-                                                bottom: "-2px",
-                                                left: 0,
-                                                right: 0,
-                                                height: "2px",
-                                                backgroundColor: "#1D6EF1",
-                                              },
-                                            }}
-                                        />
-                                    )}
-                          </span>
-                              ))}
-                            </Typography>
-                          </Box>
-                      )}
                     </CardContent>
                   </Card>
               ))}
@@ -1124,7 +760,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Term"
+                              label={templateText.formFields.term}
                               value={item.term}
                               onChange={(e) => handleMatchingChange(index, "term", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -1135,7 +771,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Definition"
+                              label={templateText.formFields.definition}
                               value={item.definition}
                               onChange={(e) => handleMatchingChange(index, "definition", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -1185,7 +821,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12}>
                           <TextField
                               fullWidth
-                              label="Question"
+                              label={templateText.formFields.question}
                               value={item.question}
                               onChange={(e) => handleMultipleChoiceChange(index, "question", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -1197,7 +833,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                             <Grid item xs={12} sm={6} key={optionIndex}>
                               <TextField
                                   fullWidth
-                                  label={`Option ${optionIndex + 1}`}
+                                  label={`${templateText.formFields.option} ${optionIndex + 1}`}
                                   value={option}
                                   onChange={(e) =>
                                       handleMultipleChoiceChange(index, "options", {
@@ -1221,7 +857,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                             >
                               {item.options.map((_, i) => (
                                   <MenuItem key={i} value={i}>
-                                    {templateText.option} {i + 1}
+                                    Option {i + 1}
                                   </MenuItem>
                               ))}
                             </Select>
@@ -1779,6 +1415,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                   onCancel={() => setShowTagsDialog(false)}
                   onSave={completeTemplateSave}
                   saveButtonText={templateText.buttonSaveTemplate}
+                  language={language}
               />
             </div>
         )}

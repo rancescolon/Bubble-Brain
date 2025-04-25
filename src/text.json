@@ -399,7 +399,16 @@
       "errorInvalidTemplateType": "Invalid template type",
       "errorPrepareTemplate": "Failed to prepare template. Please try again.",
       "errorSaveTemplate": "Failed to save template. Please try again.",
-      "successTemplateSaved": "Template saved successfully!"
+      "successTemplateSaved": "Template saved successfully!",
+      "formFields": {
+        "front": "Front",
+        "back": "Back",
+        "term": "Term",
+        "definition": "Definition",
+        "question": "Question",
+        "answer": "Answer",
+        "option": "Option"
+      }
     },
     "tagSelector": {
       "embedded": {
@@ -2205,7 +2214,16 @@
       "errorInvalidTemplateType": "Tipo de plantilla inválido",
       "errorPrepareTemplate": "Error preparado la plantilla. Por favor, inténtalo de nuevo.",
       "errorSaveTemplate": "Error guardando la plantilla. Por favor, inténtalo de nuevo.",
-      "successTemplateSaved": "¡Plantilla guardada correctamente!"
+      "successTemplateSaved": "¡Plantilla guardada correctamente!",
+      "formFields": {
+        "front": "Frente",
+        "back": "Atrás",
+        "term": "Término",
+        "definition": "Definición",
+        "question": "Pregunta",
+        "answer": "Respuesta",
+        "option": "Opción"
+      }
     },
     "tagSelector": {
       "embedded": {
