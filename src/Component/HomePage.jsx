@@ -120,8 +120,8 @@ const HomePage = () => {
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
 
   // Adjust initial Y position for mobile
-  const initialX = isMobile ? 0 : 50; // Set X animation offset to 0 for mobile
-  const initialY = isMobile ? -75 : 5; 
+  const initialX = isMobile ? 100 : 50; // Old mobile X
+  const initialY = isMobile ? -75 : 5;
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
   const [streakPopup, setStreakPopup] = useState({ open: false, message: "" })
@@ -1380,12 +1380,19 @@ const HomePage = () => {
             backgroundRepeat: "no-repeat",
             opacity: 1.0,
             width: "100%",
-            maxWidth: "100vw", // Ensure it doesn't exceed viewport width
-            overflowX: "hidden",
+            maxWidth: "100vw", // Keep from old
+            overflowX: "hidden", // Keep from old
             position: "relative",
-            boxSizing: 'border-box', // Add box-sizing
-            [theme.breakpoints.down('sm')]: {
-              // Mobile-specific styles for the main Box if needed
+            paddingLeft: { // Use old padding logic
+              xs: 0, // Set mobile paddingLeft to 0 as requested
+              sm: 0,
+            },
+            [theme.breakpoints.down('sm')]: { // Use old mobile block structure
+              maxWidth: '100%',
+              margin: 0,
+              padding: 0,
+              width: '100%',
+              overflowX: 'hidden',
             }
           }}
         >
@@ -1445,8 +1452,8 @@ const HomePage = () => {
             <Box
               component={motion.div}
               animate={{
-                x: isMobile ? 70 : helpBubblePosition.x, // Force x=0 on mobile, use state otherwise
-                y: isMobile ? -80 : helpBubblePosition.y,
+                x: helpBubblePosition.x, // Revert to old desktop animate
+                y: helpBubblePosition.y, // Revert to old desktop animate
                 transition: {
                   type: "spring",
                   stiffness: 100,
@@ -1456,7 +1463,7 @@ const HomePage = () => {
               onClick={() => setShowGuide(true)}
               sx={{
                 position: "fixed",
-                left: { xs: '10px', sm: 'auto' }, // Further reduced left offset for mobile
+                left: { xs: '80px', sm: 'auto' }, // Revert to old left position
                 zIndex: 1400, // ✅ Must be higher than the nav (usually 1200)
                 width: "60px",
                 height: "60px",
@@ -1554,17 +1561,18 @@ const HomePage = () => {
         <Container 
           maxWidth="lg" 
           sx={{ 
-            // Use pl and pr instead of px for potentially asymmetric padding
-            pl: { xs: 0, sm: 2, md: 3 }, 
-            pr: { xs: 1, sm: 2, md: 3 }, // Keep right padding for content spacing
+            px: { xs: 2, sm: 2, md: 3 }, // Revert to old px
             width: '100%',
-            maxWidth: { xs: '100%', sm: 'lg' }, // Ensure maxWidth applies correctly
-            overflow: 'hidden', // Keep overflow hidden for container
-            boxSizing: 'border-box', // Add box-sizing
-            ml: { xs: '72px', sm: 0 }, // Add marginLeft for xs to account for navbar
-            [theme.breakpoints.down('sm')]: {
-              // Styles specific to 'sm' breakpoint and below handled by sx props above
-              margin: 0, // Keep margin 0
+            maxWidth: { xs: '100%', sm: 'lg' },
+            overflow: 'hidden',
+            // boxSizing: 'border-box', // Remove this if added in new version
+            // ml: { xs: '72px', sm: 0 }, // Remove this if added in new version
+            [theme.breakpoints.down('sm')]: { // Use old mobile block
+              maxWidth: '100%',
+              padding: '0 8px', // Keep current mobile padding style
+              margin: 0,
+              width: '100%',
+              overflowX: 'hidden',
             }
           }}
         >
@@ -1603,21 +1611,24 @@ const HomePage = () => {
             sx={{
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 8 },
-              // Consistent styles
-              pl: { xs: 4, md: 3 },
-              pr: { xs: 1, md: 3 },
+              px: { xs: 2, md: 3 }, // Revert to old px
               mt: 2,
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              width: { xs: '90%', sm: '100%' },
-              mx: { xs: 'auto', sm: 0 },
+              mx: { xs: 0, sm: 0, md: 0 }, // Revert to old mx
+              width: { xs: '100%', sm: '100%' }, // Revert to old width
               overflow: 'hidden',
               position: 'relative',
-              boxSizing: 'border-box',
-              [theme.breakpoints.down('sm')]: {
-                margin: '24px auto',
-                paddingTop: '16px',
-                paddingBottom: '16px',
+              // boxSizing: 'border-box', // Remove if added in new version
+              [theme.breakpoints.down('sm')]: { // Use old mobile block
+                margin: '24px 0', // Keep current mobile margin
+                width: '100%', // Keep current mobile width
+                borderRadius: 0, // Keep current mobile radius
+                paddingTop: '16px', // Keep current mobile padding
+                paddingBottom: '16px', // Keep current mobile padding
+                overflowX: 'hidden', // Keep current mobile overflow
+                ml: 0, // Keep current mobile margin
+                mr: 0, // Keep current mobile margin
               }
             }}
           >
@@ -1689,20 +1700,25 @@ const HomePage = () => {
               mb: 6,
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 4 },
-              // Consistent styles
-              pl: { xs: 4, md: 3 }, // Match Dive into Learning md padding
-              pr: { xs: 1, md: 3 }, // Match Dive into Learning md padding
-              overflow: 'hidden',
+              px: { xs: 1, md: 2 }, // Revert to old px
+              overflow: 'visible', // Revert to old overflow
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              width: { xs: '90%', sm: '100%' },
-              mx: { xs: 'auto', sm: 0 },
+              mx: { xs: 0, sm: 0, md: 0 }, // Revert to old mx
+              width: { xs: '100%', sm: '100%' }, // Revert to old width
               position: 'relative',
-              boxSizing: 'border-box',
-              [theme.breakpoints.down('sm')]: {
-                margin: '24px auto',
-                paddingTop: '16px',
-                paddingBottom: '16px',
+              // boxSizing: 'border-box', // Remove if added in new version
+              [theme.breakpoints.down('sm')]: { // Use old mobile block
+                margin: '24px 0', // Keep current mobile margin
+                width: '100%', // Keep current mobile width
+                borderRadius: 0, // Keep current mobile radius
+                paddingTop: '16px', // Keep current mobile padding
+                paddingBottom: '16px', // Keep current mobile padding
+                paddingLeft: theme.spacing(1), // Keep current mobile paddingLeft
+                paddingRight: theme.spacing(1), // Keep current mobile paddingRight
+                overflowX: 'visible', // Keep current mobile overflowX
+                ml: 0, // Keep current mobile ml
+                mr: 0, // Keep current mobile mr
               }
             }}
           >
@@ -1794,12 +1810,12 @@ const HomePage = () => {
                 "&::-webkit-scrollbar": { display: "none" },
                 msOverflowStyle: "none",
                 minHeight: { xs: "250px", md: "280px" },
-                px: { xs: 0, md: 0 }, // Add inner padding 8px (1) on xs
+                px: { xs: 1, md: 0 }, // Revert to old px
                 width: '100%',
                 // overflow: 'hidden', // Remove this from inner box
                 scrollSnapType: 'x mandatory',
                 // Explicitly set box-sizing
-                boxSizing: 'border-box',
+                // boxSizing: 'border-box', // Remove if added in new version
                 [theme.breakpoints.down('sm')]: {
                   paddingLeft: theme.spacing(1), // Ensure inner padding is 8px
                   paddingRight: theme.spacing(1), // Ensure inner padding is 8px
@@ -1816,8 +1832,8 @@ const HomePage = () => {
                   <Card
                     key={community.id}
                     sx={{
-                      minWidth: { xs: 'calc(50% - 12px)', sm: 250, md: 280 }, // Set width to calc(50% - 12px)
-                      maxWidth: { xs: 'calc(50% - 12px)', sm: 250, md: 280 }, // Set width to calc(50% - 12px)
+                      minWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Revert to old minWidth xs
+                      maxWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Revert to old maxWidth xs
                       bgcolor: "#FFFFFF",
                       borderRadius: 2,
                       transition: "transform 0.2s, box-shadow 0.2s",
@@ -2418,6 +2434,8 @@ const HomePage = () => {
                           overflow: "hidden",
                           position: "relative",
                           mb: 3,
+                          // Remove fixed height to allow dynamic sizing
+                          // height: { xs: "70px", md: "80px" },
                           display: "flex",
                           alignItems: "center",
                           [theme.breakpoints.down('sm')]: {
@@ -2490,6 +2508,9 @@ const HomePage = () => {
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "center",
+                          // Add height and overflow control for md breakpoint
+                          height: { md: "80px" }, 
+                          overflow: { md: 'hidden' },
                           [theme.breakpoints.down('sm')]: {
                             padding: '0 4px', // Reduced internal padding slightly on xs
                             // Reduce mobile pl override
@@ -2534,13 +2555,12 @@ const HomePage = () => {
                             </Avatar>
 
                             {/* Apply negative margin on mobile */}
-                            <Box sx={{ 
-                                flexGrow: 1, 
-                                position: "relative", 
-                                marginLeft: { xs: 0, md: 0 }, 
-                                display: 'flex', // Make this flex
-                                flexDirection: 'column', // Stack children vertically always
-                                justifyContent: 'center' // Center items vertically in the column
+                            <Box sx={{
+                                flexGrow: 1,
+                                marginLeft: { xs: '-2px', md: 0 }, // Revert to old marginLeft
+                                display: 'flex', // Keep flex
+                                flexDirection: 'column', // Keep column direction
+                                justifyContent: 'center' // Keep vertical centering
                             }}>
                               {/* Title and caption container */}
                               <Typography
@@ -2553,22 +2573,25 @@ const HomePage = () => {
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: "nowrap",
-                                    mb: { xs: 0.2, md: 0.5 }, // Adjusted margin bottom
+                                    mb: 0.5, // Keep mb from old structure
                                     lineHeight: 1.2,
-                                    textAlign: { xs: 'left', md: 'center' }, // Align left on xs
-                                    width: '100%' // Ensure it takes full width
+                                    textAlign: { xs: 'left', md: 'center' }, // Align left on xs, center on md
+                                    // width: '100%' // Remove width: 100%
                                   }}
                                 >
                                   {getStatTitle(stat.statType)}
                                 </Typography>
-                                
+
                               {/* User name and stat value - Stacked Vertically on xs */}
-                              <Box sx={{ 
-                                  display: "flex", 
-                                  alignItems: { xs: 'flex-start' }, // Align items to start on xs
-                                  flexDirection: { xs: 'column', md: 'row' }, // Stack name and value on xs
-                                  justifyContent: { md: 'space-between' }, // Space between only on md+
-                                  width: '100%' // Ensure box takes width
+                              <Box sx={{
+                                  display: "flex",
+                                  alignItems: { xs: 'flex-start' }, // Keep mobile alignment
+                                  flexDirection: { xs: 'column', md: 'row' }, // Keep mobile stacking
+                                  justifyContent: { md: 'space-between' }, // Keep mobile justification
+                                  // Removed flexDirection
+                                  mt: { xs: 0.5, md: 1.5 }, // Revert mt
+                                  // width: '100%' // Remove width
+                                  width: '100%' // Keep width 100%
                               }}>
                                 {/* Wrap username and icon */}
                                 <Tooltip title={stat.name} placement="top" arrow>
@@ -2605,26 +2628,21 @@ const HomePage = () => {
                                   {formatStatValue(stat.statType, stat.statValue)}
                                 </Typography>
                               </Box>
-                                
-                              {/* Caption text positioned normally below */}
+                              {/* Caption text positioned normally below - Add back */}
                               <Typography
                                 sx={{
-                                  // Removed absolute positioning
-                                  // bottom: "0px",
-                                  // left: 0,
-                                  // right: 0,
                                   width: "100%",
                                   textAlign: "center",
                                   fontFamily: "SourGummy, sans-serif",
                                   color: "#555",
                                   fontSize: { xs: "8px", md: "10px" },
-                                  lineHeight: 1.1, // Slightly increased line height for mobile
+                                  lineHeight: 1.1, // Keep slightly larger mobile line height
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
                                   opacity: 0.9,
-                                  display: { xs: "block", sm: "block" }, 
-                                  mt: { xs: 0.5, md: 1 }, // Added margin-top for spacing
+                                  display: { xs: "block", sm: "block" }, // Ensure display block on mobile
+                                  mt: { xs: 0.5, md: 1 }, // Add margin-top for spacing
                                 }}
                               >
                                 {getStatCaption(stat.statType)}
@@ -2639,283 +2657,6 @@ const HomePage = () => {
               </Box>
             </Grid>
           </Grid>
-
-          { /*Active Users Section*/ 
-          /*<Box
-            sx={{
-              mt: 6,
-              mb: 6,
-              bgcolor: "#FFFFFF",
-              py: { xs: 3, md: 4 }, 
-              px: { xs: 1, md: 2 }, // Ensure outer padding is 8px (1) on xs
-              overflow: 'visible', // Keep overflow visible
-              borderRadius: 2,
-              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              mx: { xs: 0, sm: 0, md: 0 },
-              width: { xs: '100%', sm: '100%' },
-              position: 'relative',
-              [theme.breakpoints.down('sm')]: {
-                margin: 0,
-                width: '100%',
-                borderRadius: 0,
-                // Remove specific padding Left/Right, rely on px above
-                paddingTop: '16px',
-                paddingBottom: '16px',
-                overflowX: 'visible',
-                mt: 4,
-                ml: 0,
-                mr: 0,
-              }
-            }}
-          >
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
-              mb: 2,
-              position: 'relative',
-              zIndex: 2,
-              mt: { xs: 0, sm: 0 },
-              [theme.breakpoints.down('sm')]: {
-                padding: '0 8px',
-                mb: 3,
-                // Center title on mobile
-                flexDirection: 'column', // Stack title and arrows vertically
-                alignItems: 'center', // Center items horizontally
-              }
-            }}>
-              <Typography
-                variant="h3"
-                color="#1D1D20"
-                sx={{
-                  fontFamily: "SourGummy, sans-serif",
-                  fontWeight: 700,
-                  fontSize: { xs: "24px", sm: "30px", md: "36px" },
-                  [theme.breakpoints.down('sm')]: {
-                    mt: 1,
-                    ml: 1,
-                    // Ensure title is centered when stacked
-                    textAlign: 'center',
-                    width: '100%', // Take full width for centering
-                    mb: 1, // Add margin below title on mobile
-                  }
-                }}
-              >
-                Active Users
-              </Typography>
-              <Box sx={{ 
-                display: "flex", 
-                gap: 1,
-                [theme.breakpoints.down('sm')]: {
-                  position: 'relative',
-                  right: '0', // Reset right positioning if needed
-                  top: 0,
-                   // Shift arrows slightly left by reducing gap or adding negative margin
-                   marginLeft: '-5px', // Example shift
-                }
-              }}>
-                <Button
-                  onClick={() => scrollCarousel(usersRef, "left")}
-                  sx={{
-                    minWidth: { xs: "32px", md: "40px" },
-                    height: { xs: "32px", md: "40px" },
-                    borderRadius: "50%",
-                    bgcolor: "#EF7B6C",
-                    color: "white",
-                    "&:hover": { bgcolor: "#e66a59" },
-                    p: { xs: 0.5, md: 1 },
-
-                  }}
-                >
-
-                  <ChevronLeft size={isMobile ? 16 : 24} />
-                </Button>
-                <Button
-                  onClick={() => scrollCarousel(usersRef, "right")}
-                  sx={{
-                    minWidth: { xs: "32px", md: "40px" },
-                    height: { xs: "32px", md: "40px" },
-                    borderRadius: "50%",
-                    bgcolor: "#EF7B6C",
-                    color: "white",
-                    "&:hover": { bgcolor: "#e66a59" },
-                    p: { xs: 0.5, md: 1 },
-                  }}
-                >
-                  <ChevronRight size={isMobile ? 16 : 24} />
-                </Button>
-              </Box>
-            </Box>
-
-            <Box
-              ref={usersRef}
-              sx={{
-                display: "flex",
-                overflowX: "auto",
-                gap: { xs: 1, md: 2 },
-                pb: 2,
-                scrollbarWidth: "none",
-                "&::-webkit-scrollbar": { display: "none" },
-                msOverflowStyle: "none",
-                minHeight: { xs: "130px", md: "150px" },
-                px: { xs: 0, md: 0 }, // Set inner padding to 0 on xs
-                width: '100%',
-                scrollSnapType: 'x mandatory',
-                boxSizing: 'border-box', // Keep box-sizing
-                [theme.breakpoints.down('sm')]: {
-                  paddingLeft: 0, // Ensure inner padding is 0
-                  paddingRight: 0, // Ensure inner padding is 0
-                  mt: 1,
-                }
-              }}
-            >
-              {loadingUsers ? (
-                <Box sx={{ display: "flex",
-                  overflowX: "auto", // allow scroll instead of pushing page
-                  gap: 2,
-                  paddingX: 1,
-                  scrollbarWidth: "none", // optional: hide scrollbar
-                  "&::-webkit-scrollbar": { display: "none" },}}>
-                  <CircularProgress sx={{ color: "#1D6EF1" }} />
-                </Box>
-              ) : activeUsers && activeUsers.length > 0 ? (
-                activeUsers.map((user) => (
-                  <Card
-                    key={user.id}
-                    sx={{
-                      minWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
-                      maxWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
-                      bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
-                      borderRadius: 2,
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
-                        cursor: "pointer",
-                      },
-                      flex: "0 0 auto",
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                      p: { xs: 1, md: 2 },
-                      position: "relative",
-                      border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
-                      scrollSnapAlign: 'start',
-                      boxSizing: 'border-box',
-                      mx: { xs: '1px', sm: 0 }, // Add small horizontal margin on xs
-                    }}
-                    onClick={() => handleUserClick(user.id)}
-                  >
-                    <Box sx={{ position: "relative" }}>
-                      <Avatar
-                        alt={user.name}
-                        sx={{
-                          width: { xs: 40, sm: 50, md: 60 },
-                          height: { xs: 40, sm: 50, md: 60 },
-                          bgcolor: "#1D6EF1",
-                          mr: { xs: 1, md: 2 },
-                          border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
-                          color: "white",
-                          fontSize: { xs: "1.2rem", md: "1.5rem" },
-                        }}
-                      >
-                        {shouldShowPics && user.avatar ? (
-                          <img 
-                            src={user.avatar} 
-                            alt={user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                            onError={(e) => {
-                              e.target.onerror = null; // prevent infinite loops
-                              e.target.style.display = 'none'; // hide broken image
-                              const avatarElement = e.target.closest('.MuiAvatar-root');
-                              if (avatarElement) {
-                                avatarElement.innerHTML = user.name ? user.name.charAt(0).toUpperCase() : "U";
-                              }
-                            }}
-                          />
-                        ) : (
-                          user.name ? user.name.charAt(0).toUpperCase() : "U"
-                        )}
-                      </Avatar>
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          bottom: 0,
-                          right: { xs: 4, md: 8 },
-                          width: { xs: 8, md: 12 },
-                          height: { xs: 8, md: 12 },
-                          borderRadius: "50%",
-                          bgcolor: user.status === "online" ? "#4CAF50" : "#9e9e9e",
-                          border: "2px solid white",
-                        }}
-                      />
-                    </Box>
-                    <Box sx={{ overflow: "hidden" }}>
-                      <Tooltip title={user.name + (user.isCurrentUser ? " (You)" : "")} placement="top" arrow>
-                        <Typography
-                          variant="h6"
-                          color="#1D1D20"
-                          sx={{
-                            fontFamily: "SourGummy, sans-serif",
-                            fontWeight: 600,
-                            fontSize: { xs: "14px", sm: "16px", md: "18px" },
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {truncateText(user.name, isMobile ? 8 : 10)} {user.isCurrentUser && "(You)"}
-                        </Typography>
-                      </Tooltip>
-                      <Typography
-                        color={user.status === "online" ? "#4CAF50" : "#9e9e9e"}
-                        sx={{
-                          fontFamily: "SourGummy, sans-serif",
-                          fontWeight: 500,
-                          fontSize: "14px",
-                        }}
-                      >
-                        {user.activity}
-                      </Typography>
-                      <Tooltip title={user.email} placement="top" arrow>
-                        <Typography
-                          color="#666"
-                          sx={{
-                            fontFamily: "SourGummy, sans-serif",
-                            fontWeight: 500,
-                            fontSize: "12px",
-                            mt: 0.5,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            maxWidth: "180px",
-                          }}
-                        >
-                          {truncateText(user.email, 20)}
-                        </Typography>
-                      </Tooltip>
-                    </Box>
-                  </Card>
-                ))
-              ) : (
-                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
-                  <Typography
-                    color="#1D1D20"
-                    sx={{
-                      fontFamily: "SourGummy, sans-serif",
-                      fontWeight: 500,
-                      fontSize: "16px",
-                    }}
-                  >
-                    No users active in the last 30 minutes. Be the first to engage with the community!
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box> */}
 
         </Container>
       </Box>
