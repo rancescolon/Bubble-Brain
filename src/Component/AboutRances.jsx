@@ -1,16 +1,25 @@
 "use client"
 
+import React, { useContext } from 'react';
 import { Link } from "react-router-dom"
 import { Home, MessageSquare, Upload, Users, Settings, User } from "lucide-react"
 import profilePic from '../assets/rancesco.jpg';
-export default function AboutMe() {
+import { BackgroundContext } from '../App';
+import { getSelectedLanguage } from "../App";
+import text from "../text.json";
+
+const AboutRances = () => {
+  const { currentBackground, language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const aboutRancesText = text[langKey].aboutRancesPage;
+
   return (
     <div className="min-h-screen bg-black text-white ml-[90px]">
       {" "}
       {/* Added margin-left to account for sidebar */}
       {/* Header - About Me */}
       <div className="p-4">
-        <h1 className="text-cyan-400 text-xl mb-4">ABOUT ME</h1>
+        <h1 className="text-cyan-400 text-xl mb-4">{aboutRancesText.aboutMe}</h1>
         <div className="bg-white rounded-lg p-6 text-black">
           <div className="flex items-center gap-4">
             <img
@@ -31,7 +40,7 @@ export default function AboutMe() {
       <div className="grid md:grid-cols-2 gap-4 p-4">
         {/* Uploaded Materials */}
         <div className="bg-white rounded-lg p-6 text-black">
-          <h2 className="text-xl font-bold mb-4">Uploaded Materials</h2>
+          <h2 className="text-xl font-bold mb-4">{aboutRancesText.uploadedMaterials}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="mb-2">Quantum Mechanics Notes</p>
@@ -48,7 +57,7 @@ export default function AboutMe() {
 
         {/* Study Groups */}
         <div className="bg-white rounded-lg p-6 text-black">
-          <h2 className="text-xl font-bold mb-4">Study Groups</h2>
+          <h2 className="text-xl font-bold mb-4">{aboutRancesText.studyGroups}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="mb-2">Quantum Computing</p>
@@ -65,7 +74,7 @@ export default function AboutMe() {
 
         {/* Favorite Videos */}
         <div className="bg-white rounded-lg p-6 text-black">
-          <h2 className="text-xl font-bold mb-4">Favorite Videos</h2>
+          <h2 className="text-xl font-bold mb-4">{aboutRancesText.favoriteVideos}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="mb-2">Minecraft Parkour</p>
@@ -82,27 +91,27 @@ export default function AboutMe() {
 
         {/* Achievements */}
         <div className="bg-white rounded-lg p-6 text-black">
-          <h2 className="text-xl font-bold mb-4">Achievements</h2>
+          <h2 className="text-xl font-bold mb-4">{aboutRancesText.achievements}</h2>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <span className="text-2xl">🧪</span>
               <div>
-                <p className="font-bold">IQ +1</p>
-                <p className="text-blue-600 text-sm">Score 100% on a study set</p>
+                <p className="font-bold">{aboutRancesText.iqPlusOne}</p>
+                <p className="text-blue-600 text-sm">{aboutRancesText.iqPlusOneDesc}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">🎮</span>
               <div>
-                <p className="font-bold">Gigachad Grindset</p>
-                <p className="text-blue-600 text-sm">Study every day for a single week</p>
+                <p className="font-bold">{aboutRancesText.gigachadGrindset}</p>
+                <p className="text-blue-600 text-sm">{aboutRancesText.gigachadGrindsetDesc}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <span className="text-2xl">🧠</span>
               <div>
-                <p className="font-bold">Collective Brain-cell</p>
-                <p className="text-blue-600 text-sm">Join your first study group</p>
+                <p className="font-bold">{aboutRancesText.collectiveBrainCell}</p>
+                <p className="text-blue-600 text-sm">{aboutRancesText.collectiveBrainCellDesc}</p>
               </div>
             </div>
           </div>
@@ -115,32 +124,34 @@ export default function AboutMe() {
         <div className="flex justify-around p-4">
           <Link to="/" className="flex flex-col items-center text-cyan-400">
             <Home className="w-6 h-6" />
-            <span className="text-xs">Home</span>
+            <span className="text-xs">{aboutRancesText.home}</span>
           </Link>
           <Link to="/chat" className="flex flex-col items-center text-cyan-400">
             <MessageSquare className="w-6 h-6" />
-            <span className="text-xs">Chat</span>
+            <span className="text-xs">{aboutRancesText.chat}</span>
           </Link>
           <Link to="/upload" className="flex flex-col items-center text-cyan-400">
             <Upload className="w-6 h-6" />
-            <span className="text-xs">Upload</span>
+            <span className="text-xs">{aboutRancesText.upload}</span>
           </Link>
           <Link to="/community" className="flex flex-col items-center text-cyan-400">
             <Users className="w-6 h-6" />
-            <span className="text-xs">Community</span>
+            <span className="text-xs">{aboutRancesText.community}</span>
           </Link>
           <Link to="/settings" className="flex flex-col items-center text-cyan-400">
             <Settings className="w-6 h-6" />
-            <span className="text-xs">Settings</span>
+            <span className="text-xs">{aboutRancesText.settings}</span>
           </Link>
           <Link to="/profile" className="flex flex-col items-center text-cyan-400">
             <User className="w-6 h-6" />
-            <span className="text-xs">Profile</span>
+            <span className="text-xs">{aboutRancesText.profile}</span>
           </Link>
         </div>
       </div>
     </div>
   )
 }
+
+export default AboutRances;
 
 

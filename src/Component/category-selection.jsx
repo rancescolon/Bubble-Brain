@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import {
     Box,
@@ -17,6 +17,9 @@ import {
 import { Check } from "lucide-react"
 import background from "../assets/image3.png"
 import { useShop } from "../Context/ShopContext"
+import { BackgroundContext } from "../App"
+import { getSelectedLanguage } from "../App"
+import text from "../text.json"
 
 // Using the same categories from the tag selector
 const CATEGORIES = [
@@ -48,6 +51,10 @@ const CATEGORIES = [
 ]
 
 const CategorySelector = () => {
+    const { currentBackground, language } = useContext(BackgroundContext);
+    const langKey = language === "English" ? "en" : "es";
+    const categoryText = text[langKey].categorySelection;
+
     const [selectedCategories, setSelectedCategories] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
@@ -150,7 +157,7 @@ const CategorySelector = () => {
 
     const handleSaveCategories = async () => {
         if (selectedCategories.length === 0) {
-            setError("Please select at least one category")
+            setError(categoryText.error.selectAtLeastOne)
             return
         }
 
@@ -299,207 +306,79 @@ const CategorySelector = () => {
     return (
         <Box
             sx={{
-                flexGrow: 1,
-                bgcolor: "#1D1D20",
                 minHeight: "100vh",
                 backgroundImage: `url(${background})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                opacity: 1.0,
+                backgroundAttachment: "fixed",
+                py: 8,
             }}
         >
-            <Container
-                maxWidth="md"
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    minHeight: "100vh",
-                    py: 4,
-                }}
-            >
-                <Box
-                    sx={{
-                        bgcolor: "#FFFFFF",
-                        py: 8,
-                        px: 4,
-                        width: "100%",
-                        borderRadius: 2,
-                        boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                    }}
-                >
-                    <Typography
-                        variant="h2"
-                        align="center"
-                        color="#1D1D20"
-                        gutterBottom
-                        sx={{
-                            fontFamily: "SourGummy, sans-serif",
-                            fontWeight: 800,
-                            fontSize: "42px",
-                        }}
-                    >
-                        Choose Your Interests
-                    </Typography>
-                    <Typography
-                        variant="h5"
-                        align="center"
-                        color="#1D1D20"
-                        paragraph
-                        sx={{
-                            fontFamily: "SourGummy, sans-serif",
-                            fontWeight: 600,
-                            fontSize: "22px",
-                            mb: 4,
-                        }}
-                    >
-                        Select up to {maxCategories} categories that interest you
-                    </Typography>
+            <Container maxWidth="md">
+                <Card sx={{ backgroundColor: "rgba(255, 255, 255, 0.9)" }}>
+                    <CardContent>
+                        <Typography variant="h4" component="h1" gutterBottom align="center">
+                            {categoryText.title}
+                        </Typography>
+                        <Typography variant="body1" paragraph align="center">
+                            {categoryText.subtitle}
+                        </Typography>
 
-                    <Typography
-                        variant="body1"
-                        align="center"
-                        color="#1D1D20"
-                        paragraph
-                        sx={{
-                            fontFamily: "SourGummy, sans-serif",
-                            fontWeight: 500,
-                            fontSize: "16px",
-                            mb: 4,
-                        }}
-                    >
-                        This helps us personalize your experience and show you relevant content
-                    </Typography>
-
-                    <Grid container spacing={2} sx={{ mb: 4 }}>
-                        {CATEGORIES.map((category) => (
-                            <Grid item xs={6} sm={4} md={3} key={category}>
-                                <Card
-                                    onClick={() => handleCategorySelection(category)}
-                                    sx={{
-                                        cursor: "pointer",
-                                        bgcolor: selectedCategories.includes(category) ? "#1D6EF1" : "#F4FDFF",
-                                        color: selectedCategories.includes(category) ? "white" : "#1D1D20",
-                                        border: selectedCategories.includes(category) ? "2px solid #1D6EF1" : "2px solid #E9D0CE",
-                                        borderRadius: 2,
-                                        transition: "all 0.2s ease",
-                                        "&:hover": {
-                                            transform: "translateY(-2px)",
-                                            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-                                        },
-                                        position: "relative",
-                                        height: "100%",
-                                        opacity:
-                                            selectedCategories.length >= maxCategories && !selectedCategories.includes(category) ? 0.5 : 1,
-                                    }}
-                                >
-                                    <CardContent sx={{ p: 2, textAlign: "center" }}>
-                                        <Typography
-                                            sx={{
-                                                fontFamily: "SourGummy, sans-serif",
-                                                fontWeight: 600,
-                                                fontSize: "14px",
-                                            }}
+                        {isLoading ? (
+                            <Box display="flex" justifyContent="center" my={4}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            <Grid container spacing={2}>
+                                {CATEGORIES.map((category) => (
+                                    <Grid item xs={12} sm={6} md={4} key={category}>
+                                        <Button
+                                            fullWidth
+                                            variant={selectedCategories.includes(category) ? "contained" : "outlined"}
+                                            onClick={() => handleCategorySelection(category)}
+                                            disabled={!selectedCategories.includes(category) && selectedCategories.length >= maxCategories}
+                                            sx={{ mb: 1 }}
                                         >
                                             {category}
-                                        </Typography>
-                                        {selectedCategories.includes(category) && (
-                                            <Box
-                                                sx={{
-                                                    position: "absolute",
-                                                    top: 8,
-                                                    right: 8,
-                                                    bgcolor: "white",
-                                                    borderRadius: "50%",
-                                                    width: 20,
-                                                    height: 20,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                    justifyContent: "center",
-                                                }}
-                                            >
-                                                <Check size={14} color="#1D6EF1" />
-                                            </Box>
-                                        )}
-                                    </CardContent>
-                                </Card>
+                                            {selectedCategories.includes(category) && <Check size={20} style={{ marginLeft: 8 }} />}
+                                        </Button>
+                                    </Grid>
+                                ))}
                             </Grid>
-                        ))}
-                    </Grid>
+                        )}
 
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-                        <Button
-                            onClick={handleSkip}
-                            sx={{
-                                fontFamily: "SourGummy, sans-serif",
-                                fontWeight: 600,
-                                fontSize: "16px",
-                                color: "#1D1D20",
-                                "&:hover": {
-                                    bgcolor: "rgba(29, 29, 32, 0.05)",
-                                },
-                            }}
-                        >
-                            Skip for Now
-                        </Button>
-                        <Button
-                            onClick={handleSaveCategories}
-                            disabled={selectedCategories.length === 0 || isSaving}
-                            sx={{
-                                bgcolor: "#EF7B6C",
-                                "&:hover": {
-                                    bgcolor: "#e66a59",
-                                },
-                                fontFamily: "SourGummy, sans-serif",
-                                fontWeight: 600,
-                                fontSize: "16px",
-                                color: "#F4FDFF",
-                                px: 4,
-                                py: 1,
-                            }}
-                        >
-                            {isSaving ? "Saving..." : "Save Preferences"}
-                        </Button>
-                    </Box>
+                        <Box display="flex" justifyContent="center" mt={4} gap={2}>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                onClick={handleSaveCategories}
+                                disabled={isSaving || selectedCategories.length === 0}
+                            >
+                                {isSaving ? <CircularProgress size={24} /> : categoryText.saveButton}
+                            </Button>
+                            <Button variant="outlined" onClick={handleSkip}>
+                                {categoryText.skipButton}
+                            </Button>
+                        </Box>
 
-                    <Box sx={{ mt: 2, textAlign: "center" }}>
-                        <Typography
-                            variant="body2"
-                            color="#1D1D20"
-                            sx={{
-                                fontFamily: "SourGummy, sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                            }}
-                        >
-                            Selected: {selectedCategories.length}/{maxCategories}
-                        </Typography>
-                    </Box>
-                </Box>
+                        {error && (
+                            <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError(null)}>
+                                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
+                                    {error}
+                                </Alert>
+                            </Snackbar>
+                        )}
+
+                        {success && (
+                            <Snackbar open={success} autoHideDuration={6000} onClose={() => setSuccess(false)}>
+                                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
+                                    {categoryText.successMessage}
+                                </Alert>
+                            </Snackbar>
+                        )}
+                    </CardContent>
+                </Card>
             </Container>
-
-            <Snackbar
-                open={!!error}
-                autoHideDuration={6000}
-                onClose={() => setError(null)}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert onClose={() => setError(null)} severity="error" sx={{ width: "100%" }}>
-                    {error}
-                </Alert>
-            </Snackbar>
-
-            <Snackbar
-                open={success}
-                autoHideDuration={6000}
-                onClose={() => setSuccess(false)}
-                anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-                <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-                    Preferences saved successfully!
-                </Alert>
-            </Snackbar>
         </Box>
     )
 }

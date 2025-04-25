@@ -1551,7 +1551,194 @@
         "icon": "EllipsisVertical",
         "type": "toggleSidebar"
       }
-    ]
+    ],
+    "aboutPage": {
+      "aboutMe": "ABOUT ME",
+      "greeting": "Hello, I am Tariq Biviji a CS student and I like caffeine.",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutCaydenPage": {
+      "aboutMe": "ABOUT ME",
+      "greeting": "Hi, I'm Cayden and I'm a senior that is about to graduate this spring with a Computer Science Degree, I hope to make a lot of money and the future with this degree, and I know how to play the acoustic guitar.",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutJacobPage": {
+      "aboutMe": "ABOUT ME",
+      "greeting": "Hi, I'm Jacob and I'm a senior studying Computer Science. I aspire to be a full stack developer in the future, and my favorite dog breed are Bernese Mountain Dogs just incase you were curious",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutMePage": {
+      "aboutMe": "ABOUT ME",
+      "greeting": "I am a senior CS major at UB looking for the nearest burger king to hopefully be employed as a cashier.",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutRancesPage": {
+      "aboutMe": "ABOUT ME",
+      "greeting": "Im like making game in UE and made a game called \"Bizarre Bender\"",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutUsPage": {
+      "aboutUs": "About Us",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile",
+      "styleGuide": "Style Guide",
+      "teamMembers": {
+        "rances": {
+          "name": "Rances Colon",
+          "bio": "Hi, I'm Rances a CS student graduating next spring, I like making game in Unreal Engine and made a game called \"Bizarre Bender\" last semester"
+        },
+        "akib": {
+          "name": "Akib Mahdi",
+          "bio": "Hi, im a senior CS major at UB looking for the nearest burger king to hopefully be employed as a cashier."
+        },
+        "cayden": {
+          "name": "Cayden La Bara",
+          "bio": "Hi, I'm Cayden and I'm a senior that is about to graduate this spring with a Computer Science Degree, I hope to make a lot of money and the future with this degree, and I know how to play the acoustic guitar."
+        },
+        "jacob": {
+          "name": "Mieszawski Jacob",
+          "bio": "Hi, I'm Jacob and I'm a senior studying Computer Science. I aspire to be a full stack developer in the future, and my favorite dog breed are Bernese Mountain Dogs just incase you were curious"
+        },
+        "tariq": {
+          "name": "Biviji Tariq",
+          "bio": "Hello, I am Tariq Biviji a CS student and I like caffeine."
+        }
+      }
+    },
+    "appWrapper": {
+      "backgroundSelector": {
+        "title": "Background Selector",
+        "selectBackground": "Select Background",
+        "currentBackground": "Current Background"
+      }
+    },
+    "background": {
+      "names": {
+        "default": "Default",
+        "lifeOfCrime": "Life of Crime",
+        "voyage": "Voyage",
+        "war": "War",
+        "construction": "Construction"
+      },
+      "notifications": {
+        "backgroundChanged": "Background changed to {{name}}"
+      }
+    },
+    "aboutTariqPage": {
+      "aboutMe": "About Me",
+      "greeting": "Hi, I'm Tariq! I'm passionate about learning and sharing knowledge.",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Mastered quantum mechanics",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Never stopped learning",
+      "collectiveBrainCell": "Collective Brain Cell",
+      "collectiveBrainCellDesc": "Shared knowledge with the community",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "commentForm": {
+      "addComment": "Add A Comment to Post",
+      "placeholder": "Write your comment here...",
+      "submit": "Submit",
+      "error": "Error posting comment. Please try again."
+    },
+    "categorySelection": {
+      "title": "Choose Your Interests",
+      "subtitle": "Select up to 5 categories that interest you",
+      "saveButton": "Save Preferences",
+      "skipButton": "Skip for Now",
+      "successMessage": "Preferences saved successfully!",
+      "error": {
+        "selectAtLeastOne": "Please select at least one category"
+      }
+    }
   },
   "es": {
     "upload": {
@@ -1768,7 +1955,7 @@
       "Sociology": [
         "Sociedad",
         "Cultura",
-        "Cambio social",
+        "Social Change",
         "Desigualdad",
         "Grupos",
         "Socialización",
@@ -2902,22 +3089,22 @@
         "title": "Colores del agua",
         "colors": [
           {
-            "name": "Agua 1",
+            "name": "Agua 1",
             "class": "bg-water-1",
             "hex": "#F4FDFF"
           },
           {
-            "name": "Agua 2",
+            "name": "Agua 2",
             "class": "bg-water-2",
             "hex": "#1D6EF1"
           },
           {
-            "name": "Agua 3",
+            "name": "Agua 3",
             "class": "bg-water-3",
             "hex": "#97C7F1"
           },
           {
-            "name": "Agua 4",
+            "name": "Agua 4",
             "class": "bg-water-4",
             "hex": "#C5EDFD"
           }
@@ -2927,27 +3114,27 @@
         "title": "Colores de elemento marino",
         "colors": [
           {
-            "name": "Mar 1",
+            "name": "Mar 1",
             "class": "bg-sea-1",
             "hex": "#1D6EF1"
           },
           {
-            "name": "Mar 2",
+            "name": "Mar 2",
             "class": "bg-sea-2",
             "hex": "#5B8C5A"
           },
           {
-            "name": "Mar 3",
+            "name": "Mar 3",
             "class": "bg-sea-3",
             "hex": "#EF7B6C"
           },
           {
-            "name": "Mar 4",
+            "name": "Mar 4",
             "class": "bg-sea-4",
             "hex": "#C5EDFD"
           },
           {
-            "name": "Mar 5",
+            "name": "Mar 5",
             "class": "bg-sea-5",
             "hex": "#9DDCB1"
           }
@@ -2957,22 +3144,22 @@
         "title": "Colores de fondo",
         "colors": [
           {
-            "name": "Alga 1",
+            "name": "Alga 1",
             "class": "bg-bg-1",
             "hex": "#5B8C5A"
           },
           {
-            "name": "Alga 2",
+            "name": "Alga 2",
             "class": "bg-bg-2",
             "hex": "#9DDCB1"
           },
           {
-            "name": "Arena 1",
+            "name": "Arena 1",
             "class": "bg-bg-3",
             "hex": "#E9D0CE"
           },
           {
-            "name": "Arena 2",
+            "name": "Arena 2",
             "class": "bg-bg-4",
             "hex": "#F1DEFB"
           }
@@ -3096,6 +3283,193 @@
         "icon": "EllipsisVertical",
         "type": "Ve navegación"
       }
-    ]
+    ],
+    "aboutPage": {
+      "aboutMe": "SOBRE MÍ",
+      "greeting": "Hola, soy Tariq Biviji, un estudiante de CS y me gusta la cafeína.",
+      "uploadedMaterials": "Materiales Subidos",
+      "studyGroups": "Grupos de Estudio",
+      "favoriteVideos": "Videos Favoritos",
+      "achievements": "Logros",
+      "iqPlusOne": "CI +1",
+      "iqPlusOneDesc": "Obtén 100% en un conjunto de estudio",
+      "gigachadGrindset": "Mentalidad Gigachad",
+      "gigachadGrindsetDesc": "Estudia todos los días durante una semana",
+      "collectiveBrainCell": "Neurona Colectiva",
+      "collectiveBrainCellDesc": "Únete a tu primer grupo de estudio",
+      "home": "Inicio",
+      "chat": "Chat",
+      "upload": "Subir",
+      "community": "Comunidad",
+      "settings": "Ajustes",
+      "profile": "Perfil"
+    },
+    "aboutCaydenPage": {
+      "aboutMe": "SOBRE MÍ",
+      "greeting": "Hola, soy Cayden y soy un estudiante de último año que se graduará esta primavera con un título en Ciencias de la Computación. Espero ganar mucho dinero en el futuro con este título, y sé tocar la guitarra acústica.",
+      "uploadedMaterials": "Materiales Subidos",
+      "studyGroups": "Grupos de Estudio",
+      "favoriteVideos": "Videos Favoritos",
+      "achievements": "Logros",
+      "iqPlusOne": "CI +1",
+      "iqPlusOneDesc": "Obtén 100% en un conjunto de estudio",
+      "gigachadGrindset": "Mentalidad Gigachad",
+      "gigachadGrindsetDesc": "Estudia todos los días durante una semana",
+      "collectiveBrainCell": "Neurona Colectiva",
+      "collectiveBrainCellDesc": "Únete a tu primer grupo de estudio",
+      "home": "Inicio",
+      "chat": "Chat",
+      "upload": "Subir",
+      "community": "Comunidad",
+      "settings": "Ajustes",
+      "profile": "Perfil"
+    },
+    "aboutJacobPage": {
+      "aboutMe": "SOBRE MÍ",
+      "greeting": "Hola, soy Jacob y soy un estudiante de último año de Ciencias de la Computación. Aspiro a ser desarrollador full stack en el futuro, y mi raza de perro favorita es el Boyero de Berna por si tenías curiosidad",
+      "uploadedMaterials": "Uploaded Materials",
+      "studyGroups": "Study Groups",
+      "favoriteVideos": "Favorite Videos",
+      "achievements": "Achievements",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Score 100% on a study set",
+      "gigachadGrindset": "Gigachad Grindset",
+      "gigachadGrindsetDesc": "Study every day for a single week",
+      "collectiveBrainCell": "Collective Brain-cell",
+      "collectiveBrainCellDesc": "Join your first study group",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile"
+    },
+    "aboutMePage": {
+      "aboutMe": "SOBRE MÍ",
+      "greeting": "Soy un estudiante de último año de CS en UB buscando el Burger King más cercano con la esperanza de ser empleado como cajero.",
+      "uploadedMaterials": "Materiales Subidos",
+      "studyGroups": "Grupos de Estudio",
+      "favoriteVideos": "Videos Favoritos",
+      "achievements": "Logros",
+      "iqPlusOne": "CI +1",
+      "iqPlusOneDesc": "Obtén 100% en un conjunto de estudio",
+      "gigachadGrindset": "Mentalidad Gigachad",
+      "gigachadGrindsetDesc": "Estudia todos los días durante una semana",
+      "collectiveBrainCell": "Neurona Colectiva",
+      "collectiveBrainCellDesc": "Únete a tu primer grupo de estudio",
+      "home": "Inicio",
+      "chat": "Chat",
+      "upload": "Subir",
+      "community": "Comunidad",
+      "settings": "Ajustes",
+      "profile": "Perfil"
+    },
+    "aboutRancesPage": {
+      "aboutMe": "SOBRE MÍ",
+      "greeting": "Me gusta hacer juegos en UE y hice un juego llamado \"Bizarre Bender\"",
+      "uploadedMaterials": "Materiales Subidos",
+      "studyGroups": "Grupos de Estudio",
+      "favoriteVideos": "Videos Favoritos",
+      "achievements": "Logros",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Obtener 100% en un conjunto de estudio",
+      "gigachadGrindset": "Mentalidad Gigachad",
+      "gigachadGrindsetDesc": "Estudiar todos los días durante una semana",
+      "collectiveBrainCell": "Célula Cerebral Colectiva",
+      "collectiveBrainCellDesc": "Unirse a tu primer grupo de estudio",
+      "home": "Inicio",
+      "chat": "Chat",
+      "upload": "Subir",
+      "community": "Comunidad",
+      "settings": "Ajustes",
+      "profile": "Perfil"
+    },
+    "aboutUsPage": {
+      "aboutUs": "Sobre Nosotros",
+      "home": "Home",
+      "chat": "Chat",
+      "upload": "Upload",
+      "community": "Community",
+      "settings": "Settings",
+      "profile": "Profile",
+      "styleGuide": "Style Guide",
+      "teamMembers": {
+        "rances": {
+          "name": "Rances Colon",
+          "bio": "Hola, soy Rances, un estudiante de CS que se gradúa la próxima primavera, me gusta hacer juegos en Unreal Engine y hice un juego llamado \"Bizarre Bender\" el semestre pasado"
+        },
+        "akib": {
+          "name": "Akib Mahdi",
+          "bio": "Hola, soy un estudiante de último año de CS en UB buscando el Burger King más cercano con la esperanza de ser empleado como cajero."
+        },
+        "cayden": {
+          "name": "Cayden La Bara",
+          "bio": "Hola, soy Cayden y soy un estudiante de último año que se graduará esta primavera con un título en Ciencias de la Computación, espero ganar mucho dinero en el futuro con este título, y sé tocar la guitarra acústica."
+        },
+        "jacob": {
+          "name": "Mieszawski Jacob",
+          "bio": "Hola, soy Jacob y soy un estudiante de último año de Ciencias de la Computación. Aspiro a ser un desarrollador full stack en el futuro, y mi raza de perro favorita son los Bernese Mountain Dogs, por si tenías curiosidad"
+        },
+        "tariq": {
+          "name": "Biviji Tariq",
+          "bio": "Hola, soy Tariq Biviji, un estudiante de CS y me gusta la cafeína."
+        }
+      }
+    },
+    "appWrapper": {
+      "backgroundSelector": {
+        "title": "Selector de Fondo",
+        "selectBackground": "Seleccionar Fondo",
+        "currentBackground": "Fondo Actual"
+      }
+    },
+    "background": {
+      "names": {
+        "default": "Predeterminado",
+        "lifeOfCrime": "Vida de Crimen",
+        "voyage": "Viaje",
+        "war": "Guerra",
+        "construction": "Construcción"
+      },
+      "notifications": {
+        "backgroundChanged": "Fondo cambiado a {{name}}"
+      }
+    },
+    "aboutTariqPage": {
+      "aboutMe": "Sobre Mí",
+      "greeting": "¡Hola, soy Tariq! Me apasiona aprender y compartir conocimientos.",
+      "uploadedMaterials": "Materiales Subidos",
+      "studyGroups": "Grupos de Estudio",
+      "favoriteVideos": "Videos Favoritos",
+      "achievements": "Logros",
+      "iqPlusOne": "IQ +1",
+      "iqPlusOneDesc": "Dominé la mecánica cuántica",
+      "gigachadGrindset": "Mentalidad Gigachad",
+      "gigachadGrindsetDesc": "Nunca dejé de aprender",
+      "collectiveBrainCell": "Célula Cerebral Colectiva",
+      "collectiveBrainCellDesc": "Compartí conocimientos con la comunidad",
+      "home": "Inicio",
+      "chat": "Chat",
+      "upload": "Subir",
+      "community": "Comunidad",
+      "settings": "Configuración",
+      "profile": "Perfil"
+    },
+    "commentForm": {
+      "addComment": "Agregar un Comentario a la Publicación",
+      "placeholder": "Escribe tu comentario aquí...",
+      "submit": "Enviar",
+      "error": "Error al publicar el comentario. Por favor, inténtalo de nuevo."
+    },
+    "categorySelection": {
+      "title": "Elige Tus Intereses",
+      "subtitle": "Selecciona hasta 5 categorías que te interesen",
+      "saveButton": "Guardar Preferencias",
+      "skipButton": "Omitir por Ahora",
+      "successMessage": "¡Preferencias guardadas con éxito!",
+      "error": {
+        "selectAtLeastOne": "Por favor, selecciona al menos una categoría"
+      }
+    }
   }
 }

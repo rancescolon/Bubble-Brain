@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { BackgroundContext } from "../App";
+import { getSelectedLanguage } from "../App";
+import text from "../text.json";
 
 // CommentForm is a functional component that takes parent, loadPosts, and loadComments as props
 const CommentForm = ({
@@ -6,6 +9,10 @@ const CommentForm = ({
   loadPosts, // Function to reload posts
   loadComments, // Function to reload comments
 }) => {
+  const { currentBackground, language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const commentFormText = text[langKey].commentForm;
+
   // useState to manage the post text
   const [postText, setPostText] = useState("");
   // useState to manage the status message after posting
@@ -43,7 +50,7 @@ const CommentForm = ({
           setPostText("");
         },
         (error) => {
-          alert("error!");
+          alert(commentFormText.error);
         }
       );
   };
@@ -52,17 +59,18 @@ const CommentForm = ({
     <div>
       <form onSubmit={submitHandler}>
         <label>
-          Add A Comment to Post {parent}
+          {commentFormText.addComment} {parent}
           <br />
           <textarea
             rows="10"
             cols="70"
             onChange={(e) => setPostText(e.target.value)}
+            placeholder={commentFormText.placeholder}
           />
         </label>
         <br />
 
-        <input type="submit" value="submit" />
+        <input type="submit" value={commentFormText.submit} />
         <br />
         {postMessage}
       </form>
