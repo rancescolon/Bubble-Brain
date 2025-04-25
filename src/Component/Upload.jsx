@@ -43,8 +43,11 @@ const MenuProps = {
 }
 
 const Upload = () => {
-  const { currentBackground } = useContext(BackgroundContext)
+  const { currentBackground, language } = useContext(BackgroundContext)
   const navigate = useNavigate()
+  const langKey = language === "English" ? "en" : "es"
+  const uploadText = text[langKey].upload
+  
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -77,311 +80,33 @@ const Upload = () => {
   })
 
   // School categories for tag selection
-  const {language } = useContext(BackgroundContext)
-  const langKey = language === "English" ? "en" : "es"
-  const comViewText = text[langKey]
   const school_categories = {
-    [comViewText.categories.Math]: [
-      comViewText.school_categories.Math[0],
-      comViewText.school_categories.Math[1],
-      comViewText.school_categories.Math[2],
-      comViewText.school_categories.Math[3],
-      comViewText.school_categories.Math[4],
-      comViewText.school_categories.Math[5],
-      comViewText.school_categories.Math[6],
-      comViewText.school_categories.Math[7],
-      comViewText.school_categories.Math[8],
-      comViewText.school_categories.Math[9],
-    ],
-    [comViewText.categories.Science]: [
-      comViewText.school_categories.Science[0],
-      comViewText.school_categories.Science[1],
-      comViewText.school_categories.Science[2],
-      comViewText.school_categories.Science[3],
-      comViewText.school_categories.Science[4],
-      comViewText.school_categories.Science[5],
-      comViewText.school_categories.Science[6],
-      comViewText.school_categories.Science[7],
-      comViewText.school_categories.Science[8],
-      comViewText.school_categories.Science[9],
-    ],
-    [comViewText.categories.Literature]: [
-      comViewText.school_categories.Literature[0],
-      comViewText.school_categories.Literature[1],
-      comViewText.school_categories.Literature[2],
-      comViewText.school_categories.Literature[3],
-      comViewText.school_categories.Literature[4],
-      comViewText.school_categories.Literature[5],
-      comViewText.school_categories.Literature[6],
-      comViewText.school_categories.Literature[7],
-      comViewText.school_categories.Literature[8],
-      comViewText.school_categories.Literature[9],
-    ],
-    [comViewText.categories.History]: [
-      comViewText.school_categories.History[0],
-      comViewText.school_categories.History[1],
-      comViewText.school_categories.History[2],
-      comViewText.school_categories.History[3],
-      comViewText.school_categories.History[4],
-      comViewText.school_categories.History[5],
-      comViewText.school_categories.History[6],
-      comViewText.school_categories.History[7],
-      comViewText.school_categories.History[8],
-      comViewText.school_categories.History[9],
-    ],
-    [comViewText.categories.Geography]: [
-      comViewText.school_categories.Geography[0],
-      comViewText.school_categories.Geography[1],
-      comViewText.school_categories.Geography[2],
-      comViewText.school_categories.Geography[3],
-      comViewText.school_categories.Geography[4],
-      comViewText.school_categories.Geography[5],
-      comViewText.school_categories.Geography[6],
-      comViewText.school_categories.Geography[7],
-      comViewText.school_categories.Geography[8],
-      comViewText.school_categories.Geography[9],
-    ],
-    [comViewText.categories["Foreign Languages"]]: [
-      comViewText.school_categories["Foreign Languages"][0],
-      comViewText.school_categories["Foreign Languages"][1],
-      comViewText.school_categories["Foreign Languages"][2],
-      comViewText.school_categories["Foreign Languages"][3],
-      comViewText.school_categories["Foreign Languages"][4],
-      comViewText.school_categories["Foreign Languages"][5],
-      comViewText.school_categories["Foreign Languages"][6],
-      comViewText.school_categories["Foreign Languages"][7],
-      comViewText.school_categories["Foreign Languages"][8],
-      comViewText.school_categories["Foreign Languages"][9],
-    ],
-    [comViewText.categories.Art]: [
-      comViewText.school_categories.Art[0],
-      comViewText.school_categories.Art[1],
-      comViewText.school_categories.Art[2],
-      comViewText.school_categories.Art[3],
-      comViewText.school_categories.Art[4],
-      comViewText.school_categories.Art[5],
-      comViewText.school_categories.Art[6],
-      comViewText.school_categories.Art[7],
-      comViewText.school_categories.Art[8],
-      comViewText.school_categories.Art[9],
-    ],
-    [comViewText.categories.Music]: [
-      comViewText.school_categories.Music[0],
-      comViewText.school_categories.Music[1],
-      comViewText.school_categories.Music[2],
-      comViewText.school_categories.Music[3],
-      comViewText.school_categories.Music[4],
-      comViewText.school_categories.Music[5],
-      comViewText.school_categories.Music[6],
-      comViewText.school_categories.Music[7],
-      comViewText.school_categories.Music[8],
-      comViewText.school_categories.Music[9],
-    ],
-    [comViewText.categories["Physical Education"]]: [
-      comViewText.school_categories["Physical Education"][0],
-      comViewText.school_categories["Physical Education"][1],
-      comViewText.school_categories["Physical Education"][2],
-      comViewText.school_categories["Physical Education"][3],
-      comViewText.school_categories["Physical Education"][4],
-      comViewText.school_categories["Physical Education"][5],
-      comViewText.school_categories["Physical Education"][6],
-      comViewText.school_categories["Physical Education"][7],
-      comViewText.school_categories["Physical Education"][8],
-      comViewText.school_categories["Physical Education"][9],
-    ],
-    [comViewText.categories.Technology]: [
-      comViewText.school_categories.Technology[0],
-      comViewText.school_categories.Technology[1],
-      comViewText.school_categories.Technology[2],
-      comViewText.school_categories.Technology[3],
-      comViewText.school_categories.Technology[4],
-      comViewText.school_categories.Technology[5],
-      comViewText.school_categories.Technology[6],
-      comViewText.school_categories.Technology[7],
-      comViewText.school_categories.Technology[8],
-      comViewText.school_categories.Technology[9],
-    ],
-    [comViewText.categories["Business Studies"]]: [
-      comViewText.school_categories["Business Studies"][0],
-      comViewText.school_categories["Business Studies"][1],
-      comViewText.school_categories["Business Studies"][2],
-      comViewText.school_categories["Business Studies"][3],
-      comViewText.school_categories["Business Studies"][4],
-      comViewText.school_categories["Business Studies"][5],
-      comViewText.school_categories["Business Studies"][6],
-      comViewText.school_categories["Business Studies"][7],
-      comViewText.school_categories["Business Studies"][8],
-      comViewText.school_categories["Business Studies"][9],
-    ],
-    [comViewText.categories.Philosophy]: [
-      comViewText.school_categories.Philosophy[0],
-      comViewText.school_categories.Philosophy[1],
-      comViewText.school_categories.Philosophy[2],
-      comViewText.school_categories.Philosophy[3],
-      comViewText.school_categories.Philosophy[4],
-      comViewText.school_categories.Philosophy[5],
-      comViewText.school_categories.Philosophy[6],
-      comViewText.school_categories.Philosophy[7],
-      comViewText.school_categories.Philosophy[8],
-      comViewText.school_categories.Philosophy[9],
-    ],
-    [comViewText.categories.Psychology]: [
-      comViewText.school_categories.Psychology[0],
-      comViewText.school_categories.Psychology[1],
-      comViewText.school_categories.Psychology[2],
-      comViewText.school_categories.Psychology[3],
-      comViewText.school_categories.Psychology[4],
-      comViewText.school_categories.Psychology[5],
-      comViewText.school_categories.Psychology[6],
-      comViewText.school_categories.Psychology[7],
-      comViewText.school_categories.Psychology[8],
-      comViewText.school_categories.Psychology[9],
-    ],
-    [comViewText.categories.Sociology]: [
-      comViewText.school_categories.Sociology[0],
-      comViewText.school_categories.Sociology[1],
-      comViewText.school_categories.Sociology[2],
-      comViewText.school_categories.Sociology[3],
-      comViewText.school_categories.Sociology[4],
-      comViewText.school_categories.Sociology[5],
-      comViewText.school_categories.Sociology[6],
-      comViewText.school_categories.Sociology[7],
-      comViewText.school_categories.Sociology[8],
-      comViewText.school_categories.Sociology[9],
-    ],
-    [comViewText.categories.Economics]: [
-      comViewText.school_categories.Economics[0],
-      comViewText.school_categories.Economics[1],
-      comViewText.school_categories.Economics[2],
-      comViewText.school_categories.Economics[3],
-      comViewText.school_categories.Economics[4],
-      comViewText.school_categories.Economics[5],
-      comViewText.school_categories.Economics[6],
-      comViewText.school_categories.Economics[7],
-      comViewText.school_categories.Economics[8],
-      comViewText.school_categories.Economics[9],
-    ],
-    [comViewText.categories["Health Education"]]: [
-      comViewText.school_categories["Health Education"][0],
-      comViewText.school_categories["Health Education"][1],
-      comViewText.school_categories["Health Education"][2],
-      comViewText.school_categories["Health Education"][3],
-      comViewText.school_categories["Health Education"][4],
-      comViewText.school_categories["Health Education"][5],
-      comViewText.school_categories["Health Education"][6],
-      comViewText.school_categories["Health Education"][7],
-      comViewText.school_categories["Health Education"][8],
-      comViewText.school_categories["Health Education"][9],
-    ],
-    [comViewText.categories["Home Economics"]]: [
-      comViewText.school_categories["Home Economics"][0],
-      comViewText.school_categories["Home Economics"][1],
-      comViewText.school_categories["Home Economics"][2],
-      comViewText.school_categories["Home Economics"][3],
-      comViewText.school_categories["Home Economics"][4],
-      comViewText.school_categories["Home Economics"][5],
-      comViewText.school_categories["Home Economics"][6],
-      comViewText.school_categories["Home Economics"][7],
-      comViewText.school_categories["Home Economics"][8],
-      comViewText.school_categories["Home Economics"][9],
-    ],
-    [comViewText.categories["Public Speaking"]]: [
-      comViewText.school_categories["Public Speaking"][0],
-      comViewText.school_categories["Public Speaking"][1],
-      comViewText.school_categories["Public Speaking"][2],
-      comViewText.school_categories["Public Speaking"][3],
-      comViewText.school_categories["Public Speaking"][4],
-      comViewText.school_categories["Public Speaking"][5],
-      comViewText.school_categories["Public Speaking"][6],
-      comViewText.school_categories["Public Speaking"][7],
-      comViewText.school_categories["Public Speaking"][8],
-      comViewText.school_categories["Public Speaking"][9],
-    ],
-    [comViewText.categories["Technology & Engineering"]]: [
-      comViewText.school_categories["Technology & Engineering"][0],
-      comViewText.school_categories["Technology & Engineering"][1],
-      comViewText.school_categories["Technology & Engineering"][2],
-      comViewText.school_categories["Technology & Engineering"][3],
-      comViewText.school_categories["Technology & Engineering"][4],
-      comViewText.school_categories["Technology & Engineering"][5],
-      comViewText.school_categories["Technology & Engineering"][6],
-      comViewText.school_categories["Technology & Engineering"][7],
-      comViewText.school_categories["Technology & Engineering"][8],
-      comViewText.school_categories["Technology & Engineering"][9],
-    ],
-    [comViewText.categories.Debate]: [
-      comViewText.school_categories.Debate[0],
-      comViewText.school_categories.Debate[1],
-      comViewText.school_categories.Debate[2],
-      comViewText.school_categories.Debate[3],
-      comViewText.school_categories.Debate[4],
-      comViewText.school_categories.Debate[5],
-      comViewText.school_categories.Debate[6],
-      comViewText.school_categories.Debate[7],
-      comViewText.school_categories.Debate[8],
-      comViewText.school_categories.Debate[9],
-    ],
-    [comViewText.categories["Environmental Science"]]: [
-      comViewText.school_categories["Environmental Science"][0],
-      comViewText.school_categories["Environmental Science"][1],
-      comViewText.school_categories["Environmental Science"][2],
-      comViewText.school_categories["Environmental Science"][3],
-      comViewText.school_categories["Environmental Science"][4],
-      comViewText.school_categories["Environmental Science"][5],
-      comViewText.school_categories["Environmental Science"][6],
-      comViewText.school_categories["Environmental Science"][7],
-      comViewText.school_categories["Environmental Science"][8],
-      comViewText.school_categories["Environmental Science"][9],
-    ],
-    [comViewText.categories.Theatre]: [
-      comViewText.school_categories.Theatre[0],
-      comViewText.school_categories.Theatre[1],
-      comViewText.school_categories.Theatre[2],
-      comViewText.school_categories.Theatre[3],
-      comViewText.school_categories.Theatre[4],
-      comViewText.school_categories.Theatre[5],
-      comViewText.school_categories.Theatre[6],
-      comViewText.school_categories.Theatre[7],
-      comViewText.school_categories.Theatre[8],
-      comViewText.school_categories.Theatre[9],
-    ],
-    [comViewText.categories.Law]: [
-      comViewText.school_categories.Law[0],
-      comViewText.school_categories.Law[1],
-      comViewText.school_categories.Law[2],
-      comViewText.school_categories.Law[3],
-      comViewText.school_categories.Law[4],
-      comViewText.school_categories.Law[5],
-      comViewText.school_categories.Law[6],
-      comViewText.school_categories.Law[7],
-      comViewText.school_categories.Law[8],
-      comViewText.school_categories.Law[9],
-    ],
-    [comViewText.categories.Education]: [
-      comViewText.school_categories.Education[0],
-      comViewText.school_categories.Education[1],
-      comViewText.school_categories.Education[2],
-      comViewText.school_categories.Education[3],
-      comViewText.school_categories.Education[4],
-      comViewText.school_categories.Education[5],
-      comViewText.school_categories.Education[6],
-      comViewText.school_categories.Education[7],
-      comViewText.school_categories.Education[8],
-      comViewText.school_categories.Education[9],
-    ],
-    [comViewText.categories["Career Development"]]: [
-      comViewText.school_categories["Career Development"][0],
-      comViewText.school_categories["Career Development"][1],
-      comViewText.school_categories["Career Development"][2],
-      comViewText.school_categories["Career Development"][3],
-      comViewText.school_categories["Career Development"][4],
-      comViewText.school_categories["Career Development"][5],
-      comViewText.school_categories["Career Development"][6],
-      comViewText.school_categories["Career Development"][7],
-      comViewText.school_categories["Career Development"][8],
-      comViewText.school_categories["Career Development"][9],
-    ],
-  };
+    [text[langKey].school_categories.categories[0]]: text[langKey].school_categories.Math,
+    [text[langKey].school_categories.categories[1]]: text[langKey].school_categories.Science,
+    [text[langKey].school_categories.categories[2]]: text[langKey].school_categories.Literature,
+    [text[langKey].school_categories.categories[3]]: text[langKey].school_categories.History,
+    [text[langKey].school_categories.categories[4]]: text[langKey].school_categories.Geography,
+    [text[langKey].school_categories.categories[5]]: text[langKey].school_categories["Foreign Languages"],
+    [text[langKey].school_categories.categories[6]]: text[langKey].school_categories.Art,
+    [text[langKey].school_categories.categories[7]]: text[langKey].school_categories.Music,
+    [text[langKey].school_categories.categories[8]]: text[langKey].school_categories["Physical Education"],
+    [text[langKey].school_categories.categories[9]]: text[langKey].school_categories.Technology,
+    [text[langKey].school_categories.categories[10]]: text[langKey].school_categories["Business Studies"],
+    [text[langKey].school_categories.categories[11]]: text[langKey].school_categories.Philosophy,
+    [text[langKey].school_categories.categories[12]]: text[langKey].school_categories.Psychology,
+    [text[langKey].school_categories.categories[13]]: text[langKey].school_categories.Sociology,
+    [text[langKey].school_categories.categories[14]]: text[langKey].school_categories.Economics,
+    [text[langKey].school_categories.categories[15]]: text[langKey].school_categories["Health Education"],
+    [text[langKey].school_categories.categories[16]]: text[langKey].school_categories["Home Economics"],
+    [text[langKey].school_categories.categories[17]]: text[langKey].school_categories["Public Speaking"],
+    [text[langKey].school_categories.categories[18]]: text[langKey].school_categories["Technology & Engineering"],
+    [text[langKey].school_categories.categories[19]]: text[langKey].school_categories.Debate,
+    [text[langKey].school_categories.categories[20]]: text[langKey].school_categories["Environmental Science"],
+    [text[langKey].school_categories.categories[21]]: text[langKey].school_categories.Theatre,
+    [text[langKey].school_categories.categories[22]]: text[langKey].school_categories.Law,
+    [text[langKey].school_categories.categories[23]]: text[langKey].school_categories.Education,
+    [text[langKey].school_categories.categories[24]]: text[langKey].school_categories["Career Development"],
+  }
 
   // Add this function to get the base URL
   const getBaseUrl = () => {
@@ -532,17 +257,17 @@ const Upload = () => {
     const userId = sessionStorage.getItem("user")
 
     if (!userId) {
-      throw new Error("User not found. Please log in again.")
+      throw new Error(uploadText.errorUserNotFound)
     }
 
     // Ensure we have valid content
     if (!selectedTemplate || !selectedTemplate.content) {
-      throw new Error("Invalid template selected")
+      throw new Error(uploadText.errorInvalidTemplate)
     }
 
     // Ensure we have a valid community ID
     if (!selectedCommunity) {
-      throw new Error("Please select a community")
+      throw new Error(uploadText.errorSelectCommunity)
     }
 
     // Keep the original string value for attributes
@@ -647,20 +372,20 @@ const Upload = () => {
       setError(null)
 
       if (!selectedCommunity) {
-        throw new Error("Please select a community")
+        throw new Error(uploadText.errorSelectCommunity)
       }
 
       if (!selectedTemplate) {
-        throw new Error("Please select a template")
+        throw new Error(uploadText.errorInvalidTemplate)
       }
 
       if (!studySetName.trim()) {
-        throw new Error("Please enter a name for your study set")
+        throw new Error(uploadText.errorEmptyName)
       }
 
       // Check if specific members option is selected but no members chosen
       if (accessType === "specificMembers" && selectedMembers.length === 0) {
-        throw new Error("Please select at least one member who can access this study set")
+        throw new Error(uploadText.errorSelectMembers)
       }
 
       // Create a post with the template content
@@ -685,7 +410,7 @@ const Upload = () => {
         // Show success popup with a button to view the post
         setCustomPopup({
           show: true,
-          message: "Study set created successfully!",
+          message: uploadText.successStudySetCreated,
           type: "success",
           postId: result.id,
           communityId: result.attributes?.communityId || selectedCommunity,
@@ -693,12 +418,12 @@ const Upload = () => {
       }, 500)
     } catch (err) {
       console.error("Error in handleUpload:", err)
-      setError(err.message || "Failed to create study set. Please try again.")
+      setError(err.message || uploadText.errorFailedCreateStudySet)
 
       // Replace the error alert in the catch block with custom popup
       setCustomPopup({
         show: true,
-        message: `Error: ${err.message || "Failed to create study set. Please try again."}`,
+        message: `Error: ${err.message || uploadText.errorFailedCreateStudySet}`,
         type: "error",
       })
     } finally {
@@ -790,7 +515,7 @@ const Upload = () => {
                   fontSize: "52px",
                 }}
             >
-              Create Your Study Set
+              {uploadText.title}
             </Typography>
             <Typography
                 variant="h5"
@@ -803,13 +528,13 @@ const Upload = () => {
                   fontSize: "26px",
                 }}
             >
-              Choose a template and create your study set
+              {uploadText.subtitle}
             </Typography>
 
             <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
               <TextField
                   fullWidth
-                  label="Study Set Name"
+                  label={uploadText.labelStudySetName}
                   variant="outlined"
                   value={studySetName}
                   onChange={(e) => setStudySetName(e.target.value)}
@@ -844,7 +569,7 @@ const Upload = () => {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <BookOpen size={24} />
-                  <Typography>Select Template</Typography>
+                  <Typography>{uploadText.buttonSelectTemplate}</Typography>
                 </Box>
               </Button>
 
@@ -871,16 +596,16 @@ const Upload = () => {
                           fontSize: "16px",
                         }}
                     >
-                      Current template selected: {selectedTemplate.name}
+                      {uploadText.currentTemplateSelected.replace("{{templateName}}", selectedTemplate.name)}
                     </Typography>
                   </Box>
               )}
 
               <FormControl fullWidth sx={{ maxWidth: "600px" }}>
-                <InputLabel>Select Community</InputLabel>
+                <InputLabel>{uploadText.labelSelectCommunity}</InputLabel>
                 <Select
                     value={selectedCommunity}
-                    label="Select Community"
+                    label={uploadText.labelSelectCommunity}
                     onChange={(e) => setSelectedCommunity(e.target.value)}
                     disabled={uploading}
                 >
@@ -915,8 +640,7 @@ const Upload = () => {
                           fontSize: "16px",
                         }}
                     >
-                      Study set will be uploaded to:{" "}
-                      {communities.find((c) => c.id === selectedCommunity)?.name || "selected community"}
+                      {uploadText.studySetUploadedTo.replace("{{communityName}}", communities.find((c) => c.id === selectedCommunity)?.name || "selected community")}
                     </Typography>
                   </Box>
               )}
@@ -932,12 +656,12 @@ const Upload = () => {
                     color: "#1D1D20",
                   }}
               >
-                Access Control
+                {uploadText.accessControlTitle}
               </Typography>
 
               <FormControl component="fieldset" sx={{ maxWidth: "600px", width: "100%" }}>
                 <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                  Who can view this study set?
+                  {uploadText.questionWhoCanView}
                 </Typography>
                 <Grid container direction="column" spacing={1}>
                   <Grid item>
@@ -958,7 +682,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Unlock size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Everyone - Study set visible to all users
+                              {uploadText.optionEveryone}
                             </Typography>
                           </Box>
                         }
@@ -988,7 +712,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Lock size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Community Members Only - Only visible to anyone who joined the community
+                              {uploadText.optionAllMembers}
                             </Typography>
                           </Box>
                         }
@@ -1017,7 +741,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Users size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Specific Members - Choose exactly who can see this study set
+                              {uploadText.optionSpecificMembers}
                             </Typography>
                           </Box>
                         }
@@ -1031,11 +755,10 @@ const Upload = () => {
                 </Grid>
               </FormControl>
 
-              {/* Show member selection when specific members option is chosen */}
               {accessType === "specificMembers" && selectedCommunity && (
                   <FormControl fullWidth sx={{ maxWidth: "600px", mt: 2 }}>
                     <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                      Select Members
+                      {uploadText.labelSelectMembers}
                     </InputLabel>
                     <Select
                         labelId="member-selection-label"
@@ -1046,7 +769,7 @@ const Upload = () => {
                           console.log("Selected members:", e.target.value)
                           setSelectedMembers(e.target.value)
                         }}
-                        input={<OutlinedInput label="Select Members" />}
+                        input={<OutlinedInput label={uploadText.labelSelectMembers} />}
                         renderValue={(selected) => (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                               {selected.map((value) => {
@@ -1100,7 +823,7 @@ const Upload = () => {
                       ) : (
                           <MenuItem disabled>
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              No members found in this community
+                              {uploadText.noMembersFound}
                             </Typography>
                           </MenuItem>
                       )}
@@ -1109,12 +832,11 @@ const Upload = () => {
                         variant="caption"
                         sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", color: "#1D1D20", display: "block" }}
                     >
-                      Only selected members will be able to view this study set
+                      {uploadText.infoOnlySelectedMembers}
                     </Typography>
                   </FormControl>
               )}
 
-              {/* Categories and Tags Section */}
               <Typography
                   variant="h6"
                   sx={{
@@ -1126,12 +848,12 @@ const Upload = () => {
                     color: "#1D1D20",
                   }}
               >
-                Categories & Tags
+                {uploadText.categoriesTagsTitle}
               </Typography>
 
               <Box sx={{ maxWidth: "600px", width: "100%" }}>
                 <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                  Select Categories (up to 3)
+                  {uploadText.instructionSelectCategories}
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
                   {Object.keys(school_categories).map((category) => (
@@ -1155,13 +877,13 @@ const Upload = () => {
                     variant="caption"
                     sx={{ display: "block", mb: 2, fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}
                 >
-                  Selected: {selectedCategories.length}/3
+                  {uploadText.selectedCategoriesCount.replace("{{count}}", selectedCategories.length)}
                 </Typography>
 
                 {selectedCategories.length > 0 && (
                     <>
                       <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                        Select Tags (up to 5)
+                        {uploadText.instructionSelectTags}
                       </Typography>
                       {selectedCategories.map((category) => (
                           <Box key={category} sx={{ mb: 2 }}>
@@ -1169,7 +891,7 @@ const Upload = () => {
                                 variant="subtitle2"
                                 sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, color: "#1D1D20" }}
                             >
-                              {category} Tags:
+                              {uploadText.categoryTagLabel.replace("{{category}}", category)}
                             </Typography>
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
                               {school_categories[category].map((tag) => (
@@ -1195,7 +917,7 @@ const Upload = () => {
                           variant="caption"
                           sx={{ display: "block", mb: 2, fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}
                       >
-                        Selected: {selectedTags.length}/5
+                        {uploadText.selectedTagsCount.replace("{{count}}", selectedTags.length)}
                       </Typography>
                     </>
                 )}
@@ -1226,8 +948,10 @@ const Upload = () => {
                   }}
               >
                 {uploading
-                    ? "Posting..."
-                    : `Post "${studySetName}" to ${communities.find((c) => c.id === selectedCommunity)?.name || "community"}`}
+                    ? uploadText.posting
+                    : uploadText.buttonPost
+                        .replace("{{studySetName}}", studySetName)
+                        .replace("{{communityName}}", communities.find((c) => c.id === selectedCommunity)?.name || "community")}
               </Button>
             </Box>
           </Box>
@@ -1275,7 +999,6 @@ const Upload = () => {
               </Box>
 
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                {/* Add "See post in community" button for success popups */}
                 {customPopup.type === "success" && customPopup.communityId && (
                     <Button
                         onClick={() => {
@@ -1295,7 +1018,7 @@ const Upload = () => {
                           },
                         }}
                     >
-                      See post in community
+                      {uploadText.buttonSeePost}
                     </Button>
                 )}
 
