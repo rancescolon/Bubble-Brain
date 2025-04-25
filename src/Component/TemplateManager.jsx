@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import text from "../text.json"
 import {
   Box,
   Typography,
@@ -334,7 +335,10 @@ const school_categories = {
   ],
 }
 
-const TemplateManager = ({ onSelectTemplate, onClose }) => {
+const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) => {
+  const langKey = language === "English" ? "en" : "es"
+  const templateText = text[langKey].templateManager
+  
   const [templates, setTemplates] = useState([])
   const [selectedType, setSelectedType] = useState("flashcards")
   const [error, setError] = useState(null)
@@ -400,7 +404,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       const userId = sessionStorage.getItem("user")
 
       if (!token || !userId) {
-        setError("Please log in to view templates")
+        setError(templateText.errorLoginViewTemplates)
         return
       }
 
@@ -442,7 +446,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       }
     } catch (err) {
       console.error("Error fetching templates:", err)
-      setError("Failed to load templates. Please try again.")
+      setError(templateText.errorFailedLoadTemplates)
     }
   }
 
@@ -460,12 +464,12 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       const userId = sessionStorage.getItem("user")
 
       if (!token || !userId) {
-        setError("Please log in to save templates")
+        setError(templateText.errorLoginSaveTemplates)
         return
       }
 
       if (!templateName.trim()) {
-        setError("Please enter a template name")
+        setError(templateText.errorEnterTemplateName)
         return
       }
 
@@ -484,14 +488,14 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
           content = multipleChoice
           break
         default:
-          throw new Error("Invalid template type")
+          throw new Error(templateText.errorInvalidTemplateType)
       }
 
       // Show tags dialog before saving
       setShowTagsDialog(true)
     } catch (err) {
       console.error("Error preparing to save template:", err)
-      setError(err.message || "Failed to prepare template. Please try again.")
+      setError(templateText.errorPrepareTemplate)
     }
   }
 
@@ -502,7 +506,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       const userId = sessionStorage.getItem("user")
 
       if (!token || !userId) {
-        setError("Please log in to save templates")
+        setError(templateText.errorLoginSaveTemplates)
         return
       }
 
@@ -521,7 +525,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
           content = multipleChoice
           break
         default:
-          throw new Error("Invalid template type")
+          throw new Error(templateText.errorInvalidTemplateType)
       }
 
       // Limit categories to max 3 and tags to max 5
@@ -573,7 +577,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
       }
     } catch (err) {
       console.error("Error saving template:", err)
-      setError(err.message || "Failed to save template. Please try again.")
+      setError(err.message || templateText.errorSaveTemplate)
       setShowTagsDialog(false)
     }
   }
@@ -702,7 +706,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
               {categories.length > 0 && (
                   <Box sx={{ mb: 1 }}>
                     <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
-                      Categories:
+                      {templateText.labelCategories}
                     </Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {categories.map((category, i) => (
@@ -726,7 +730,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
               {tags.length > 0 && (
                   <Box>
                     <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
-                      Tags:
+                      {templateText.labelTags}
                     </Typography>
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {tags.map((tag, i) => (
@@ -756,14 +760,14 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         return (
             <Box sx={{ width: "100%" }}>
               <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Preview
+                {templateText.preview}
               </Typography>
               {tagsSection}
               {content.map((card, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
                       <Typography variant="subtitle1" sx={{ ...fontStyle }}>
-                        Card {index + 1}
+                        {templateText.type_flashcards} {index + 1}
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
@@ -790,21 +794,21 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         return (
             <Box sx={{ width: "100%" }}>
               <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Preview
+                {templateText.preview}
               </Typography>
               {tagsSection}
               {content.map((item, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
                       <Typography variant="subtitle1" sx={{ ...fontStyle }}>
-                        Question {index + 1}
+                        {templateText.type_fill_in_blank} {index + 1}
                       </Typography>
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        Question:
+                        {templateText.question}
                       </Typography>
                       <Typography>{item.question}</Typography>
                       <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
-                        Answer:
+                        {templateText.answer}
                       </Typography>
                       <Typography>{item.answer}</Typography>
                     </CardContent>
@@ -817,25 +821,25 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         return (
             <Box sx={{ width: "100%" }}>
               <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Preview
+                {templateText.preview}
               </Typography>
               {tagsSection}
               {content.map((item, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
                       <Typography variant="subtitle1" sx={{ ...fontStyle }}>
-                        Pair {index + 1}
+                        {templateText.type_matching} {index + 1}
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid item xs={6}>
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            Term:
+                            {templateText.term}
                           </Typography>
                           <Typography>{item.term}</Typography>
                         </Grid>
                         <Grid item xs={6}>
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            Definition:
+                            {templateText.definition}
                           </Typography>
                           <Typography>{item.definition}</Typography>
                         </Grid>
@@ -850,21 +854,21 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
         return (
             <Box sx={{ width: "100%" }}>
               <Typography variant="h6" sx={{ mb: 2, ...fontStyle }}>
-                Preview
+                {templateText.preview}
               </Typography>
               {tagsSection}
               {content.map((item, index) => (
                   <Card key={index} sx={{ mb: 2 }}>
                     <CardContent>
                       <Typography variant="subtitle1" sx={{ ...fontStyle }}>
-                        Question {index + 1}
+                        {templateText.type_multiple_choice} {index + 1}
                       </Typography>
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        Question:
+                        {templateText.question}
                       </Typography>
                       <Typography>{item.question}</Typography>
                       <Typography variant="body2" sx={{ color: "text.secondary", mt: 1 }}>
-                        Options:
+                        {templateText.options}
                       </Typography>
                       {item.options.map((option, optIndex) => (
                           <Typography key={optIndex}>
@@ -901,7 +905,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                               fontSize: { xs: "1rem", sm: "1.25rem" },
                             }}
                         >
-                          Flashcard {index + 1}
+                          {templateText.type_flashcards} {index + 1}
                         </Typography>
                         <IconButton onClick={() => handleRemoveFlashcard(index)}>
                           <Trash2 size={isMobile ? 18 : 24} />
@@ -943,7 +947,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                     fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
               >
-                Add Flashcard
+                {templateText.buttonAddFlashcard}
               </Button>
             </Box>
         )
@@ -962,7 +966,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                               fontSize: { xs: "1rem", sm: "1.25rem" },
                             }}
                         >
-                          Question {index + 1}
+                          {templateText.type_fill_in_blank} {index + 1}
                         </Typography>
                         <IconButton onClick={() => handleRemoveFillInBlank(index)}>
                           <Trash2 size={isMobile ? 18 : 24} />
@@ -990,7 +994,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                                 }}
                                 size={isMobile ? "small" : "medium"}
                             >
-                              Add Blank
+                              {templateText.buttonAddBlank}
                             </Button>
                           </Box>
                           <TextField
@@ -1040,7 +1044,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                                   fontSize: { xs: "0.75rem", sm: "0.875rem" },
                                 }}
                             >
-                              Preview:
+                              {templateText.preview}
                             </Typography>
                             <Typography
                                 sx={{
@@ -1091,7 +1095,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                     fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
               >
-                Add Question
+                {templateText.buttonAddQuestion}
               </Button>
             </Box>
         )
@@ -1110,7 +1114,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                               fontSize: { xs: "1rem", sm: "1.25rem" },
                             }}
                         >
-                          Pair {index + 1}
+                          {templateText.type_matching} {index + 1}
                         </Typography>
                         <IconButton onClick={() => handleRemoveMatching(index)}>
                           <Trash2 size={isMobile ? 18 : 24} />
@@ -1152,7 +1156,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                     fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
               >
-                Add Pair
+                {templateText.buttonAddPair}
               </Button>
             </Box>
         )
@@ -1171,7 +1175,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                               fontSize: { xs: "1rem", sm: "1.25rem" },
                             }}
                         >
-                          Question {index + 1}
+                          {templateText.type_multiple_choice} {index + 1}
                         </Typography>
                         <IconButton onClick={() => handleRemoveMultipleChoice(index)}>
                           <Trash2 size={isMobile ? 18 : 24} />
@@ -1209,15 +1213,15 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         ))}
                         <Grid item xs={12}>
                           <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                            <InputLabel>Correct Answer</InputLabel>
+                            <InputLabel>{templateText.labelCorrectAnswer}</InputLabel>
                             <Select
                                 value={item.correctAnswer}
-                                label="Correct Answer"
+                                label={templateText.labelCorrectAnswer}
                                 onChange={(e) => handleMultipleChoiceChange(index, "correctAnswer", e.target.value)}
                             >
                               {item.options.map((_, i) => (
                                   <MenuItem key={i} value={i}>
-                                    Option {i + 1}
+                                    {templateText.option} {i + 1}
                                   </MenuItem>
                               ))}
                             </Select>
@@ -1236,7 +1240,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                     fontSize: { xs: "0.875rem", sm: "1rem" },
                   }}
               >
-                Add Question
+                {templateText.buttonAddQuestion}
               </Button>
             </Box>
         )
@@ -1263,7 +1267,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
           }}
       >
         <Tab
-            label="Types"
+            label={templateText.tabTypes}
             value="types"
             sx={{
               ...fontStyle,
@@ -1271,7 +1275,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
             }}
         />
         <Tab
-            label="Form"
+            label={templateText.tabForm}
             value="form"
             sx={{
               ...fontStyle,
@@ -1279,7 +1283,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
             }}
         />
         <Tab
-            label="Saved"
+            label={templateText.tabSaved}
             value="saved"
             sx={{
               ...fontStyle,
@@ -1333,7 +1337,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                       onClick={() => handleUseTemplate(previewTemplate)}
                       sx={{ bgcolor: "#1D6EF1" }}
                   >
-                    Use Template
+                    {templateText.buttonUseTemplate}
                   </Button>
                 </Box>
               </>
@@ -1382,7 +1386,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                   fontSize: { xs: "1.5rem", sm: "2rem", md: "2.125rem" },
                 }}
             >
-              Template Manager
+              {templateText.title}
             </Typography>
             <IconButton
                 onClick={onClose}
@@ -1426,7 +1430,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         fontSize: { xs: "1.25rem", sm: "1.5rem" },
                       }}
                   >
-                    Template Types
+                    {templateText.sectionTemplateTypes}
                   </Typography>
                   <Card
                       sx={{
@@ -1462,7 +1466,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                                   flex: { sm: "1 0 calc(50% - 8px)", md: "0 0 auto" },
                                 }}
                             >
-                              {type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                              {templateText[`type_${type}`]}
                             </Button>
                         ))}
                       </Box>
@@ -1488,7 +1492,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         fontSize: { sm: "1.25rem", md: "1.5rem" },
                       }}
                   >
-                    {selectedType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} Template
+                    {templateText[`type_${selectedType}`]}
                   </Typography>
                   <Card
                       sx={{
@@ -1508,7 +1512,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                     >
                       <TextField
                           fullWidth
-                          label="Template Name"
+                          label={templateText.labelTemplateName}
                           value={templateName}
                           onChange={(e) => setTemplateName(e.target.value)}
                           sx={{
@@ -1543,7 +1547,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                             }}
                             startIcon={<Save size={isTablet ? 16 : 20} />}
                         >
-                          Save Template
+                          {templateText.buttonSaveTemplate}
                         </Button>
                       </Box>
                     </CardContent>
@@ -1569,7 +1573,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                         fontSize: { sm: "1.25rem", md: "1.5rem" },
                       }}
                   >
-                    Saved Templates
+                    {templateText.savedTemplates}
                   </Typography>
                   <Card
                       sx={{
@@ -1628,7 +1632,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                                                 fontSize: { xs: "0.75rem", sm: "0.875rem" },
                                               }}
                                           >
-                                            Use Template
+                                            {templateText.buttonUseTemplate}
                                           </Button>
                                         </Box>
                                       </Box>
@@ -1643,7 +1647,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                                   color: "#666",
                                 }}
                             >
-                              <Typography sx={{ ...fontStyle }}>No saved templates yet</Typography>
+                              <Typography sx={{ ...fontStyle }}>{templateText.noSavedTemplates}</Typography>
                             </Box>
                         )}
                       </Box>
@@ -1709,7 +1713,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                               sx={{ bgcolor: "#1D6EF1" }}
                               startIcon={<Save size={16} />}
                           >
-                            Save Template
+                            {templateText.buttonSaveTemplate}
                           </Button>
                         </Box>
                       </CardContent>
@@ -1748,7 +1752,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                           ))
                         ) : (
                           <Box sx={{ p: 2, textAlign: "center", color: "#666" }}>
-                            <Typography sx={{ ...fontStyle }}>No saved templates yet</Typography>
+                            <Typography sx={{ ...fontStyle }}>{templateText.noSavedTemplates}</Typography>
                           </Box>
                         )}
                       </Box>
@@ -1774,7 +1778,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
                   isMobile={isMobile}
                   onCancel={() => setShowTagsDialog(false)}
                   onSave={completeTemplateSave}
-                  saveButtonText="Save Template"
+                  saveButtonText={templateText.buttonSaveTemplate}
               />
             </div>
         )}
@@ -1797,7 +1801,7 @@ const TemplateManager = ({ onSelectTemplate, onClose }) => {
             anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
           <Alert onClose={() => setSuccess(false)} severity="success" sx={{ width: "100%" }}>
-            Template saved successfully!
+            {templateText.templateSavedSuccessfully}
           </Alert>
         </Snackbar>
       </Box>

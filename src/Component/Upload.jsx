@@ -1043,7 +1043,11 @@ const Upload = () => {
         )}
 
         <Dialog open={showTemplateManager} onClose={() => setShowTemplateManager(false)} maxWidth="lg" fullWidth>
-          <TemplateManager onSelectTemplate={handleTemplateSelect} onClose={() => setShowTemplateManager(false)} />
+          <TemplateManager 
+            onSelectTemplate={handleTemplateSelect} 
+            onClose={() => setShowTemplateManager(false)}
+            language={language}
+          />
         </Dialog>
 
         <Snackbar

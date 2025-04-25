@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { getSelectedLanguage } from "../App";
+import text from "../text.json";
 
 // Import your background images
 import defaultBackground from '../assets/image3.png';
