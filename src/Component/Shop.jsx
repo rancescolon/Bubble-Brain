@@ -1191,10 +1191,14 @@ const Shop = () => {
               const rarity = rarityMap[skin.rarityId];
               const isMythic = skin.rarityId === 'mythic';
               return (
-                <Grid item xs={12} sm={6} md={4} key={skin.id}>
+                <Grid item xs={12} sm={6} md={4} key={skin.id} sx={{ display: 'flex' }}>
                   <motion.div
                     className="skin-item"
                     style={{ 
+                      display: 'flex',          
+                      flexDirection: 'column', 
+                      height: '100%',          
+                      width: '100%',           
                       animationDelay: `${index * 0.1}s`,
                       opacity: 0,
                       transform: 'translateY(20px)',
@@ -1263,6 +1267,55 @@ const Shop = () => {
                             {skin.price}
                           </Typography>
                         </Box>
+
+                        {/* Action Buttons */}
+                        <Box sx={{ mt: 2, textAlign: 'center' }}>
+                          {isEquipped ? (
+                            <Box
+                              component="img"
+                              src={langKey === 'es' ? spanishEquippedButtonImage : finalEquippedButtonImage}
+                              alt={shopText.equippedAlt}
+                              sx={{ width: 'auto', height: '70px', display: 'block', mx: 'auto' }}
+                            />
+                          ) : isOwned ? (
+                            <Box
+                              component="img"
+                              src={langKey === 'es' ? spanishEquipButtonImage : updatedEquipButtonImage}
+                              alt={shopText.equipAlt}
+                              onClick={() => handleEquip(skin.id)}
+                              sx={{
+                                width: 'auto',
+                                height: '70px',
+                                cursor: 'pointer',
+                                display: 'block',
+                                mx: 'auto',
+                                transition: 'transform 0.1s ease',
+                                '&:hover': { transform: 'scale(1.05)' }
+                              }}
+                            />
+                          ) : ( // Not owned
+                            <Box
+                              component="img"
+                              src={langKey === 'es' ? spanishBuyButtonImage : actualBuyButtonImage}
+                              alt={shopText.buyAlt}
+                              onClick={() => handleBuy(skin)}
+                              sx={{
+                                width: 'auto',
+                                height: langKey === 'es' ? '70px' : '30px', 
+                                cursor: canAfford ? 'pointer' : 'not-allowed',
+                                display: 'block',
+                                mx: 'auto',
+                                filter: canAfford ? 'none' : 'grayscale(80%)',
+                                transition: 'transform 0.1s ease',
+                                '&:hover': {
+                                  transform: canAfford ? 'scale(1.05)' : 'none'
+                                },
+                              }}
+                            />
+                          )}
+                        </Box>
+                        {/* End Action Buttons */}
+
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -1335,7 +1388,7 @@ const Shop = () => {
                               alt={shopText.equippedAlt} 
                               sx={{
                                 width: 'auto',
-                                height: '100px',
+                                height: '70px',
                                 display: 'block',
                                 mx: 'auto'
                               }}
