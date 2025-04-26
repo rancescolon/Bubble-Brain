@@ -26,45 +26,40 @@ import {
 import { BookOpen, CheckCircle2, Lock, Unlock, Users } from "lucide-react"
 import { BackgroundContext } from "../App"
 import TemplateManager from "./TemplateManager"
+import text from "../text.json"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
-// Style for the multiselect dropdown
-const ITEM_HEIGHT = 48
-const ITEM_PADDING_TOP = 8
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-}
-
 const Upload = () => {
-  const { currentBackground } = useContext(BackgroundContext)
+  const { currentBackground, language } = useContext(BackgroundContext)
   const navigate = useNavigate()
+  const langKey = language === "English" ? "en" : "es"
+  const uploadText = text[langKey].upload
+  
+  const school_categories = text[langKey].school_categories
+
+  const categories = Object.keys(text[langKey].categories || {}).map(category => {
+    const translatedCategory = text[langKey].categories[category]
+    return {
+      original: category,
+      translated: translatedCategory,
+      tags: school_categories[category] || []
+    }
+  })
+
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
   const [selectedCommunity, setSelectedCommunity] = useState("")
   const [communities, setCommunities] = useState([])
   const [showTemplateManager, setShowTemplateManager] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
-  const [templateType, setTemplateType] = useState("")
-  const [templateContent, setTemplateContent] = useState("")
-  const [templateName, setTemplateName] = useState("")
-
   const [membersOnly, setMembersOnly] = useState(false)
   const [selectedMembers, setSelectedMembers] = useState([])
   const [accessType, setAccessType] = useState("everyone") // "everyone", "allMembers", "specificMembers"
   const [communityMembers, setCommunityMembers] = useState([])
-
-  const [currentStep, setCurrentStep] = useState(1) // 1: Name, 2: Template, 3: Content, 4: Tags
   const [selectedCategories, setSelectedCategories] = useState([])
   const [selectedTags, setSelectedTags] = useState([])
-  const isMobile = window.innerWidth <= 768
 
   // Add a new state for custom popups
   const [customPopup, setCustomPopup] = useState({
@@ -74,324 +69,6 @@ const Upload = () => {
     postId: null,
     communityId: null,
   })
-
-  // School categories for tag selection
-  const school_categories = {
-    Math: [
-      "Algebra",
-      "Geometry",
-      "Calculus",
-      "Trigonometry",
-      "Statistics",
-      "Probability",
-      "Functions",
-      "Matrices",
-      "Equations",
-      "Graphs",
-    ],
-    Science: [
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "Earth Science",
-      "Astronomy",
-      "Genetics",
-      "Ecology",
-      "Laboratory",
-      "Periodic Table",
-      "Experiments",
-    ],
-    Literature: [
-      "Novels",
-      "Poetry",
-      "Shakespeare",
-      "Analysis",
-      "Short Stories",
-      "Fiction",
-      "Non-fiction",
-      "Literary Devices",
-      "Themes",
-      "Book Reviews",
-    ],
-    History: [
-      "Ancient Civilizations",
-      "World Wars",
-      "U.S. History",
-      "Revolutions",
-      "Geography",
-      "Historical Figures",
-      "Wars",
-      "Presidents",
-      "Political Movements",
-      "Artifacts",
-    ],
-    Geography: [
-      "Maps",
-      "Countries",
-      "Capitals",
-      "Climate",
-      "Landforms",
-      "Physical Geography",
-      "Urbanization",
-      "Migration",
-      "Natural Resources",
-      "Time Zones",
-    ],
-    "Foreign Languages": [
-      "Spanish",
-      "French",
-      "German",
-      "Italian",
-      "Chinese",
-      "Japanese",
-      "Vocabulary",
-      "Grammar",
-      "Pronunciation",
-      "Language Exchange",
-    ],
-    Art: [
-      "Painting",
-      "Sculpture",
-      "Drawing",
-      "Digital Art",
-      "Art History",
-      "Canvas",
-      "Portraits",
-      "Abstract",
-      "Artists",
-      "Creativity",
-    ],
-    Music: [
-      "Instruments",
-      "Composers",
-      "Genres",
-      "Music Theory",
-      "Choir",
-      "Band",
-      "Symphony",
-      "Singing",
-      "Sheet Music",
-      "Rhythm",
-    ],
-    "Physical Education": [
-      "Sports",
-      "Fitness",
-      "Exercises",
-      "Health",
-      "Endurance",
-      "Teamwork",
-      "Running",
-      "Strength Training",
-      "Flexibility",
-      "Physical Health",
-    ],
-    Technology: [
-      "Coding",
-      "Software",
-      "Hardware",
-      "Programming",
-      "Artificial Intelligence",
-      "Web Development",
-      "Robotics",
-      "Cybersecurity",
-      "Databases",
-      "Machine Learning",
-    ],
-    "Business Studies": [
-      "Economics",
-      "Finance",
-      "Marketing",
-      "Entrepreneurship",
-      "Accounting",
-      "Management",
-      "Business Plans",
-      "Investment",
-      "Trade",
-      "Corporations",
-    ],
-    Philosophy: [
-      "Ethics",
-      "Logic",
-      "Metaphysics",
-      "Epistemology",
-      "Plato",
-      "Aristotle",
-      "Morality",
-      "Knowledge",
-      "Free Will",
-      "Political Philosophy",
-    ],
-    Psychology: [
-      "Behavior",
-      "Cognition",
-      "Mental Health",
-      "Emotions",
-      "Motivation",
-      "Perception",
-      "Social Psychology",
-      "Developmental Psychology",
-      "Therapy",
-      "Neuroscience",
-    ],
-    Sociology: [
-      "Society",
-      "Culture",
-      "Social Change",
-      "Inequality",
-      "Groups",
-      "Socialization",
-      "Deviance",
-      "Families",
-      "Education Systems",
-      "Race & Ethnicity",
-    ],
-    Economics: [
-      "Supply and Demand",
-      "Inflation",
-      "GDP",
-      "Trade",
-      "Markets",
-      "Microeconomics",
-      "Macroeconomics",
-      "Economic Systems",
-      "Resources",
-      "Taxes",
-    ],
-    "Health Education": [
-      "Nutrition",
-      "Mental Health",
-      "Wellness",
-      "Exercise",
-      "Hygiene",
-      "Diseases",
-      "Prevention",
-      "Vaccines",
-      "Sexual Health",
-      "First Aid",
-    ],
-    "Home Economics": [
-      "Cooking",
-      "Sewing",
-      "Budgeting",
-      "Interior Design",
-      "Childcare",
-      "Household Management",
-      "Nutrition",
-      "Textiles",
-      "Family Planning",
-      "Sustainability",
-    ],
-    "Public Speaking": [
-      "Presentations",
-      "Rhetoric",
-      "Speech Writing",
-      "Communication Skills",
-      "Confidence",
-      "Debates",
-      "Persuasion",
-      "Audience",
-      "Body Language",
-      "Speech Delivery",
-    ],
-    "Technology & Engineering": [
-      "Robotics",
-      "Engineering Design",
-      "CAD (Computer-Aided Design)",
-      "Prototyping",
-      "Electronics",
-      "Renewable Energy",
-      "Structural Engineering",
-      "Computer Engineering",
-      "3D Printing",
-      "Programming",
-    ],
-    Debate: [
-      "Argumentation",
-      "Persuasion",
-      "Logical Fallacies",
-      "Evidence",
-      "Counterarguments",
-      "Rhetorical Strategies",
-      "Public Speaking",
-      "Research",
-      "Debating Styles",
-      "Cross-examination",
-    ],
-    "Environmental Science": [
-      "Ecosystems",
-      "Conservation",
-      "Climate Change",
-      "Pollution",
-      "Sustainability",
-      "Renewable Energy",
-      "Biodiversity",
-      "Recycling",
-      "Environmental Policy",
-      "Environmental Impact",
-    ],
-    Theatre: [
-      "Acting",
-      "Stage Design",
-      "Directing",
-      "Playwriting",
-      "Auditions",
-      "Performances",
-      "Costumes",
-      "Set Construction",
-      "Lighting",
-      "Rehearsals",
-    ],
-    Law: [
-      "Legal Studies",
-      "Constitutional Law",
-      "Criminal Law",
-      "Civil Law",
-      "Contracts",
-      "Courts",
-      "Lawyers",
-      "Law Enforcement",
-      "Legal Systems",
-      "Human Rights",
-    ],
-    Education: [
-      "Pedagogy",
-      "Classroom Management",
-      "Learning Styles",
-      "Curriculum Development",
-      "Assessment",
-      "Special Education",
-      "Teaching Strategies",
-      "Technology in Education",
-      "Teacher Training",
-      "Online Learning",
-    ],
-    "Career Development": [
-      "Job Search",
-      "Internships",
-      "Networking",
-      "Resumes",
-      "Interviews",
-      "Professional Skills",
-      "Career Pathways",
-      "Entrepreneurship",
-      "Certifications",
-      "Personal Branding",
-    ],
-  }
-
-  // Add this function to get the base URL
-  const getBaseUrl = () => {
-    // Check if we're in production by looking for the specific domain
-    const isProduction = window.location.hostname.includes("webdev.cse.buffalo.edu")
-
-    if (isProduction) {
-      // In production, include the full path
-      return `${window.location.origin}/hci/teams/droptable`
-    } else {
-      // In development, just use the origin
-      return window.location.origin
-    }
-  }
 
   // Fetch communities when component mounts
   useEffect(() => {
@@ -509,18 +186,8 @@ const Upload = () => {
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template)
-    setTemplateType(template.type)
-    setTemplateContent(template.content)
-    setTemplateName(template.name)
-
-    // Extract categories and tags from the template if they exist
-    if (template.categories && Array.isArray(template.categories)) {
-      setSelectedCategories(template.categories)
-    }
-
-    if (template.tags && Array.isArray(template.tags)) {
-      setSelectedTags(template.tags)
-    }
+    setSelectedCategories(template.categories || [])
+    setSelectedTags(template.tags || [])
   }
 
   const createPost = async () => {
@@ -528,17 +195,17 @@ const Upload = () => {
     const userId = sessionStorage.getItem("user")
 
     if (!userId) {
-      throw new Error("User not found. Please log in again.")
+      throw new Error(uploadText.errorUserNotFound)
     }
 
     // Ensure we have valid content
     if (!selectedTemplate || !selectedTemplate.content) {
-      throw new Error("Invalid template selected")
+      throw new Error(uploadText.errorInvalidTemplate)
     }
 
     // Ensure we have a valid community ID
     if (!selectedCommunity) {
-      throw new Error("Please select a community")
+      throw new Error(uploadText.errorSelectCommunity)
     }
 
     // Keep the original string value for attributes
@@ -643,20 +310,20 @@ const Upload = () => {
       setError(null)
 
       if (!selectedCommunity) {
-        throw new Error("Please select a community")
+        throw new Error(uploadText.errorSelectCommunity)
       }
 
       if (!selectedTemplate) {
-        throw new Error("Please select a template")
+        throw new Error(uploadText.errorInvalidTemplate)
       }
 
       if (!studySetName.trim()) {
-        throw new Error("Please enter a name for your study set")
+        throw new Error(uploadText.errorEmptyName)
       }
 
       // Check if specific members option is selected but no members chosen
       if (accessType === "specificMembers" && selectedMembers.length === 0) {
-        throw new Error("Please select at least one member who can access this study set")
+        throw new Error(uploadText.errorSelectMembers)
       }
 
       // Create a post with the template content
@@ -664,7 +331,6 @@ const Upload = () => {
       const result = await createPost()
       console.log("Study set created successfully:", result)
 
-      setSuccess(true)
       // Reset form
       setStudySetName("")
       setSelectedCommunity("")
@@ -674,14 +340,12 @@ const Upload = () => {
       setAccessType("everyone")
       setSelectedCategories([])
       setSelectedTags([])
-      setCurrentStep(1)
 
-      // Replace the setTimeout block in handleUpload with this updated code
+      // Show success popup with a button to view the post
       setTimeout(() => {
-        // Show success popup with a button to view the post
         setCustomPopup({
           show: true,
-          message: "Study set created successfully!",
+          message: uploadText.successStudySetCreated,
           type: "success",
           postId: result.id,
           communityId: result.attributes?.communityId || selectedCommunity,
@@ -689,12 +353,12 @@ const Upload = () => {
       }, 500)
     } catch (err) {
       console.error("Error in handleUpload:", err)
-      setError(err.message || "Failed to create study set. Please try again.")
+      setError(err.message || uploadText.errorFailedCreateStudySet)
 
       // Replace the error alert in the catch block with custom popup
       setCustomPopup({
         show: true,
-        message: `Error: ${err.message || "Failed to create study set. Please try again."}`,
+        message: `Error: ${err.message || uploadText.errorFailedCreateStudySet}`,
         type: "error",
       })
     } finally {
@@ -727,18 +391,6 @@ const Upload = () => {
     } else {
       setError("You can select up to 5 tags")
       setTimeout(() => setError(null), 3000)
-    }
-  }
-
-  const handleNextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1)
-    }
-  }
-
-  const handleBackStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
     }
   }
 
@@ -786,7 +438,7 @@ const Upload = () => {
                   fontSize: "52px",
                 }}
             >
-              Create Your Study Set
+              {uploadText.title}
             </Typography>
             <Typography
                 variant="h5"
@@ -799,13 +451,13 @@ const Upload = () => {
                   fontSize: "26px",
                 }}
             >
-              Choose a template and create your study set
+              {uploadText.subtitle}
             </Typography>
 
             <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
               <TextField
                   fullWidth
-                  label="Study Set Name"
+                  label={uploadText.labelStudySetName}
                   variant="outlined"
                   value={studySetName}
                   onChange={(e) => setStudySetName(e.target.value)}
@@ -840,7 +492,7 @@ const Upload = () => {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                   <BookOpen size={24} />
-                  <Typography>Select Template</Typography>
+                  <Typography>{uploadText.buttonSelectTemplate}</Typography>
                 </Box>
               </Button>
 
@@ -867,16 +519,16 @@ const Upload = () => {
                           fontSize: "16px",
                         }}
                     >
-                      Current template selected: {selectedTemplate.name}
+                      {uploadText.currentTemplateSelected.replace("{{templateName}}", selectedTemplate.name)}
                     </Typography>
                   </Box>
               )}
 
               <FormControl fullWidth sx={{ maxWidth: "600px" }}>
-                <InputLabel>Select Community</InputLabel>
+                <InputLabel>{uploadText.labelSelectCommunity}</InputLabel>
                 <Select
                     value={selectedCommunity}
-                    label="Select Community"
+                    label={uploadText.labelSelectCommunity}
                     onChange={(e) => setSelectedCommunity(e.target.value)}
                     disabled={uploading}
                 >
@@ -911,8 +563,7 @@ const Upload = () => {
                           fontSize: "16px",
                         }}
                     >
-                      Study set will be uploaded to:{" "}
-                      {communities.find((c) => c.id === selectedCommunity)?.name || "selected community"}
+                      {uploadText.studySetUploadedTo.replace("{{communityName}}", communities.find((c) => c.id === selectedCommunity)?.name || "selected community")}
                     </Typography>
                   </Box>
               )}
@@ -928,12 +579,12 @@ const Upload = () => {
                     color: "#1D1D20",
                   }}
               >
-                Access Control
+                {uploadText.accessControlTitle}
               </Typography>
 
               <FormControl component="fieldset" sx={{ maxWidth: "600px", width: "100%" }}>
                 <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                  Who can view this study set?
+                  {uploadText.questionWhoCanView}
                 </Typography>
                 <Grid container direction="column" spacing={1}>
                   <Grid item>
@@ -954,7 +605,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Unlock size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Everyone - Study set visible to all users
+                              {uploadText.optionEveryone}
                             </Typography>
                           </Box>
                         }
@@ -984,7 +635,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Lock size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Community Members Only - Only visible to anyone who joined the community
+                              {uploadText.optionAllMembers}
                             </Typography>
                           </Box>
                         }
@@ -1013,7 +664,7 @@ const Upload = () => {
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                             <Users size={16} />
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              Specific Members - Choose exactly who can see this study set
+                              {uploadText.optionSpecificMembers}
                             </Typography>
                           </Box>
                         }
@@ -1027,11 +678,10 @@ const Upload = () => {
                 </Grid>
               </FormControl>
 
-              {/* Show member selection when specific members option is chosen */}
               {accessType === "specificMembers" && selectedCommunity && (
                   <FormControl fullWidth sx={{ maxWidth: "600px", mt: 2 }}>
                     <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                      Select Members
+                      {uploadText.labelSelectMembers}
                     </InputLabel>
                     <Select
                         labelId="member-selection-label"
@@ -1042,7 +692,7 @@ const Upload = () => {
                           console.log("Selected members:", e.target.value)
                           setSelectedMembers(e.target.value)
                         }}
-                        input={<OutlinedInput label="Select Members" />}
+                        input={<OutlinedInput label={uploadText.labelSelectMembers} />}
                         renderValue={(selected) => (
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                               {selected.map((value) => {
@@ -1096,7 +746,7 @@ const Upload = () => {
                       ) : (
                           <MenuItem disabled>
                             <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}>
-                              No members found in this community
+                              {uploadText.noMembersFound}
                             </Typography>
                           </MenuItem>
                       )}
@@ -1105,12 +755,11 @@ const Upload = () => {
                         variant="caption"
                         sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", color: "#1D1D20", display: "block" }}
                     >
-                      Only selected members will be able to view this study set
+                      {uploadText.infoOnlySelectedMembers}
                     </Typography>
                   </FormControl>
               )}
 
-              {/* Categories and Tags Section */}
               <Typography
                   variant="h6"
                   sx={{
@@ -1122,26 +771,26 @@ const Upload = () => {
                     color: "#1D1D20",
                   }}
               >
-                Categories & Tags
+                {uploadText.categoriesTagsTitle}
               </Typography>
 
               <Box sx={{ maxWidth: "600px", width: "100%" }}>
                 <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                  Select Categories (up to 3)
+                  {uploadText.instructionSelectCategories}
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-                  {Object.keys(school_categories).map((category) => (
+                  {categories.map(({ original, translated }) => (
                       <Chip
-                          key={category}
-                          label={category}
-                          onClick={() => handleCategorySelect(category)}
-                          color={selectedCategories.includes(category) ? "primary" : "default"}
+                          key={original}
+                          label={translated}
+                          onClick={() => handleCategorySelect(original)}
+                          color={selectedCategories.includes(original) ? "primary" : "default"}
                           sx={{
                             fontFamily: "SourGummy, sans-serif",
-                            bgcolor: selectedCategories.includes(category) ? "#1D6EF1" : "#F4FDFF",
-                            color: selectedCategories.includes(category) ? "white" : "#1D1D20",
+                            bgcolor: selectedCategories.includes(original) ? "#1D6EF1" : "#F4FDFF",
+                            color: selectedCategories.includes(original) ? "white" : "#1D1D20",
                             "&:hover": {
-                              bgcolor: selectedCategories.includes(category) ? "#1557B0" : "#E9ECEF",
+                              bgcolor: selectedCategories.includes(original) ? "#1557B0" : "#E9ECEF",
                             },
                           }}
                       />
@@ -1151,13 +800,13 @@ const Upload = () => {
                     variant="caption"
                     sx={{ display: "block", mb: 2, fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}
                 >
-                  Selected: {selectedCategories.length}/3
+                  {uploadText.selectedCategoriesCount.replace("{{count}}", selectedCategories.length)}
                 </Typography>
 
                 {selectedCategories.length > 0 && (
                     <>
                       <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: "#1D1D20" }}>
-                        Select Tags (up to 5)
+                        {uploadText.instructionSelectTags}
                       </Typography>
                       {selectedCategories.map((category) => (
                           <Box key={category} sx={{ mb: 2 }}>
@@ -1165,10 +814,13 @@ const Upload = () => {
                                 variant="subtitle2"
                                 sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, color: "#1D1D20" }}
                             >
-                              {category} Tags:
+                              {uploadText.categoryTagLabel.replace(
+                                "{{category}}", 
+                                text[langKey].categories[category] || category
+                              )}
                             </Typography>
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                              {school_categories[category].map((tag) => (
+                              {(school_categories[category] || []).map((tag) => (
                                   <Chip
                                       key={tag}
                                       label={tag}
@@ -1191,7 +843,7 @@ const Upload = () => {
                           variant="caption"
                           sx={{ display: "block", mb: 2, fontFamily: "SourGummy, sans-serif", color: "#1D1D20" }}
                       >
-                        Selected: {selectedTags.length}/5
+                        {uploadText.selectedTagsCount.replace("{{count}}", selectedTags.length)}
                       </Typography>
                     </>
                 )}
@@ -1222,8 +874,10 @@ const Upload = () => {
                   }}
               >
                 {uploading
-                    ? "Posting..."
-                    : `Post "${studySetName}" to ${communities.find((c) => c.id === selectedCommunity)?.name || "community"}`}
+                    ? uploadText.posting
+                    : uploadText.buttonPost
+                        .replace("{{studySetName}}", studySetName)
+                        .replace("{{communityName}}", communities.find((c) => c.id === selectedCommunity)?.name || "community")}
               </Button>
             </Box>
           </Box>
@@ -1271,7 +925,6 @@ const Upload = () => {
               </Box>
 
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                {/* Add "See post in community" button for success popups */}
                 {customPopup.type === "success" && customPopup.communityId && (
                     <Button
                         onClick={() => {
@@ -1291,7 +944,7 @@ const Upload = () => {
                           },
                         }}
                     >
-                      See post in community
+                      {uploadText.buttonSeePost}
                     </Button>
                 )}
 
@@ -1316,7 +969,11 @@ const Upload = () => {
         )}
 
         <Dialog open={showTemplateManager} onClose={() => setShowTemplateManager(false)} maxWidth="lg" fullWidth>
-          <TemplateManager onSelectTemplate={handleTemplateSelect} onClose={() => setShowTemplateManager(false)} />
+          <TemplateManager 
+            onSelectTemplate={handleTemplateSelect} 
+            onClose={() => setShowTemplateManager(false)}
+            language={language}
+          />
         </Dialog>
 
         <Snackbar

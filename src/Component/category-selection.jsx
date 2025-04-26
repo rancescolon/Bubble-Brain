@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import {useState, useEffect, useRef, useContext} from "react"
 import { useNavigate } from "react-router-dom"
 import {
     Box,
@@ -17,35 +17,11 @@ import {
 import { Check } from "lucide-react"
 import background from "../assets/image3.png"
 import { useShop } from "../Context/ShopContext"
+import {BackgroundContext} from "../App";
+import text from "../text.json";
 
 // Using the same categories from the tag selector
-const CATEGORIES = [
-    "Math",
-    "Science",
-    "Literature",
-    "History",
-    "Geography",
-    "Foreign Languages",
-    "Art",
-    "Music",
-    "Physical Education",
-    "Technology",
-    "Business Studies",
-    "Philosophy",
-    "Psychology",
-    "Sociology",
-    "Economics",
-    "Health Education",
-    "Home Economics",
-    "Public Speaking",
-    "Technology & Engineering",
-    "Debate",
-    "Environmental Science",
-    "Theatre",
-    "Law",
-    "Education",
-    "Career Development",
-]
+
 
 const CategorySelector = () => {
     const [selectedCategories, setSelectedCategories] = useState([])
@@ -56,9 +32,45 @@ const CategorySelector = () => {
     const navigate = useNavigate()
     const maxCategories = 5
 
+    const { currentBackground, language } = useContext(BackgroundContext)
+    const langKey = language === "English" ? "en" : "es"
+
+    const catViewText = text[langKey].categorySelector
+    const cat2ViewText = text[langKey].categories
+
+
     // Get shop data refresh function
     const { refreshUserData, userId } = useShop()
     const hasRefreshedRef = useRef(false)
+
+
+    const CATEGORIES = [
+        cat2ViewText["Math"],
+        cat2ViewText["Science"],
+        cat2ViewText["Literature"],
+        cat2ViewText["History"],
+        cat2ViewText["Geography"],
+        cat2ViewText["Foreign Languages"],
+        cat2ViewText["Art"],
+        cat2ViewText["Music"],
+        cat2ViewText["Physical Education"],
+        cat2ViewText["Technology"],
+        cat2ViewText["Business Studies"],
+        cat2ViewText["Philosophy"],
+        cat2ViewText["Psychology"],
+        cat2ViewText["Sociology"],
+        cat2ViewText["Economics"],
+        cat2ViewText["Health Education"],
+        cat2ViewText["Home Economics"],
+        cat2ViewText["Public Speaking"],
+        cat2ViewText["Technology & Engineering"],
+        cat2ViewText["Debate"],
+        cat2ViewText["Environmental Science"],
+        cat2ViewText["Theatre"],
+        cat2ViewText["Law"],
+        cat2ViewText["Education"],
+        cat2ViewText["Career Development"],
+    ]
 
     // Add effect to refresh skin data
     useEffect(() => {
@@ -340,7 +352,7 @@ const CategorySelector = () => {
                             fontSize: "42px",
                         }}
                     >
-                        Choose Your Interests
+                        {catViewText.title}
                     </Typography>
                     <Typography
                         variant="h5"
@@ -354,7 +366,7 @@ const CategorySelector = () => {
                             mb: 4,
                         }}
                     >
-                        Select up to {maxCategories} categories that interest you
+                        {catViewText.subtitle1}   {maxCategories}  {catViewText.subtitle2}
                     </Typography>
 
                     <Typography
@@ -369,7 +381,7 @@ const CategorySelector = () => {
                             mb: 4,
                         }}
                     >
-                        This helps us personalize your experience and show you relevant content
+                        {catViewText.description}
                     </Typography>
 
                     <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -441,7 +453,7 @@ const CategorySelector = () => {
                                 },
                             }}
                         >
-                            Skip for Now
+                            {catViewText.skipButton}
                         </Button>
                         <Button
                             onClick={handleSaveCategories}
@@ -459,7 +471,7 @@ const CategorySelector = () => {
                                 py: 1,
                             }}
                         >
-                            {isSaving ? "Saving..." : "Save Preferences"}
+                            {isSaving ? catViewText.saving : catViewText.saveButton}
                         </Button>
                     </Box>
 
@@ -473,7 +485,7 @@ const CategorySelector = () => {
                                 fontSize: "14px",
                             }}
                         >
-                            Selected: {selectedCategories.length}/{maxCategories}
+                            {catViewText.selectedCount} {selectedCategories.length}/{maxCategories}
                         </Typography>
                     </Box>
                 </Box>

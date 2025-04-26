@@ -1,4 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { getSelectedLanguage } from "../App";
+import text from "../text.json";
 
 // Import your background images
 import defaultBackground from '../assets/image3.png';
@@ -6,15 +8,6 @@ import background1 from '../assets/gang.png';
 import background2 from '../assets/voyage.png';
 import background3 from '../assets/war.png';
 import background4 from '../assets/building.png';
-
-// Define background options
-export const backgroundOptions = [
-  { id: 'default', image: defaultBackground, name: 'Default' },
-  { id: 'bg1', image: background1, name: 'Life of Crime' },
-  { id: 'bg2', image: background2, name: 'Voyage' },
-  { id: 'bg3', image: background3, name: 'War' },
-  { id: 'bg4', image: background4, name: 'Construction' },
-];
 
 // Create the context
 const BackgroundContext = createContext();
@@ -27,6 +20,19 @@ const BackgroundContext = createContext();
  * @returns {React.Component}
  */
 export const BackgroundProvider = ({ children }) => {
+  const language = getSelectedLanguage();
+  const langKey = language === "English" ? "en" : "es";
+  const backgroundText = text[langKey].background;
+
+  // Define background options with translated names
+  const backgroundOptions = [
+    { id: 'default', image: defaultBackground, name: backgroundText.names.default },
+    { id: 'bg1', image: background1, name: backgroundText.names.lifeOfCrime },
+    { id: 'bg2', image: background2, name: backgroundText.names.voyage },
+    { id: 'bg3', image: background3, name: backgroundText.names.war },
+    { id: 'bg4', image: background4, name: backgroundText.names.construction },
+  ];
+
   // State for current background
   const [currentBackground, setCurrentBackground] = useState(() => {
     // Initialize from localStorage if available
@@ -42,7 +48,7 @@ export const BackgroundProvider = ({ children }) => {
     // Optional: Show notification or feedback (integrate with your notification system)
     if (window.showNotification) {
       window.showNotification({
-        message: `Background changed to ${backgroundOption.name}`,
+        message: backgroundText.notifications.backgroundChanged.replace('{{name}}', backgroundOption.name),
         severity: 'success',
       });
     }
@@ -54,6 +60,7 @@ export const BackgroundProvider = ({ children }) => {
     currentBackground,
     changeBackground,
     currentBackgroundId: currentBackground.id,
+    language,
   };
 
   return (

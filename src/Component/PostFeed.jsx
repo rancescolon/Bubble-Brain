@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   Box,
   Card,
@@ -20,10 +20,21 @@ import {
   DialogActions,
 } from '@mui/material';
 import { ThumbUp, Comment, Share, Favorite, FavoriteBorder, ChatBubbleOutline, Send, Delete } from '@mui/icons-material';
+import { BackgroundContext } from "../App"
+import text from "../translations.json"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
 
 const PostFeed = () => {
+  const { language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const feedText = text[langKey].feedToggle;
+  const alertsText = text[langKey].alerts;
+  const buttonsText = text[langKey].buttons;
+  const labelsText = text[langKey].labels;
+  const errorsText = text[langKey].errors;
+  const postText = text[langKey].post;
+
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -835,15 +846,29 @@ const PostFeed = () => {
         <Button
           variant={feedView === 'public' ? 'contained' : 'outlined'}
           onClick={() => setFeedView('public')}
-          sx={{ mr: 1 }}
+          sx={{ 
+            mr: 1,
+            bgcolor: feedView === 'public' ? '#1D6EF1' : '#F4FDFF',
+            color: feedView === 'public' ? 'white' : '#1D6EF1',
+            '&:hover': {
+              bgcolor: feedView === 'public' ? '#1557B0' : '#E3F2FF'
+            }
+          }}
         >
-          Public Feed
+          {feedText.public}
         </Button>
         <Button
           variant={feedView === 'private' ? 'contained' : 'outlined'}
           onClick={() => setFeedView('private')}
+          sx={{ 
+            bgcolor: feedView === 'private' ? '#1D6EF1' : '#F4FDFF',
+            color: feedView === 'private' ? 'white' : '#1D6EF1',
+            '&:hover': {
+              bgcolor: feedView === 'private' ? '#1557B0' : '#E3F2FF'
+            }
+          }}
         >
-          My Private Posts
+          {feedText.private}
         </Button>
       </Box>
       {posts.map((post) => {
@@ -981,8 +1006,8 @@ const PostFeed = () => {
                     }}
                   >
                     {likeCounts[post.id] === 1 
-                      ? "1 like" 
-                      : `${likeCounts[post.id]} likes`}
+                      ? labelsText.likes.one
+                      : labelsText.likes.other.replace('{{count}}', likeCounts[post.id])}
                   </Typography>
                 )}
                 
@@ -1073,8 +1098,8 @@ const PostFeed = () => {
                         }}
                       >
                         {expandedComments[post.id] 
-                          ? "Show less" 
-                          : `View all ${comments[post.id].length} comments`}
+                          ? buttonsText.showLess 
+                          : buttonsText.viewAllComments.replace('{{count}}', comments[post.id].length)}
                       </Typography>
                     )}
                   </Box>
@@ -1108,7 +1133,7 @@ const PostFeed = () => {
                 >
                   <TextField
                     id={`comment-input-${post.id}`}
-                    placeholder="Add a comment..."
+                    placeholder={labelsText.addComment}
                     variant="standard"
                     fullWidth
                     value={newComments[post.id] || ''}
@@ -1137,7 +1162,7 @@ const PostFeed = () => {
                       }
                     }}
                   >
-                    Post
+                    {buttonsText.post}
                   </Button>
                 </Box>
               </Box>

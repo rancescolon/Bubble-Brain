@@ -1,6 +1,9 @@
 "use client"
+import React, { useContext } from 'react';
 import { Link } from "react-router-dom"
 import {Home, MessageSquare, Upload, Users, Settings, User, Palette} from "lucide-react"
+import { getSelectedLanguage } from "../App";
+import text from "../text.json";
 
 // Import profile images
 import rancesPic from "../assets/rancesco.jpg"
@@ -34,34 +37,38 @@ function TeamMemberCard({ name, bio, imageSrc, profileLink }) {
 }
 
 export default function AboutUs() {
+  const language = getSelectedLanguage();
+  const langKey = language === "English" ? "en" : "es";
+  const aboutUsText = text[langKey].aboutUsPage;
+
   const teamMembers = [
     {
-      name: "Rances Colon",
-      bio: 'Hi, I\'m Rances a CS student graduating next spring, I like making game in Unreal Engine and made a game called "Bizarre Bender" last semester',
+      name: aboutUsText.teamMembers.rances.name,
+      bio: aboutUsText.teamMembers.rances.bio,
       imageSrc: rancesPic,
       profileLink: "/rances",
     },
     {
-      name: "Akib Mahdi",
-      bio: "Hi, im a senior CS major at UB looking for the nearest burger king to hopefully be employed as a cashier.",
+      name: aboutUsText.teamMembers.akib.name,
+      bio: aboutUsText.teamMembers.akib.bio,
       imageSrc: akibPic,
       profileLink: "/akibmahdi",
     },
     {
-      name: "Cayden La Bara",
-      bio: "Hi, I'm Cayden and I'm a senior that is about to graduate this spring with a Computer Science Degree, I hope to make a lot of money and the future with this degree, and I know how to play the acoustic guitar.",
+      name: aboutUsText.teamMembers.cayden.name,
+      bio: aboutUsText.teamMembers.cayden.bio,
       imageSrc: caydenPic,
       profileLink: "/caydenla",
     },
     {
-      name: "Mieszawski Jacob",
-      bio: "Hi, I'm Jacob and I'm a senior studying Computer Science. I aspire to be a full stack developer in the future, and my favorite dog breed are Bernese Mountain Dogs just incase you were curious ",
+      name: aboutUsText.teamMembers.jacob.name,
+      bio: aboutUsText.teamMembers.jacob.bio,
       imageSrc: jacobPic,
       profileLink: "/jacobmie",
     },
     {
-      name: "Biviji Tariq",
-      bio: "Hello, I am Tariq Biviji a CS student and I like caffeine.",
+      name: aboutUsText.teamMembers.tariq.name,
+      bio: aboutUsText.teamMembers.tariq.bio,
       imageSrc: bivijPic,
       profileLink: "/biviji",
     },
@@ -70,7 +77,7 @@ export default function AboutUs() {
   return (
     <div className="min-h-screen bg-black text-white ml-[90px] pb-20">
       <div className="p-4">
-        <h1 className="text-[#00aeef] text-xl mb-4">About Us</h1>
+        <h1 className="text-[#00aeef] text-xl mb-4">{aboutUsText.aboutUs}</h1>
 
           {/* Team Members */}
           <div className="space-y-4">
@@ -90,13 +97,13 @@ export default function AboutUs() {
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-[100px] right-0 bg-black border-t border-gray-800">
         <div className="flex justify-around p-4">
-          <NavLink to="/" icon={<Home className="w-6 h-6" />} label="Home" />
-          <NavLink to="/chat" icon={<MessageSquare className="w-6 h-6" />} label="Chat" />
-          <NavLink to="/upload" icon={<Upload className="w-6 h-6" />} label="Upload" />
-          <NavLink to="/community" icon={<Users className="w-6 h-6" />} label="Community" />
-          <NavLink to="/settings" icon={<Settings className="w-6 h-6" />} label="Settings" />
-          <NavLink to="/profile" icon={<User className="w-6 h-6" />} label="Profile" />
-          <NavLink to="/style-guide" icon={<Palette className="w-6 h-6"/>} label="Style Guide"/>
+          <NavLink to="/" icon={<Home className="w-6 h-6" />} label={aboutUsText.home} />
+          <NavLink to="/chat" icon={<MessageSquare className="w-6 h-6" />} label={aboutUsText.chat} />
+          <NavLink to="/upload" icon={<Upload className="w-6 h-6" />} label={aboutUsText.upload} />
+          <NavLink to="/community" icon={<Users className="w-6 h-6" />} label={aboutUsText.community} />
+          <NavLink to="/settings" icon={<Settings className="w-6 h-6" />} label={aboutUsText.settings} />
+          <NavLink to="/profile" icon={<User className="w-6 h-6" />} label={aboutUsText.profile} />
+          <NavLink to="/style-guide" icon={<Palette className="w-6 h-6"/>} label={aboutUsText.styleGuide}/>
 
         </div>
 

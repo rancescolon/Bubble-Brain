@@ -1,11 +1,16 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { socket } from "../App";
+import { socket, BackgroundContext } from "../App";
 import { Send, ArrowLeft, AlertCircle } from "lucide-react";
 import background from "../assets/image3.png";
+import text from "../translations.json";
 
 // This CommunityMessaging component handles group chat for community members
 const CommunityMessaging = () => {
+  const { language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const communityMessagingText = text[langKey].communityMessaging;
+
   const [userData, setUserData] = useState({});
   const [communityData, setCommunityData] = useState({});
   const [message, setMessage] = useState("");
@@ -527,7 +532,7 @@ const CommunityMessaging = () => {
         <div className="bg-white p-6 rounded-xl shadow-lg text-[#1D1D20]">
           <div className="flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1D6EF1] mb-4"></div>
-            <p>Loading community chat...</p>
+            <p>{communityMessagingText.loading}</p>
           </div>
         </div>
       </div>
@@ -548,7 +553,7 @@ const CommunityMessaging = () => {
           {/* Members Sidebar */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden w-72 hidden md:block">
             <div className="bg-[#1D6EF1] p-4">
-              <h3 className="text-xl font-bold text-white">Community Members</h3>
+              <h3 className="text-xl font-bold text-white">{communityMessagingText.sidebar.title}</h3>
             </div>
             <div className="p-4 overflow-y-auto max-h-[calc(80vh-60px)]">
               <div className="space-y-3">
@@ -563,9 +568,8 @@ const CommunityMessaging = () => {
                             alt={member.name.charAt(0).toUpperCase()}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={(e) => {
-                              e.target.onerror = null; // prevent infinite loops
-                              e.target.style.display = 'none'; // hide broken image
-                              // Find the parent div and replace img with initial
+                              e.target.onerror = null;
+                              e.target.style.display = 'none';
                               const avatarContainer = e.target.parentNode;
                               if (avatarContainer) {
                                 avatarContainer.innerHTML = `<span>${member.name.charAt(0).toUpperCase()}</span>`;
@@ -590,7 +594,7 @@ const CommunityMessaging = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-500">No members found</p>
+                  <p className="text-gray-500">{communityMessagingText.sidebar.noMembers}</p>
                 )}
               </div>
             </div>
@@ -609,10 +613,14 @@ const CommunityMessaging = () => {
                 </button>
                 <div>
                   <h2 className="text-xl font-bold">
-                    {communityData.name || "Community"} Chat
+                    {communityData.name 
+                      ? communityMessagingText.header.chatTitle.replace('{{communityName}}', communityData.name)
+                      : communityMessagingText.header.fallbackTitle}
                   </h2>
                   <p className="text-sm opacity-75">
-                    {isConnected ? "Connected" : "Disconnected"} • {members.length} members
+                    {isConnected 
+                      ? communityMessagingText.header.status.connected 
+                      : communityMessagingText.header.status.disconnected} • {communityMessagingText.header.membersCount.replace('{{count}}', members.length)}
                   </p>
                 </div>
               </div>
@@ -630,6 +638,13 @@ const CommunityMessaging = () => {
                 {messages.map((msg) => {
                   const isOwnMessage = msg.fromUserID === parseInt(userId);
                   const isSystemMessage = msg.fromUserID === "system";
+                  
+                  if (isSystemMessage) {
+                    const welcomeMessage = communityData.name 
+                      ? communityMessagingText.messages.welcomeWithName.replace('{{communityName}}', communityData.name)
+                      : communityMessagingText.messages.systemWelcome;
+                    msg.message = welcomeMessage;
+                  }
                   
                   return (
                     <div
@@ -674,7 +689,7 @@ const CommunityMessaging = () => {
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type a message to the community..."
+                  placeholder={communityMessagingText.input.placeholder}
                   className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] text-[#1D1D20]"
                   disabled={!isConnected || isSending}
                 />
@@ -698,7 +713,7 @@ const CommunityMessaging = () => {
         {detailedError && (
           <div className="mt-4 bg-white rounded-xl shadow-lg p-4">
             <details>
-              <summary className="text-red-500 cursor-pointer font-medium">Error details (for debugging)</summary>
+              <summary className="text-red-500 cursor-pointer font-medium">{communityMessagingText.details.errorSummary}</summary>
               <pre className="mt-2 p-3 bg-gray-100 rounded text-xs text-red-800 overflow-x-auto">
                 {detailedError}
               </pre>

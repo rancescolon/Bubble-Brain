@@ -1,13 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {useContext, useEffect, useState} from "react"
 import { useNavigate } from "react-router-dom"
 import DrBubbles from "../assets/Frame.png"
+import {BackgroundContext} from "../App";
+import text from "../text.json";
 
 const BubbleTrapAnimation = ({ onComplete }) => {
   const navigate = useNavigate()
   const [showButton, setShowButton] = useState(false)
   const [showBubble, setShowBubble] = useState(false)
+
+  const { language, setLanguage } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const trapText = text[langKey].bubbleTrap
+
 
   useEffect(() => {
     // Start bubble animation after a short delay
@@ -83,7 +90,7 @@ const BubbleTrapAnimation = ({ onComplete }) => {
               textShadow: "0 0 20px rgba(0,174,239,0.5)",
             }}
           >
-            Oh no! Dr. Bubbles is trapped!
+            {trapText.title}
           </h2>
           <p
             className={`text-blue-300 text-2xl mb-6 transition-all duration-500 delay-300 ${
@@ -93,7 +100,7 @@ const BubbleTrapAnimation = ({ onComplete }) => {
               fontFamily: "SourGummy, sans-serif",
             }}
           >
-            Complete challenges to help free him
+            {trapText.subtitle}
           </p>
 
           {showButton && (
@@ -106,7 +113,7 @@ const BubbleTrapAnimation = ({ onComplete }) => {
                 boxShadow: "0 0 30px rgba(239,123,108,0.5)",
               }}
             >
-              Start Your Journey
+              {trapText.button}
             </button>
           )}
         </div>

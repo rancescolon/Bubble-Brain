@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import {useState, useEffect, useRef, useContext} from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import {
   MessageSquare,
@@ -16,7 +16,7 @@ import {
   FileText,
   BookOpen,
 } from "lucide-react"
-import { socket } from "../App"
+import {BackgroundContext, socket} from "../App"
 import { useMediaQuery, useTheme } from "@mui/material"
 import {
   Box,
@@ -38,12 +38,20 @@ import {
   Chip,
 } from "@mui/material"
 import TagSelector from "./tag-selector"
+
+import text from "../text.json";
+
 import { motion } from "framer-motion"
+
 
 // API base URL
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
 
 export default function CommunityView() {
+  const { currentBackground, language } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const comViewText = text[langKey]
+
   const { id } = useParams()
   const navigate = useNavigate()
   const [community, setCommunity] = useState(null)
@@ -87,341 +95,347 @@ export default function CommunityView() {
   })
 
   // Add school categories for tag selection
+
   const school_categories = {
-    Math: [
-      "Algebra",
-      "Geometry",
-      "Calculus",
-      "Trigonometry",
-      "Statistics",
-      "Probability",
-      "Functions",
-      "Matrices",
-      "Equations",
-      "Graphs",
+    [comViewText.categories.Math]: [
+      comViewText.school_categories.Math[0],
+      comViewText.school_categories.Math[1],
+      comViewText.school_categories.Math[2],
+      comViewText.school_categories.Math[3],
+      comViewText.school_categories.Math[4],
+      comViewText.school_categories.Math[5],
+      comViewText.school_categories.Math[6],
+      comViewText.school_categories.Math[7],
+      comViewText.school_categories.Math[8],
+      comViewText.school_categories.Math[9],
     ],
-    Science: [
-      "Physics",
-      "Chemistry",
-      "Biology",
-      "Earth Science",
-      "Astronomy",
-      "Genetics",
-      "Ecology",
-      "Laboratory",
-      "Periodic Table",
-      "Experiments",
+    [comViewText.categories.Science]: [
+      comViewText.school_categories.Science[0],
+      comViewText.school_categories.Science[1],
+      comViewText.school_categories.Science[2],
+      comViewText.school_categories.Science[3],
+      comViewText.school_categories.Science[4],
+      comViewText.school_categories.Science[5],
+      comViewText.school_categories.Science[6],
+      comViewText.school_categories.Science[7],
+      comViewText.school_categories.Science[8],
+      comViewText.school_categories.Science[9],
     ],
-    Literature: [
-      "Novels",
-      "Poetry",
-      "Shakespeare",
-      "Analysis",
-      "Short Stories",
-      "Fiction",
-      "Non-fiction",
-      "Literary Devices",
-      "Themes",
-      "Book Reviews",
+    [comViewText.categories.Literature]: [
+      comViewText.school_categories.Literature[0],
+      comViewText.school_categories.Literature[1],
+      comViewText.school_categories.Literature[2],
+      comViewText.school_categories.Literature[3],
+      comViewText.school_categories.Literature[4],
+      comViewText.school_categories.Literature[5],
+      comViewText.school_categories.Literature[6],
+      comViewText.school_categories.Literature[7],
+      comViewText.school_categories.Literature[8],
+      comViewText.school_categories.Literature[9],
     ],
-    History: [
-      "Ancient Civilizations",
-      "World Wars",
-      "U.S. History",
-      "Revolutions",
-      "Geography",
-      "Historical Figures",
-      "Wars",
-      "Presidents",
-      "Political Movements",
-      "Artifacts",
+    [comViewText.categories.History]: [
+      comViewText.school_categories.History[0],
+      comViewText.school_categories.History[1],
+      comViewText.school_categories.History[2],
+      comViewText.school_categories.History[3],
+      comViewText.school_categories.History[4],
+      comViewText.school_categories.History[5],
+      comViewText.school_categories.History[6],
+      comViewText.school_categories.History[7],
+      comViewText.school_categories.History[8],
+      comViewText.school_categories.History[9],
     ],
-    Geography: [
-      "Maps",
-      "Countries",
-      "Capitals",
-      "Climate",
-      "Landforms",
-      "Physical Geography",
-      "Urbanization",
-      "Migration",
-      "Natural Resources",
-      "Time Zones",
+    [comViewText.categories.Geography]: [
+      comViewText.school_categories.Geography[0],
+      comViewText.school_categories.Geography[1],
+      comViewText.school_categories.Geography[2],
+      comViewText.school_categories.Geography[3],
+      comViewText.school_categories.Geography[4],
+      comViewText.school_categories.Geography[5],
+      comViewText.school_categories.Geography[6],
+      comViewText.school_categories.Geography[7],
+      comViewText.school_categories.Geography[8],
+      comViewText.school_categories.Geography[9],
     ],
-    "Foreign Languages": [
-      "Spanish",
-      "French",
-      "German",
-      "Italian",
-      "Chinese",
-      "Japanese",
-      "Vocabulary",
-      "Grammar",
-      "Pronunciation",
-      "Language Exchange",
+    [comViewText.categories["Foreign Languages"]]: [
+      comViewText.school_categories["Foreign Languages"][0],
+      comViewText.school_categories["Foreign Languages"][1],
+      comViewText.school_categories["Foreign Languages"][2],
+      comViewText.school_categories["Foreign Languages"][3],
+      comViewText.school_categories["Foreign Languages"][4],
+      comViewText.school_categories["Foreign Languages"][5],
+      comViewText.school_categories["Foreign Languages"][6],
+      comViewText.school_categories["Foreign Languages"][7],
+      comViewText.school_categories["Foreign Languages"][8],
+      comViewText.school_categories["Foreign Languages"][9],
     ],
-    Art: [
-      "Painting",
-      "Sculpture",
-      "Drawing",
-      "Digital Art",
-      "Art History",
-      "Canvas",
-      "Portraits",
-      "Abstract",
-      "Artists",
-      "Creativity",
+    [comViewText.categories.Art]: [
+      comViewText.school_categories.Art[0],
+      comViewText.school_categories.Art[1],
+      comViewText.school_categories.Art[2],
+      comViewText.school_categories.Art[3],
+      comViewText.school_categories.Art[4],
+      comViewText.school_categories.Art[5],
+      comViewText.school_categories.Art[6],
+      comViewText.school_categories.Art[7],
+      comViewText.school_categories.Art[8],
+      comViewText.school_categories.Art[9],
     ],
-    Music: [
-      "Instruments",
-      "Composers",
-      "Genres",
-      "Music Theory",
-      "Choir",
-      "Band",
-      "Symphony",
-      "Singing",
-      "Sheet Music",
-      "Rhythm",
+    [comViewText.categories.Music]: [
+      comViewText.school_categories.Music[0],
+      comViewText.school_categories.Music[1],
+      comViewText.school_categories.Music[2],
+      comViewText.school_categories.Music[3],
+      comViewText.school_categories.Music[4],
+      comViewText.school_categories.Music[5],
+      comViewText.school_categories.Music[6],
+      comViewText.school_categories.Music[7],
+      comViewText.school_categories.Music[8],
+      comViewText.school_categories.Music[9],
     ],
-    "Physical Education": [
-      "Sports",
-      "Fitness",
-      "Exercises",
-      "Health",
-      "Endurance",
-      "Teamwork",
-      "Running",
-      "Strength Training",
-      "Flexibility",
-      "Physical Health",
+    [comViewText.categories["Physical Education"]]: [
+      comViewText.school_categories["Physical Education"][0],
+      comViewText.school_categories["Physical Education"][1],
+      comViewText.school_categories["Physical Education"][2],
+      comViewText.school_categories["Physical Education"][3],
+      comViewText.school_categories["Physical Education"][4],
+      comViewText.school_categories["Physical Education"][5],
+      comViewText.school_categories["Physical Education"][6],
+      comViewText.school_categories["Physical Education"][7],
+      comViewText.school_categories["Physical Education"][8],
+      comViewText.school_categories["Physical Education"][9],
     ],
-    Technology: [
-      "Coding",
-      "Software",
-      "Hardware",
-      "Programming",
-      "Artificial Intelligence",
-      "Web Development",
-      "Robotics",
-      "Cybersecurity",
-      "Databases",
-      "Machine Learning",
+    [comViewText.categories.Technology]: [
+      comViewText.school_categories.Technology[0],
+      comViewText.school_categories.Technology[1],
+      comViewText.school_categories.Technology[2],
+      comViewText.school_categories.Technology[3],
+      comViewText.school_categories.Technology[4],
+      comViewText.school_categories.Technology[5],
+      comViewText.school_categories.Technology[6],
+      comViewText.school_categories.Technology[7],
+      comViewText.school_categories.Technology[8],
+      comViewText.school_categories.Technology[9],
     ],
-    "Business Studies": [
-      "Economics",
-      "Finance",
-      "Marketing",
-      "Entrepreneurship",
-      "Accounting",
-      "Management",
-      "Business Plans",
-      "Investment",
-      "Trade",
-      "Corporations",
+    [comViewText.categories["Business Studies"]]: [
+      comViewText.school_categories["Business Studies"][0],
+      comViewText.school_categories["Business Studies"][1],
+      comViewText.school_categories["Business Studies"][2],
+      comViewText.school_categories["Business Studies"][3],
+      comViewText.school_categories["Business Studies"][4],
+      comViewText.school_categories["Business Studies"][5],
+      comViewText.school_categories["Business Studies"][6],
+      comViewText.school_categories["Business Studies"][7],
+      comViewText.school_categories["Business Studies"][8],
+      comViewText.school_categories["Business Studies"][9],
     ],
-    Philosophy: [
-      "Ethics",
-      "Logic",
-      "Metaphysics",
-      "Epistemology",
-      "Plato",
-      "Aristotle",
-      "Morality",
-      "Knowledge",
-      "Free Will",
-      "Political Philosophy",
+    [comViewText.categories.Philosophy]: [
+      comViewText.school_categories.Philosophy[0],
+      comViewText.school_categories.Philosophy[1],
+      comViewText.school_categories.Philosophy[2],
+      comViewText.school_categories.Philosophy[3],
+      comViewText.school_categories.Philosophy[4],
+      comViewText.school_categories.Philosophy[5],
+      comViewText.school_categories.Philosophy[6],
+      comViewText.school_categories.Philosophy[7],
+      comViewText.school_categories.Philosophy[8],
+      comViewText.school_categories.Philosophy[9],
     ],
-    Psychology: [
-      "Behavior",
-      "Cognition",
-      "Mental Health",
-      "Emotions",
-      "Motivation",
-      "Perception",
-      "Social Psychology",
-      "Developmental Psychology",
-      "Therapy",
-      "Neuroscience",
+    [comViewText.categories.Psychology]: [
+      comViewText.school_categories.Psychology[0],
+      comViewText.school_categories.Psychology[1],
+      comViewText.school_categories.Psychology[2],
+      comViewText.school_categories.Psychology[3],
+      comViewText.school_categories.Psychology[4],
+      comViewText.school_categories.Psychology[5],
+      comViewText.school_categories.Psychology[6],
+      comViewText.school_categories.Psychology[7],
+      comViewText.school_categories.Psychology[8],
+      comViewText.school_categories.Psychology[9],
     ],
-    Sociology: [
-      "Society",
-      "Culture",
-      "Social Change",
-      "Inequality",
-      "Groups",
-      "Socialization",
-      "Deviance",
-      "Families",
-      "Education Systems",
-      "Race & Ethnicity",
+    [comViewText.categories.Sociology]: [
+      comViewText.school_categories.Sociology[0],
+      comViewText.school_categories.Sociology[1],
+      comViewText.school_categories.Sociology[2],
+      comViewText.school_categories.Sociology[3],
+      comViewText.school_categories.Sociology[4],
+      comViewText.school_categories.Sociology[5],
+      comViewText.school_categories.Sociology[6],
+      comViewText.school_categories.Sociology[7],
+      comViewText.school_categories.Sociology[8],
+      comViewText.school_categories.Sociology[9],
     ],
-    Economics: [
-      "Supply and Demand",
-      "Inflation",
-      "GDP",
-      "Trade",
-      "Markets",
-      "Microeconomics",
-      "Macroeconomics",
-      "Economic Systems",
-      "Resources",
-      "Taxes",
+    [comViewText.categories.Economics]: [
+      comViewText.school_categories.Economics[0],
+      comViewText.school_categories.Economics[1],
+      comViewText.school_categories.Economics[2],
+      comViewText.school_categories.Economics[3],
+      comViewText.school_categories.Economics[4],
+      comViewText.school_categories.Economics[5],
+      comViewText.school_categories.Economics[6],
+      comViewText.school_categories.Economics[7],
+      comViewText.school_categories.Economics[8],
+      comViewText.school_categories.Economics[9],
     ],
-    "Health Education": [
-      "Nutrition",
-      "Mental Health",
-      "Wellness",
-      "Exercise",
-      "Hygiene",
-      "Diseases",
-      "Prevention",
-      "Vaccines",
-      "Sexual Health",
-      "First Aid",
+    [comViewText.categories["Health Education"]]: [
+      comViewText.school_categories["Health Education"][0],
+      comViewText.school_categories["Health Education"][1],
+      comViewText.school_categories["Health Education"][2],
+      comViewText.school_categories["Health Education"][3],
+      comViewText.school_categories["Health Education"][4],
+      comViewText.school_categories["Health Education"][5],
+      comViewText.school_categories["Health Education"][6],
+      comViewText.school_categories["Health Education"][7],
+      comViewText.school_categories["Health Education"][8],
+      comViewText.school_categories["Health Education"][9],
     ],
-    "Home Economics": [
-      "Cooking",
-      "Sewing",
-      "Budgeting",
-      "Interior Design",
-      "Childcare",
-      "Household Management",
-      "Nutrition",
-      "Textiles",
-      "Family Planning",
-      "Sustainability",
+    [comViewText.categories["Home Economics"]]: [
+      comViewText.school_categories["Home Economics"][0],
+      comViewText.school_categories["Home Economics"][1],
+      comViewText.school_categories["Home Economics"][2],
+      comViewText.school_categories["Home Economics"][3],
+      comViewText.school_categories["Home Economics"][4],
+      comViewText.school_categories["Home Economics"][5],
+      comViewText.school_categories["Home Economics"][6],
+      comViewText.school_categories["Home Economics"][7],
+      comViewText.school_categories["Home Economics"][8],
+      comViewText.school_categories["Home Economics"][9],
     ],
-    "Public Speaking": [
-      "Presentations",
-      "Rhetoric",
-      "Speech Writing",
-      "Communication Skills",
-      "Confidence",
-      "Debates",
-      "Persuasion",
-      "Audience",
-      "Body Language",
-      "Speech Delivery",
+    [comViewText.categories["Public Speaking"]]: [
+      comViewText.school_categories["Public Speaking"][0],
+      comViewText.school_categories["Public Speaking"][1],
+      comViewText.school_categories["Public Speaking"][2],
+      comViewText.school_categories["Public Speaking"][3],
+      comViewText.school_categories["Public Speaking"][4],
+      comViewText.school_categories["Public Speaking"][5],
+      comViewText.school_categories["Public Speaking"][6],
+      comViewText.school_categories["Public Speaking"][7],
+      comViewText.school_categories["Public Speaking"][8],
+      comViewText.school_categories["Public Speaking"][9],
     ],
-    "Technology & Engineering": [
-      "Robotics",
-      "Engineering Design",
-      "CAD (Computer-Aided Design)",
-      "Prototyping",
-      "Electronics",
-      "Renewable Energy",
-      "Structural Engineering",
-      "Computer Engineering",
-      "3D Printing",
-      "Programming",
+    [comViewText.categories["Technology & Engineering"]]: [
+      comViewText.school_categories["Technology & Engineering"][0],
+      comViewText.school_categories["Technology & Engineering"][1],
+      comViewText.school_categories["Technology & Engineering"][2],
+      comViewText.school_categories["Technology & Engineering"][3],
+      comViewText.school_categories["Technology & Engineering"][4],
+      comViewText.school_categories["Technology & Engineering"][5],
+      comViewText.school_categories["Technology & Engineering"][6],
+      comViewText.school_categories["Technology & Engineering"][7],
+      comViewText.school_categories["Technology & Engineering"][8],
+      comViewText.school_categories["Technology & Engineering"][9],
     ],
-    Debate: [
-      "Argumentation",
-      "Persuasion",
-      "Logical Fallacies",
-      "Evidence",
-      "Counterarguments",
-      "Rhetorical Strategies",
-      "Public Speaking",
-      "Research",
-      "Debating Styles",
-      "Cross-examination",
+    [comViewText.categories.Debate]: [
+      comViewText.school_categories.Debate[0],
+      comViewText.school_categories.Debate[1],
+      comViewText.school_categories.Debate[2],
+      comViewText.school_categories.Debate[3],
+      comViewText.school_categories.Debate[4],
+      comViewText.school_categories.Debate[5],
+      comViewText.school_categories.Debate[6],
+      comViewText.school_categories.Debate[7],
+      comViewText.school_categories.Debate[8],
+      comViewText.school_categories.Debate[9],
     ],
-    "Environmental Science": [
-      "Ecosystems",
-      "Conservation",
-      "Climate Change",
-      "Pollution",
-      "Sustainability",
-      "Renewable Energy",
-      "Biodiversity",
-      "Recycling",
-      "Environmental Policy",
-      "Environmental Impact",
+    [comViewText.categories["Environmental Science"]]: [
+      comViewText.school_categories["Environmental Science"][0],
+      comViewText.school_categories["Environmental Science"][1],
+      comViewText.school_categories["Environmental Science"][2],
+      comViewText.school_categories["Environmental Science"][3],
+      comViewText.school_categories["Environmental Science"][4],
+      comViewText.school_categories["Environmental Science"][5],
+      comViewText.school_categories["Environmental Science"][6],
+      comViewText.school_categories["Environmental Science"][7],
+      comViewText.school_categories["Environmental Science"][8],
+      comViewText.school_categories["Environmental Science"][9],
     ],
-    Theatre: [
-      "Acting",
-      "Stage Design",
-      "Directing",
-      "Playwriting",
-      "Auditions",
-      "Performances",
-      "Costumes",
-      "Set Construction",
-      "Lighting",
-      "Rehearsals",
+    [comViewText.categories.Theatre]: [
+      comViewText.school_categories.Theatre[0],
+      comViewText.school_categories.Theatre[1],
+      comViewText.school_categories.Theatre[2],
+      comViewText.school_categories.Theatre[3],
+      comViewText.school_categories.Theatre[4],
+      comViewText.school_categories.Theatre[5],
+      comViewText.school_categories.Theatre[6],
+      comViewText.school_categories.Theatre[7],
+      comViewText.school_categories.Theatre[8],
+      comViewText.school_categories.Theatre[9],
     ],
-    Law: [
-      "Legal Studies",
-      "Constitutional Law",
-      "Criminal Law",
-      "Civil Law",
-      "Contracts",
-      "Courts",
-      "Lawyers",
-      "Law Enforcement",
-      "Legal Systems",
-      "Human Rights",
+    [comViewText.categories.Law]: [
+      comViewText.school_categories.Law[0],
+      comViewText.school_categories.Law[1],
+      comViewText.school_categories.Law[2],
+      comViewText.school_categories.Law[3],
+      comViewText.school_categories.Law[4],
+      comViewText.school_categories.Law[5],
+      comViewText.school_categories.Law[6],
+      comViewText.school_categories.Law[7],
+      comViewText.school_categories.Law[8],
+      comViewText.school_categories.Law[9],
     ],
-    Education: [
-      "Pedagogy",
-      "Classroom Management",
-      "Learning Styles",
-      "Curriculum Development",
-      "Assessment",
-      "Special Education",
-      "Teaching Strategies",
-      "Technology in Education",
-      "Teacher Training",
-      "Online Learning",
+    [comViewText.categories.Education]: [
+      comViewText.school_categories.Education[0],
+      comViewText.school_categories.Education[1],
+      comViewText.school_categories.Education[2],
+      comViewText.school_categories.Education[3],
+      comViewText.school_categories.Education[4],
+      comViewText.school_categories.Education[5],
+      comViewText.school_categories.Education[6],
+      comViewText.school_categories.Education[7],
+      comViewText.school_categories.Education[8],
+      comViewText.school_categories.Education[9],
     ],
-    "Career Development": [
-      "Job Search",
-      "Internships",
-      "Networking",
-      "Resumes",
-      "Interviews",
-      "Professional Skills",
-      "Career Pathways",
-      "Entrepreneurship",
-      "Certifications",
-      "Personal Branding",
+
+    [comViewText.categories["Career Development"]]: [
+      comViewText.school_categories["Career Development"][0],
+      comViewText.school_categories["Career Development"][1],
+      comViewText.school_categories["Career Development"][2],
+      comViewText.school_categories["Career Development"][3],
+      comViewText.school_categories["Career Development"][4],
+      comViewText.school_categories["Career Development"][5],
+      comViewText.school_categories["Career Development"][6],
+      comViewText.school_categories["Career Development"][7],
+      comViewText.school_categories["Career Development"][8],
+      comViewText.school_categories["Career Development"][9],
     ],
-  }
+  };
+
 
   // Theme and responsive breakpoints
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"))
 
+
+
   // Define template options
   const templateOptions = [
     {
       id: 1,
-      name: "Basic Flashcards",
+      name: [comViewText.communityView.templateOptions.flashcards],
       type: "flashcards",
       icon: BookOpen,
       content: [{ front: "", back: "" }],
     },
     {
       id: 2,
-      name: "Multiple Choice",
+      name: [comViewText.communityView.templateOptions.multiple_choice],
       type: "multiple_choice",
       icon: FileText,
       content: [{ question: "", options: ["", "", "", ""], correctAnswer: 0 }],
     },
     {
       id: 3,
-      name: "Fill in the Blank",
+      name:       [comViewText.communityView.templateOptions.fill_in_blank],
       type: "fill_in_blank",
       icon: FileText,
       content: [{ text: "", answer: "" }],
     },
     {
       id: 4,
-      name: "Matching",
-      type: "matching",
+      name: [comViewText.communityView.templateOptions.matching],
+      // Define template options
+      type: [comViewText.communityView.templateOptions.matching],
       icon: FileText,
       content: [{ left: "", right: "" }],
     },
@@ -1350,7 +1364,7 @@ export default function CommunityView() {
         fetchStudySets()
       }, 1000)
 
-      setCustomPopup({ show: true, message: "Study set created successfully!", type: "success" })
+      setCustomPopup({ show: true, message: [comViewText.communityView.notifications.studySetCreated], type: "success" })
     } catch (error) {
       console.error("Error creating study set:", error)
       setCustomPopup({ show: true, message: `Failed to create study set: ${error.message}`, type: "error" })
@@ -1695,7 +1709,7 @@ export default function CommunityView() {
   const handleDeleteCommunity = async () => {
     setCustomPopup({
       show: true,
-      message: "Are you sure you want to delete this community? This action cannot be undone.",
+      message: [comViewText.communityView.notifications.communityDeleteCheck],
       type: "warning",
       onConfirm: async () => {
         const token = sessionStorage.getItem("token")
@@ -1914,17 +1928,17 @@ export default function CommunityView() {
                 >
                   <ArrowLeft size={isMobile ? 16 : 20} />
                 </button>
-                <h2 className={`${isMobile ? "text-[24px]" : "text-[32px]"} font-semibold text-[#1D1D20]`}>Study Sets</h2>
+                <h2 className={`${isMobile ? "text-[24px]" : "text-[32px]"} font-semibold text-[#1D1D20]`}>{comViewText.communityView.titles.studySets}</h2>
                 <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
                     className={`bg-white rounded-xl p-${isMobile ? "1" : "2"} text-[#1D1D20] border border-[#E9D0CE] text-[${isMobile ? "12px" : "14px"}]`}
                 >
-                  <option value="all">View All</option>
-                  <option value="flashcards">Flashcards</option>
-                  <option value="fill_in_blank">Fill in the Blank</option>
-                  <option value="matching">Matching</option>
-                  <option value="multiple_choice">Multiple Choice</option>
+                  <option value="all">{comViewText.communityView.filters.viewAll}</option>
+                  <option value="flashcards">{comViewText.communityView.filters.flashcards}</option>
+                  <option value="fill_in_blank">{comViewText.communityView.filters.fillInBlank}</option>
+                  <option value="matching">{comViewText.communityView.filters.matching}</option>
+                  <option value="multiple_choice">{comViewText.communityView.filters.multipleChoice}</option>
                 </select>
               </div>
 
@@ -1935,7 +1949,7 @@ export default function CommunityView() {
                     onClick={handleAddStudyMaterial}
                 >
                   <Plus size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>{isMobile ? "Add" : "Add Study Material"}</span>
+                  <span>{isMobile ? comViewText.communityView.buttons.add: comViewText.communityView.buttons.addStudyMaterial}</span>
                 </button>
 
                 <button
@@ -1944,7 +1958,7 @@ export default function CommunityView() {
                     onClick={handleOpenChatRoom}
                 >
                   <MessageSquare size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Message</span>
+                  <span>{comViewText.communityView.buttons.message}</span>
                 </button>
 
                 <button
@@ -1953,7 +1967,7 @@ export default function CommunityView() {
                     onClick={toggleMembers}
                 >
                   <Users size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Members</span>
+                  <span>{comViewText.communityView.buttons.members}</span>
                 </button>
 
                 <button
@@ -1961,7 +1975,7 @@ export default function CommunityView() {
                     onClick={handleDeleteCommunity}
                 >
                   <Trash2 size={isMobile ? 14 : 18} className="mr-2" />
-                  <span>Delete Community</span>
+                  <span>{isMobile ? comViewText.communityView.buttons.deleteCommunityM:comViewText.communityView.buttons.deleteCommunity}</span>
                 </button>
               </div>
             </div>
@@ -2044,8 +2058,8 @@ export default function CommunityView() {
                                                 : "bg-[#1D6EF1] text-[#F4FDFF]"
                                         } px-3 py-1 rounded-xl flex items-center h-8 cursor-pointer`}
                                     >
-                                      {category}
-                                      {userCategories.includes(category) && <span className="ml-1 text-xs">★</span>}
+                                      {comViewText.categoriesTranslation[category] || category}
+                                      {userCategories.includes(category || comViewText.categoriesTranslation[category]) && <span className="ml-1 text-xs">★</span>}
                                     </span>
 
                                                 {/* Tags that appear on hover - fixed positioning */}
@@ -2064,7 +2078,7 @@ export default function CommunityView() {
                                                             ))}
                                                         {studySet.tags.filter((tag) => school_categories[category]?.includes(tag))
                                                             .length === 0 && (
-                                                            <span className="text-[14px] text-gray-500">No tags for this category</span>
+                                                            <span className="text-[14px] text-gray-500">{comViewText.communityView.emptyStates.noTags}</span>
                                                         )}
                                                       </div>
                                                     </div>
@@ -2083,15 +2097,15 @@ export default function CommunityView() {
                                     <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
                                       <button
                                           // Change Share button bg to Water 4 (#C5EDFD), text to Water 2 (#1D6EF1), hover bg to Water 3 (#97C7F1)
-                                          className={`bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
+                                          className={`bg-[#48BB78] hover:bg-[#97C7F1] text-[#F4FDFF] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
                                           onClick={() => handleShareStudySet(studySet.id)}
                                       >
                                         {copiedSetId === studySet.id ? (
-                                            <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Copied!</span>
+                                            <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{comViewText.common.copied}</span>
                                         ) : (
                                             <>
                                               <Share2 size={isMobile ? 14 : 16} className="mr-1" />
-                                              <span className={`text-[${isMobile ? "12px" : "14px"}]`}>Share</span>
+                                              <span className={`text-[${isMobile ? "12px" : "14px"}]`}>{comViewText.communityView.buttons.share}</span>
                                             </>
                                         )}
                                       </button>
@@ -2100,8 +2114,11 @@ export default function CommunityView() {
                                           className="bg-[#DC2626] hover:bg-[#DC2626]/80 text-white py-1 px-3 rounded-xl flex items-center"
                                           onClick={() => handleDeleteStudySet(studySet.id, studySet.creator)}
                                       >
+
+                                        <span className="text-[14px]">{comViewText.communityView.buttons.delete}</span>
+
                                         <Trash2 size={isMobile ? 14 : 16} className="mr-1" />
-                                        <span className="text-[14px]">Delete</span>
+
                                       </button>
                                     </div>
                                     <div className={`flex-shrink-0 ${isMobile ? "" : "ml-4"}`}>
@@ -2116,7 +2133,7 @@ export default function CommunityView() {
                 </div>
             ) : (
                 <div className={`text-center py-${isMobile ? "4" : "8"} bg-white/80 rounded-xl`}>
-                  <p className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]/70`}>No study sets available.</p>
+                  <p className={`text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]/70`}>{comViewText.communityView.emptyStates.noStudySets}</p>
                 </div>
             )}
           </div>
@@ -2129,7 +2146,7 @@ export default function CommunityView() {
             >
               <div className={`p-${isMobile ? "3" : "6"}`}>
                 <div className={`flex items-center justify-between mb-${isMobile ? "3" : "6"}`}>
-                  <h2 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>Members</h2>
+                  <h2 className={`${isMobile ? "text-[20px]" : "text-[26px]"} font-semibold text-[#1D1D20]`}>{comViewText.communityView.buttons.members}</h2>
                   <div className="flex items-center gap-2">
                     <button
                         className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-1 rounded-full"
@@ -2202,12 +2219,13 @@ export default function CommunityView() {
                   <div className="flex justify-between items-center mb-4 md:mb-6">
                     <h2 className="text-xl md:text-2xl font-semibold text-[#1D1D20]">
                       {currentStep === 1
-                          ? "Name Your Study Set"
+                          ? comViewText.communityView.dialogSteps.nameStep
                           : currentStep === 2
-                              ? "Select a Template"
+                              ?  comViewText.communityView.dialogSteps.templateStep
                               : currentStep === 3
-                                  ? "Customize Your Content"
-                                  : "Add Categories & Tags"}
+                                  ?  comViewText.communityView.dialogSteps.contentStep
+                                  : comViewText.communityView.dialogSteps.tagsStep
+                      }
                     </h2>
                     <button
                         className="text-[#1D1D20] hover:text-[#1D1D20]/70 p-2 rounded-full"
@@ -2228,24 +2246,24 @@ export default function CommunityView() {
                   {/* Step indicators */}
                   <div className="flex mb-4 md:mb-6 rounded-xl overflow-hidden">
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 1 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
-                      1. Name
+                      {comViewText.communityView.stepLabels.step1}
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 2 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
-                      2. Template
+                      {comViewText.communityView.stepLabels.step2}
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 3 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
-                      3. Content
+                      {comViewText.communityView.stepLabels.step3}
                     </div>
                     <div
-                        className={`flex-1 p-2 text-center ${currentStep === 4 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"}`}
+                        className={`flex-1 p-2 text-center ${currentStep === 4 ? "bg-[#1D6EF1] text-white" : "bg-[#F4FDFF]"} text-black`}
                     >
-                      4. Tags
+                      {comViewText.communityView.stepLabels.step4}
                     </div>
                   </div>
 
@@ -2259,12 +2277,12 @@ export default function CommunityView() {
                               mb: 2,
                             }}
                         >
-                          Study Set Name
+                          {comViewText.upload.labelStudySetName}
                         </Typography>
                         <TextField
                             fullWidth
                             variant="outlined"
-                            placeholder="Enter a name for your study set"
+                            placeholder={comViewText.communityView.header.name}
                             value={studySetName}
                             onChange={(e) => setStudySetName(e.target.value)}
                             sx={{
@@ -2342,12 +2360,12 @@ export default function CommunityView() {
                               mt: 4,
                             }}
                         >
-                          Access Control
+                          {comViewText.upload.accessControlTitle}
                         </Typography>
 
                         <FormControl component="fieldset" sx={{ width: "100%" }}>
-                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px" }}>
-                            Who can view this study set?
+                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: 'black' }}>
+                            {comViewText.upload.questionWhoCanView}
                           </Typography>
                           <Grid container direction="column" spacing={1}>
                             <Grid item>
@@ -2367,8 +2385,10 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Unlock size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Everyone - Study set visible to all users
+
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
+                                        {comViewText.upload.optionEveryone}
+
                                       </Typography>
                                     </Box>
                                   }
@@ -2397,8 +2417,10 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Lock size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Community Members Only - Only visible to anyone who joined the community
+
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
+                                        {comViewText.upload.optionAllMembers}
+
                                       </Typography>
                                     </Box>
                                   }
@@ -2426,8 +2448,10 @@ export default function CommunityView() {
                                   label={
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Users size={16} />
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                        Specific Members - Choose exactly who can see this study set
+
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
+                                        {comViewText.upload.optionSpecificMembers}
+
                                       </Typography>
                                     </Box>
                                   }
@@ -2445,7 +2469,7 @@ export default function CommunityView() {
                         {accessType === "specificMembers" && (
                             <FormControl fullWidth sx={{ mt: 2 }}>
                               <InputLabel id="member-selection-label" sx={{ fontFamily: "SourGummy, sans-serif" }}>
-                                Select Members
+                                {comViewText.communityView.accessControl.memberSelectLabel}
                               </InputLabel>
                               <Select
                                   labelId="member-selection-label"
@@ -2514,7 +2538,7 @@ export default function CommunityView() {
                                   variant="caption"
                                   sx={{ mt: 1, fontFamily: "SourGummy, sans-serif", display: "block" }}
                               >
-                                Only selected members will be able to view this study set
+                                {comViewText.upload.infoOnlySelectedMembers}
                               </Typography>
                             </FormControl>
                         )}
@@ -2532,7 +2556,7 @@ export default function CommunityView() {
                                 fontFamily: "SourGummy, sans-serif",
                               }}
                           >
-                            Choose Template
+                            {comViewText.communityView.buttons.chooseTemplate}
                           </Button>
                         </Box>
                       </Box>
@@ -2542,6 +2566,7 @@ export default function CommunityView() {
                   {currentStep === 2 && (
                       <div>
                         <div className={`grid grid-cols-1 ${isMobile ? "" : "md:grid-cols-2"} gap-4 mb-6`}>
+
                           {templateOptions.map((template, index) => (
                             <div
                               key={template.id}
@@ -2572,17 +2597,17 @@ export default function CommunityView() {
 
                         <div className="flex justify-between">
                           <button
-                              className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
+                              className={`bg-[#97C7F1] hover:bg-[#C5EDFD]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={() => setCurrentStep(3)}
                               disabled={!selectedTemplate}
                           >
-                            Next
+                            {comViewText.drBubbles.buttons.next}
                           </button>
                         </div>
                       </div>
@@ -2601,7 +2626,7 @@ export default function CommunityView() {
                                 onClick={handleAddItem}
                             >
                               <Plus size={isMobile ? 14 : 16} className="mr-1" />
-                              Add Item
+                              {comViewText.communityView.buttons.addItem}
                             </button>
                           </div>
 
@@ -2612,7 +2637,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Card {index + 1}
+                                          {comViewText.communityView.dialogSteps.card} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2624,7 +2649,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Front (Question)
+                                          {comViewText.communityView.dialogSteps.front}
                                         </label>
                                         <input
                                             type="text"
@@ -2635,7 +2660,7 @@ export default function CommunityView() {
                                       </div>
                                       <div>
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Back (Answer)
+                                          {comViewText.communityView.dialogSteps.back}
                                         </label>
                                         <input
                                             type="text"
@@ -2656,7 +2681,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Question {index + 1}
+                                          {comViewText.communityView.dialogSteps.Question}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2668,7 +2693,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Question
+                                          {comViewText.communityView.dialogSteps.Question}
                                         </label>
                                         <input
                                             type="text"
@@ -2679,7 +2704,7 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Options
+                                          {comViewText.communityView.dialogSteps.Options}
                                         </label>
                                         {item.options.map((option, optIndex) => (
                                             <div key={optIndex} className="flex items-center mb-2">
@@ -2695,12 +2720,12 @@ export default function CommunityView() {
                                                   className={`flex-1 p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
                                                   value={option}
                                                   onChange={(e) => handleUpdateItem(index, `options.${optIndex}`, e.target.value)}
-                                                  placeholder={`Option ${optIndex + 1}`}
+                                                  placeholder={`${comViewText.communityView.dialogSteps.Options + " " + 1}`}
                                               />
                                             </div>
                                         ))}
                                         <p className={`text-[${isMobile ? "10px" : "12px"}] text-[#1D1D20]/70`}>
-                                          Select the radio button next to the correct answer
+                                          {comViewText.communityView.dialogSteps.Answer}
                                         </p>
                                       </div>
                                     </div>
@@ -2715,7 +2740,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Sentence {index + 1}
+                                          {comViewText.communityView.dialogSteps.Sentence} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2727,19 +2752,20 @@ export default function CommunityView() {
                                       </div>
                                       <div className="mb-3">
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Text (use ___ for the blank)
+                                          {comViewText.communityView.dialogSteps.blank}
                                         </label>
                                         <input
                                             type="text"
                                             className={`w-full p-${isMobile ? "1.5" : "2"} border border-[#E9D0CE] rounded-xl text-[#1D1D20] text-[${isMobile ? "12px" : "14px"}]`}
                                             value={item.text}
                                             onChange={(e) => handleUpdateItem(index, "text", e.target.value)}
-                                            placeholder="Example: The sky is ___."
+                                            placeholder={comViewText.communityView.dialogSteps.example}
                                         />
                                       </div>
+                                      //
                                       <div>
                                         <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                          Answer
+                                          {comViewText.communityView.dialogSteps.Answer}
                                         </label>
                                         <input
                                             type="text"
@@ -2760,7 +2786,7 @@ export default function CommunityView() {
                                     <div key={index} className={`border border-[#E9D0CE] rounded-xl p-${isMobile ? "3" : "4"}`}>
                                       <div className="flex justify-between items-center mb-2">
                                         <h4 className={`font-medium text-[${isMobile ? "14px" : "16px"}] text-[#1D1D20]`}>
-                                          Pair {index + 1}
+                                          {comViewText.communityView.dialogSteps.Pair} {index + 1}
                                         </h4>
                                         <button
                                             className="text-[#DC2626] rounded-full p-1 hover:bg-[#F4FDFF]"
@@ -2773,7 +2799,7 @@ export default function CommunityView() {
                                       <div className={`grid grid-cols-${isMobile ? "1" : "2"} gap-4`}>
                                         <div>
                                           <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                            Left Item
+                                            {comViewText.communityView.dialogSteps.left}
                                           </label>
                                           <input
                                               type="text"
@@ -2784,7 +2810,7 @@ export default function CommunityView() {
                                         </div>
                                         <div>
                                           <label className={`block text-[#1D1D20] mb-1 text-[${isMobile ? "12px" : "14px"}]`}>
-                                            Right Item
+                                            {comViewText.communityView.dialogSteps.Right}
                                           </label>
                                           <input
                                               type="text"
@@ -2805,14 +2831,14 @@ export default function CommunityView() {
                               className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#48BB78] hover:bg-[#48BB78]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={() => setCurrentStep(4)}
                               disabled={templateContent.length === 0}
                           >
-                            Next
+                            {comViewText.drBubbles.buttons.next}
                           </button>
                         </div>
                       </div>
@@ -2823,7 +2849,7 @@ export default function CommunityView() {
                       <div>
                         <div className="mb-6">
                           <div className="flex justify-between items-center mb-4">
-                            <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>Add Tags</h3>
+                            <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold text-[#1D1D20]`}>{comViewText.communityView.dialogSteps.tagsStep}</h3>
                           </div>
 
                           <div className="max-h-[50vh] overflow-y-auto">
@@ -2844,13 +2870,13 @@ export default function CommunityView() {
                               className={`bg-[#F4FDFF] hover:bg-[#F4FDFF]/90 text-[#1D1D20] py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={handleBackStep}
                           >
-                            Back
+                            {comViewText.communityView.buttons.back}
                           </button>
                           <button
                               className={`bg-[#1D6EF1] hover:bg-[#1D6EF1]/90 text-white py-${isMobile ? "1" : "2"} px-${isMobile ? "3" : "4"} rounded-xl text-[${isMobile ? "14px" : "16px"}]`}
                               onClick={createStudySet}
                           >
-                            Create Study Set
+                            {comViewText.communityView.buttons.createStudySet}
                           </button>
                         </div>
                       </div>
@@ -2912,7 +2938,7 @@ export default function CommunityView() {
                           }}
                           className="mr-2 px-2 py-1 text-xs bg-yellow-200 hover:bg-yellow-300 rounded-md"
                       >
-                        Confirm
+                        {comViewText.communityView.buttons.confirm}
                       </button>
                   )}
                   <button
