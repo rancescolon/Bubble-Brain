@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import text from "../text.json"
+import { getSelectedLanguage } from "../App"
 import {
   Box,
   Typography,
@@ -600,7 +601,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Front"
+                              label={templateText.formFields.front}
                               value={card.front}
                               onChange={(e) => handleFlashcardChange(index, "front", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -611,7 +612,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Back"
+                              label={templateText.formFields.back}
                               value={card.back}
                               onChange={(e) => handleFlashcardChange(index, "back", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -684,10 +685,10 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                           </Box>
                           <TextField
                               fullWidth
-                              label="Question"
+                              label={templateText.formFields.question}
                               value={item.question}
                               onChange={(e) => handleFillInBlankChange(index, "question", e.target.value)}
-                              placeholder="Example: The capital of France is _____"
+                              placeholder={templateText.placeholderQuestionExample}
                               multiline
                               rows={isMobile ? 1 : 2}
                               sx={{
@@ -703,10 +704,10 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12}>
                           <TextField
                               fullWidth
-                              label="Correct Answer"
+                              label={templateText.formFields.answer}
                               value={item.answer}
                               onChange={(e) => handleFillInBlankChange(index, "answer", e.target.value)}
-                              placeholder="Example: Paris"
+                              placeholder={templateText.placeholderAnswerExample}
                               sx={{
                                 ...fontStyle,
                                 "& .MuiOutlinedInput-root": {
@@ -718,56 +719,6 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                           />
                         </Grid>
                       </Grid>
-                      {item.question && (
-                          <Box sx={{ mt: 2, p: 2, bgcolor: "#F8F9FA", borderRadius: 1 }}>
-                            <Typography
-                                variant="body2"
-                                sx={{
-                                  color: "text.secondary",
-                                  mb: 1,
-                                  ...fontStyle,
-                                  fontSize: { xs: "0.75rem", sm: "0.875rem" },
-                                }}
-                            >
-                              {templateText.preview}
-                            </Typography>
-                            <Typography
-                                sx={{
-                                  ...fontStyle,
-                                  fontSize: { xs: "0.875rem", sm: "1rem" },
-                                }}
-                            >
-                              {item.question.split("_____").map((part, i, arr) => (
-                                  <span key={i}>
-                            {part}
-                                    {i < arr.length - 1 && (
-                                        <Box
-                                            component="span"
-                                            sx={{
-                                              display: "inline-block",
-                                              minWidth: { xs: "80px", sm: "150px" },
-                                              height: { xs: "20px", sm: "24px" },
-                                              borderBottom: "2px dashed #1D6EF1",
-                                              mx: 1,
-                                              verticalAlign: "middle",
-                                              position: "relative",
-                                              "&::after": {
-                                                content: '""',
-                                                position: "absolute",
-                                                bottom: "-2px",
-                                                left: 0,
-                                                right: 0,
-                                                height: "2px",
-                                                backgroundColor: "#1D6EF1",
-                                              },
-                                            }}
-                                        />
-                                    )}
-                          </span>
-                              ))}
-                            </Typography>
-                          </Box>
-                      )}
                     </CardContent>
                   </Card>
               ))}
@@ -809,7 +760,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Term"
+                              label={templateText.formFields.term}
                               value={item.term}
                               onChange={(e) => handleMatchingChange(index, "term", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -820,7 +771,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12} sm={6}>
                           <TextField
                               fullWidth
-                              label="Definition"
+                              label={templateText.formFields.definition}
                               value={item.definition}
                               onChange={(e) => handleMatchingChange(index, "definition", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -870,7 +821,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                         <Grid item xs={12}>
                           <TextField
                               fullWidth
-                              label="Question"
+                              label={templateText.formFields.question}
                               value={item.question}
                               onChange={(e) => handleMultipleChoiceChange(index, "question", e.target.value)}
                               sx={{ ...fontStyle }}
@@ -882,7 +833,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                             <Grid item xs={12} sm={6} key={optionIndex}>
                               <TextField
                                   fullWidth
-                                  label={`Option ${optionIndex + 1}`}
+                                  label={`${templateText.formFields.option} ${optionIndex + 1}`}
                                   value={option}
                                   onChange={(e) =>
                                       handleMultipleChoiceChange(index, "options", {
@@ -906,7 +857,7 @@ const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) =>
                             >
                               {item.options.map((_, i) => (
                                   <MenuItem key={i} value={i}>
-                                    {templateText.option} {i + 1}
+                                    Option {i + 1}
                                   </MenuItem>
                               ))}
                             </Select>

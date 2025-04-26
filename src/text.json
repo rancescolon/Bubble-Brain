@@ -399,7 +399,16 @@
       "errorInvalidTemplateType": "Invalid template type",
       "errorPrepareTemplate": "Failed to prepare template. Please try again.",
       "errorSaveTemplate": "Failed to save template. Please try again.",
-      "successTemplateSaved": "Template saved successfully!"
+      "successTemplateSaved": "Template saved successfully!",
+      "formFields": {
+        "front": "Front",
+        "back": "Back",
+        "term": "Term",
+        "definition": "Definition",
+        "question": "Question",
+        "answer": "Answer",
+        "option": "Option"
+      }
     },
     "tagSelector": {
       "embedded": {
@@ -793,14 +802,15 @@
         "close": "Close"
       },
       "guideSteps": {
-        "nav-start": "Welcome! I'm Dr. Bubbles, and I'll help you navigate around. Let's start with the Home button!",
-        "nav-home": "Return to this page at anytime here!",
-        "nav-friends": "Here you can connect with others and make new friends!",
-        "nav-community": "Join exciting communities and view study sets!",
-        "nav-profile": "View and manage your profile and progress here!",
-        "nav-style-guide": "Check out our style guide to understand the design system!",
-        "nav-feed": "View your feed and see what others are up to!",
-        "nav-shop": "Buy new icons for Dr. Bubbles in the shop!"
+        "navStart": "Welcome! I'm Dr. Bubbles, and I'll help you navigate around. Let's start with Our logo Me!",
+        "navHome": "Return to this page at anytime by pressing Me!",
+        "navFriends": "Here you can connect with others and make new friends!",
+        "navUpload": "Upload your study sets and share them with the community!",
+        "navCommunity": "Join exciting communities and view study sets!",
+        "navProfile": "View and manage your profile and progress here!",
+        "navStyleGuide": "Check out our style guide to understand the design system!",
+        "navFeed": "View your feed and see what others are up to!",
+        "navShop": "Buy new costumes for me in the shop!"
       }
     },
     "createPost": {
@@ -2280,7 +2290,16 @@
       "errorInvalidTemplateType": "Tipo de plantilla inválido",
       "errorPrepareTemplate": "Error preparado la plantilla. Por favor, inténtalo de nuevo.",
       "errorSaveTemplate": "Error guardando la plantilla. Por favor, inténtalo de nuevo.",
-      "successTemplateSaved": "¡Plantilla guardada correctamente!"
+      "successTemplateSaved": "¡Plantilla guardada correctamente!",
+      "formFields": {
+        "front": "Frente",
+        "back": "Atrás",
+        "term": "Término",
+        "definition": "Definición",
+        "question": "Pregunta",
+        "answer": "Respuesta",
+        "option": "Opción"
+      }
     },
     "tagSelector": {
       "embedded": {
@@ -2674,14 +2693,15 @@
         "close": "Cerrar"
       },
       "guideSteps": {
-        "nav-start": "¡Bienvenido! Soy Dr. Bubbles y te ayudaré a navegar. ¡Comencemos con la casa!",
-        "nav-home": "Regresa a esta página en cualquier momento aquí.",
-        "nav-friends": "¡Aquí puedes conectar con otros y hacer nuevos amigos!",
-        "nav-community": "¡participar en comunidades y ve colecciónes de estudio!",
-        "nav-profile": "¡Aquí puedes administrar tu perfil y ver progreso!",
-        "nav-style-guide": "¡Consulta nuestra guía de estilo para entender el sistema de diseño!",
-        "nav-feed": "¡Mira tu feed y ve klk con la gente !",
-        "nav-shop": "¡Compra nuevos íconos para Dr. Bubbles en la tienda!"
+        "navStart": "¡Bienvenidos! Soy el Dr. Bubbles y les ayudaré a navegar. ¡Comencemos con nuestro logo, Yo!",
+        "navHome": "Regrese a esta página en cualquier momento presionando es me.",
+        "navFriends": "¡Aquí puedes conectar con otros y hacer nuevos amigos!",
+        "navUpload": "¡Sube tus material de estudio y compártelos con la comunidad!",
+        "navCommunity": "¡participar en comunidades y ve colecciónes de estudio!",
+        "navProfile": "¡Aquí puedes administrar tu perfil y ver tu progreso!",
+        "navStyleGuide": "¡Consulta nuestra guía de estilo para entender el sistema de diseño!",
+        "navFeed": "¡Mira tu feed y ve klk con la gente !",
+        "navShop": "¡Compra nuevos disfraces para Me en la tienda!"
       }
     },
     "createPost": {

@@ -9,6 +9,8 @@ const BubbleTrapAnimation = ({ onComplete }) => {
   const [showButton, setShowButton] = useState(false)
   const [showBubble, setShowBubble] = useState(false)
 
+
+
   useEffect(() => {
     // Start bubble animation after a short delay
     setTimeout(() => setShowBubble(true), 500)
