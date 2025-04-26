@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import {useState, useEffect} from "react"
 import { X } from "lucide-react"
+import text from "../text.json"
 
 const TagSelector = ({
                          selectedCategories,
@@ -15,9 +16,19 @@ const TagSelector = ({
                          onSave,
                          saveButtonText = "Save Template",
                          embedded = false,
+                         language = "English"
                      }) => {
     const [availableTags, setAvailableTags] = useState([])
     const [showTagsSection, setShowTagsSection] = useState(false)
+
+    const langKey = language === "English" ? "en" : "es"
+    const tagViewText = text[langKey].tagSelector
+    const categoriesText = text[langKey].categories
+
+    // Helper function to translate category names
+    const translateCategory = (category) => {
+        return categoriesText[category] || category
+    }
 
     // Update available tags whenever selected categories change
     useEffect(() => {
@@ -63,7 +74,9 @@ const TagSelector = ({
             <div className="p-2">
                 {/* Categories Selection */}
                 <div className="mb-4">
-                    <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>Categories</h3>
+                    <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>
+                        {tagViewText.embedded.headerCategories}
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                         {Object.keys(school_categories).map((category) => (
                             <button
@@ -74,19 +87,21 @@ const TagSelector = ({
                                 onClick={() => handleCategorySelection(category)}
                                 disabled={selectedCategories.length >= maxCategories && !selectedCategories.includes(category)}
                             >
-                                {category}
+                                {translateCategory(category)}
                             </button>
                         ))}
                     </div>
                     <p className="mt-1 text-[12px] text-[#1D1D20]/70">
-                        {selectedCategories.length}/{maxCategories} categories selected
+                        {selectedCategories.length}/{maxCategories} {tagViewText.embedded.categoriesSelected}
                     </p>
                 </div>
 
                 {/* Tags Selection */}
                 {showTagsSection && (
                     <div>
-                        <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>Tags</h3>
+                        <h3 className={`text-[${isMobile ? "14px" : "16px"}] font-semibold mb-2 text-[#1D1D20]`}>
+                            {tagViewText.embedded.headerTags}
+                        </h3>
                         <div className="flex flex-wrap gap-2">
                             {availableTags.map((tag) => (
                                 <button
@@ -101,7 +116,9 @@ const TagSelector = ({
                                 </button>
                             ))}
                         </div>
-                        <p className="mt-1 text-[12px] text-[#1D1D20]/70">{selectedTags.length}/5 tags selected</p>
+                        <p className="mt-1 text-[12px] text-[#1D1D20]/70">
+                            {selectedTags.length}/5 {tagViewText.embedded.tagsSelected}
+                        </p>
                     </div>
                 )}
             </div>
@@ -111,7 +128,7 @@ const TagSelector = ({
     return (
         <div className="bg-white rounded-xl p-4 md:p-6 max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-[#1D1D20]">Add Categories & Tags</h2>
+                <h2 className="text-xl font-semibold text-[#1D1D20]">{tagViewText.full.title}</h2>
                 {onCancel && (
                     <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
                         <X size={24} />
@@ -120,17 +137,19 @@ const TagSelector = ({
             </div>
 
             <p className="text-gray-600 text-sm mb-6">
-                Categories and tags help others find your content and optimize your feed for relevant study materials.
+                {tagViewText.full.description}
             </p>
 
             <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-[16px] font-semibold text-[#1D1D20]">Add Categories & Tags</h3>
-                    <p className="text-[14px] text-[#1D1D20]/70">Helps optimize your feed</p>
+                    <h3 className="text-[16px] font-semibold text-[#1D1D20]">{tagViewText.full.title}</h3>
+                    <p className="text-[14px] text-[#1D1D20]/70">{tagViewText.full.helpText}</p>
                 </div>
 
                 <div className="mb-4">
-                    <label className="block text-[#1D1D20] mb-2 text-[16px]">Select Categories (up to {maxCategories})</label>
+                    <label className="block text-[#1D1D20] mb-2 text-[16px]">
+                        {tagViewText.full.labelSelectCategories.replace("{{maxCategories}}", maxCategories)}
+                    </label>
                     <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto p-2 border border-[#E9D0CE] rounded-xl mb-2">
                         {Object.keys(school_categories).map((category) => (
                             <button
@@ -143,18 +162,18 @@ const TagSelector = ({
                                 } ${selectedCategories.length >= maxCategories && !selectedCategories.includes(category) ? "opacity-50 cursor-not-allowed" : ""}`}
                                 disabled={selectedCategories.length >= maxCategories && !selectedCategories.includes(category)}
                             >
-                                {category}
+                                {translateCategory(category)}
                             </button>
                         ))}
                     </div>
                     <p className="text-[12px] text-[#1D1D20]/70">
-                        Selected: {selectedCategories.length}/{maxCategories} categories
+                        {tagViewText.full.selectedCategories.replace("{{selectedCategories.length}}", selectedCategories.length).replace("{{maxCategories}}", maxCategories)}
                     </p>
                 </div>
 
                 {showTagsSection && (
                     <div>
-                        <label className="block text-[#1D1D20] mb-2 text-[16px]">Select Tags (up to 5)</label>
+                        <label className="block text-[#1D1D20] mb-2 text-[16px]">{tagViewText.full.labelSelectTags}</label>
                         <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border border-[#E9D0CE] rounded-xl">
                             {availableTags.map((tag) => (
                                 <button
@@ -171,7 +190,9 @@ const TagSelector = ({
                                 </button>
                             ))}
                         </div>
-                        <p className="mt-2 text-[12px] text-[#1D1D20]/70">Selected: {selectedTags.length}/5 tags</p>
+                        <p className="mt-2 text-[12px] text-[#1D1D20]/70">
+                            {tagViewText.full.selectedTags.replace("{{selectedTags.length}}", selectedTags.length)}
+                        </p>
                     </div>
                 )}
             </div>
@@ -183,7 +204,7 @@ const TagSelector = ({
                             onClick={onCancel}
                             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                         >
-                            Cancel
+                            {tagViewText.full.buttonCancel}
                         </button>
                     )}
                     {onSave && (
@@ -191,24 +212,7 @@ const TagSelector = ({
                             onClick={onSave}
                             className="px-4 py-2 bg-[#1D6EF1] text-white rounded-lg hover:bg-[#1557B0] flex items-center"
                         >
-              <span className="mr-2">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                >
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-              </span>
-                            {saveButtonText}
+                            {tagViewText.full.buttonSave.replace("{{saveButtonText}}", saveButtonText)}
                         </button>
                     )}
                 </div>

@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { Image } from 'lucide-react';
 import { styled } from '@mui/material/styles';
+import { getSelectedLanguage } from "../App";
 
 // Styled thumbnail component for background options
 const BackgroundThumbnail = styled(Box)(({ selected }) => ({
@@ -46,6 +47,9 @@ const SlideTransition = React.forwardRef(function Transition(props, ref) {
  * @param {Object} props.style - Additional styles for the button container
  * @param {string} props.position - Position of the button ('top-right', 'top-left', 'bottom-right', 'bottom-left')
  * @param {boolean} props.miniPalette - Whether to show a mini palette instead of full dialog
+ * @param {string} props.title - Title for the dialog
+ * @param {string} props.selectLabel - Label for the select button
+ * @param {string} props.currentLabel - Label for the current background
  * @returns {React.Component}
  */
 const BackgroundSelector = ({
@@ -55,9 +59,15 @@ const BackgroundSelector = ({
   style = {},
   position = 'top-right',
   miniPalette = false,
+  title,
+  selectLabel,
+  currentLabel,
 }) => {
   const [showSelector, setShowSelector] = useState(false);
   const [quickPalette, setQuickPalette] = useState(false);
+  const language = getSelectedLanguage();
+  const langKey = language === "English" ? "en" : "es";
+  const backgroundSelectorText = text[langKey].appWrapper.backgroundSelector;
 
   // Position styles mapping
   const positionStyles = {
@@ -96,7 +106,7 @@ const BackgroundSelector = ({
           ...style,
         }}
       >
-        <Tooltip title="Change Background">
+        <Tooltip title={currentLabel || backgroundSelectorText.currentBackground}>
           <IconButton
             onClick={toggleQuickPalette}
             sx={{
@@ -152,7 +162,7 @@ const BackgroundSelector = ({
                 }}
                 sx={{ fontSize: '0.7rem' }}
               >
-                More Options
+                {selectLabel || backgroundSelectorText.selectBackground}
               </Button>
             </Box>
           </Box>
@@ -166,7 +176,7 @@ const BackgroundSelector = ({
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 'bold' }}>Choose Background</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>{title || backgroundSelectorText.title}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             {backgroundOptions.map((bg) => (
@@ -186,7 +196,7 @@ const BackgroundSelector = ({
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowSelector(false)}>Cancel</Button>
+          <Button onClick={() => setShowSelector(false)}>{text[langKey].common.cancel}</Button>
         </DialogActions>
       </Dialog>
     </>

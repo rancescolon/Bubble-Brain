@@ -1,7 +1,8 @@
 "use client"
 //The code for the homepage was assisted with the help of ChatGPT
 import { useEffect, useState, useRef, useContext } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import {json, Link, useNavigate} from "react-router-dom"
+import text from "../text.json"
 import {
   AppBar,
   Alert,
@@ -33,6 +34,12 @@ import { BackgroundContext } from "../App"
 import CreatePost from "./CreatePost"
 import PostFeed from "./PostFeed"
 import { useShop } from "../Context/ShopContext"
+
+import LanguageContext from "./../App"
+import { getSelectedLanguage } from "../App";
+
+console.log("Selected language from context:", getSelectedLanguage());
+
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -69,7 +76,11 @@ const MOCK_USERS = [
 ]
 
 const HomePage = () => {
-  const { currentBackground } = useContext(BackgroundContext);
+
+  const { currentBackground, language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const homeText = text[langKey].homePage;
+
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
   const [showGuide, setShowGuide] = useState(true)
@@ -87,23 +98,24 @@ const HomePage = () => {
   // Add effect to refresh skin data on initial load
   useEffect(() => {
     const token = sessionStorage.getItem("token");
-    
+
     // Only run once when component mounts and we have a logged-in user
     if (token && userId && !hasRefreshedDataRef.current) {
-      console.log("[HomePage] First load after login detected. Context should be loading/loaded.");
-      
+
+      console.log("[HomePage] First load after login, refreshing skin data");
+
       // Set ref to prevent multiple refreshes
       hasRefreshedDataRef.current = true;
-      
-      // COMMENTED OUT: Explicit refresh might be causing conflict/flicker
-      // console.log("[HomePage] First load after login, refreshing skin data");
-      // refreshUserData().then(success => {
-      //   if (success) {
-      //     console.log("[HomePage] Successfully refreshed skin data on login");
-      //   } else {
-      //     console.warn("[HomePage] Failed to refresh skin data on login");
-      //   }
-      // });
+
+      // Force refresh shop data (same as what happens in the Shop page)
+      refreshUserData().then(success => {
+        if (success) {
+          console.log("[HomePage] Successfully refreshed skin data on login");
+        } else {
+          console.warn("[HomePage] Failed to refresh skin data on login");
+        }
+      });
+
     }
   }, [refreshUserData, userId]); // Keep dependencies for effect logic
 
@@ -120,7 +132,9 @@ const HomePage = () => {
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
 
   // Adjust initial Y position for mobile
-  const initialX = isMobile ? 100 : 50; // Old mobile X
+
+  const initialX = isMobile ? 100 : 50;
+
   const initialY = isMobile ? -75 : 5;
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
@@ -137,7 +151,7 @@ const HomePage = () => {
   useEffect(() => {
     const storedSetting = localStorage.getItem("showProfilePics");
     setShouldShowPics(storedSetting === null ? true : storedSetting === "true");
-    
+
     // Add event listener to detect changes to localStorage
     const handleStorageChange = (e) => {
       if (e.key === "showProfilePics") {
@@ -150,10 +164,10 @@ const HomePage = () => {
         // }
       }
     };
-    
+
     window.addEventListener("storage", handleStorageChange);
     console.log('Added storage event listener for showProfilePics');
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       console.log('Removed storage event listener for showProfilePics');
@@ -540,7 +554,7 @@ const HomePage = () => {
       combinedUser.avatar ||
       combinedUser.profilePicture ||
       null
-    
+
     // Try to prioritize URL-like pictures
     let pictureUrl = null;
     const topLevelPic = combinedUser.picture || combinedUser.avatar; // Combine potential top-level names
@@ -683,12 +697,12 @@ const HomePage = () => {
           console.error("Error fetching data:", error)
         }
       }
-      
+
       fetchData()
-      
+
       // Set up polling every 30 seconds
       const intervalId = setInterval(fetchData, 30000)
-      
+
       // Cleanup on unmount
       return () => clearInterval(intervalId)
     }
@@ -774,10 +788,10 @@ const HomePage = () => {
 
           // Get user display name from attributes
           let displayName = extractUserDisplayName(user)
-          
+
           // --- Extract avatar/profile picture using prioritization ---
           let pictureUrl = null;
-          const topLevelPic = user.picture || user.avatar; 
+          const topLevelPic = user.picture || user.avatar;
           const attributePic = user.attributes?.picture || user.attributes?.profilePicture;
 
           if (topLevelPic && (String(topLevelPic).startsWith('http') || String(topLevelPic).startsWith('/'))) {
@@ -808,7 +822,7 @@ const HomePage = () => {
       })
 
       const leaderboardResults = (await Promise.all(leaderboardPromises)).filter(Boolean)
-      
+
       if (!leaderboardResults || leaderboardResults.length === 0) {
         console.error("No valid leaderboard results found")
         setLeaderboardData([])
@@ -832,7 +846,7 @@ const HomePage = () => {
   const fetchUserStats = async () => {
     setLoadingUserStats(true)
     const token = sessionStorage.getItem("token")
-    
+
     if (!token) {
       setLoadingUserStats(false)
       return
@@ -890,7 +904,7 @@ const HomePage = () => {
               },
             }
           )
-          
+
           if (!studySessionsResponse.ok) {
             console.error(`Failed to fetch study sessions for user ${userId}: ${studySessionsResponse.status}`)
             return null
@@ -905,23 +919,23 @@ const HomePage = () => {
           let longestSession = 0;
           let sessionCount = studySessions.length;
           let todaySessionCount = 0;
-          
+
           // Get today's date (midnight) for comparing sessions
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const todayTimestamp = today.getTime();
-          
+
           // Process study sessions
           studySessions.forEach(session => {
             try {
               const content = typeof session.content === 'string' ? JSON.parse(session.content) : session.content
-              
+
               // Check session duration and add to total
               if (content && content.duration && !isNaN(content.duration)) {
                 const duration = Number(content.duration);
                 longestSession = Math.max(longestSession, duration);
               }
-              
+
               // Check if session was today
               if (content && content.startTime) {
                 try {
@@ -945,9 +959,9 @@ const HomePage = () => {
             }
           })
 
-          // Get user display name 
+          // Get user display name
           let displayName = extractUserDisplayName(user)
-          
+
           // --- Extract avatar/profile picture using prioritization ---
           let pictureUrl = null;
           const topLevelPic = user.picture || user.avatar;
@@ -984,7 +998,7 @@ const HomePage = () => {
 
       // Wait for all user stats to be processed
       let statsResults = (await Promise.all(statsPromises)).filter(Boolean)
-      
+
       if (!statsResults || statsResults.length === 0) {
         console.error("No valid user statistics found")
         setUserStats([])
@@ -992,21 +1006,21 @@ const HomePage = () => {
       }
 
       console.log(`Found ${statsResults.length} users with valid statistics`)
-      
+
       // Find the top user for each stat category
       const topMarathon = findTopUserForStat(statsResults, 'longestSession', 'marathon')
       const topSessions = findTopUserForStat(statsResults, 'sessionCount', 'studySessions')
       const topTodaySessions = findTopUserForStat(statsResults, 'todaySessionCount', 'todaySessions')
-      
+
       // Combine all top users, ensuring we have all 3 badges
       let finalStats = [
-        topMarathon, 
-        topSessions, 
+        topMarathon,
+        topSessions,
         topTodaySessions
       ].filter(Boolean) // Remove any null values
-      
+
       console.log("Final user achievements:", finalStats)
-      
+
       // Set the state with our final statistics
       setUserStats(finalStats)
     } catch (error) {
@@ -1048,7 +1062,7 @@ const HomePage = () => {
         statValue = user.todaySessionCount || 0;
         break;
     }
-    
+
     return {
       id: `${user.id}-${statType}`,
       name: user.name,
@@ -1064,20 +1078,20 @@ const HomePage = () => {
 
     // Sort users by the stat value in descending order
     const sortedUsers = [...users].sort((a, b) => b[statKey] - a[statKey]);
-    
+
     console.log(`Sorted ${sortedUsers.length} users for ${statType}`);
-    
+
     // Take the top user for this stat
     const topUser = sortedUsers[0];
-    
+
     // If no user found, return null
     if (!topUser) {
       console.warn(`No top user found for ${statType}`);
       return null;
     }
-    
+
     console.log(`Top user for ${statType}: ${topUser.name} with value ${topUser[statKey]}`);
-    
+
     // Return formatted stat object
     return {
       id: topUser.id,
@@ -1091,11 +1105,11 @@ const HomePage = () => {
   // Helper function to extract user display name from user object
   const extractUserDisplayName = (user) => {
     if (!user) return "Anonymous User"
-    
+
     // Try to get username from different possible locations
     if (user.attributes?.username) return user.attributes.username
     if (user.username) return user.username
-    
+
     // Try to construct name from first and last name
     if (user.attributes?.firstName && user.attributes?.lastName) {
       return `${user.attributes.firstName} ${user.attributes.lastName}`
@@ -1103,11 +1117,11 @@ const HomePage = () => {
     if (user.firstName && user.lastName) {
       return `${user.firstName} ${user.lastName}`
     }
-    
+
     // Try to extract name from email
     if (user.attributes?.email) return user.attributes.email.split('@')[0]
     if (user.email) return user.email.split('@')[0]
-    
+
     // Final fallback
     return "Anonymous User"
   }
@@ -1143,7 +1157,7 @@ const HomePage = () => {
   // Helper function to format the stat value based on its type
   const formatStatValue = (statType, value) => {
     if (value === undefined || value === null) return "N/A";
-    
+
     switch (statType) {
       case 'marathon':
         // Convert seconds to minutes for readability
@@ -1193,16 +1207,8 @@ const HomePage = () => {
 
   // Helper function to get the caption for each stat type
   const getStatCaption = (statType) => {
-    switch (statType) {
-      case 'marathon':
-        return 'Longest continuous study session';
-      case 'studySessions':
-        return 'Highest number of study sessions';
-      case 'todaySessions':
-        return 'Most study sessions completed today';
-      default:
-        return 'Outstanding achievement';
-    }
+    const descs = homeText.achievementDescriptions;
+    return descs[statType] || descs.default;
   };
 
   // Remove the separate useEffect for fetchLeaderboardData and fetchUserStats
@@ -1268,9 +1274,9 @@ const HomePage = () => {
   useEffect(() => {
     const token = sessionStorage.getItem("token")
     const userStr = sessionStorage.getItem("user")
-  
+
     if (!token || !userStr) return
-  
+
     // Streak check (once per day)
     const showStreakPopupIfNeeded = async () => {
       try {
@@ -1279,12 +1285,12 @@ const HomePage = () => {
         const postsRes = await fetch(`${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${userId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-  
+
         if (!postsRes.ok) return
-  
+
         const postsData = await postsRes.json()
         const posts = postsData[0] || []
-  
+
         // Filter unique days
         const uniqueDays = new Set(
           posts.map(post => {
@@ -1299,16 +1305,16 @@ const HomePage = () => {
             }
           }).filter(Boolean)
         )
-  
+
         // Sort by most recent
         const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a)
-  
+
         // Calculate streak (daily or 5-minute test mode if you want!)
         let streak = 0
         let today = new Date()
         today.setHours(0, 0, 0, 0)
         let current = today.getTime()
-  
+
         for (let i = 0; i < sortedDays.length; i++) {
           const diff = (current - sortedDays[i]) / (1000 * 60 * 60 * 24)
           if (diff === 0 || diff === 1) {
@@ -1318,11 +1324,11 @@ const HomePage = () => {
             break
           }
         }
-  
+
         // Check if we've already shown it today
         const lastShown = sessionStorage.getItem("lastStreakPopupDate")
         const todayStr = new Date().toISOString().split("T")[0]
-  
+
         if (streak > 0 && lastShown !== todayStr) {
           setStreakPopup({
             open: true,
@@ -1334,10 +1340,10 @@ const HomePage = () => {
         console.error("Streak popup error:", e)
       }
     }
-  
+
     showStreakPopupIfNeeded()
   }, [])
-  
+
   // Add this useEffect to handle scroll behavior for both Dr. Bubbles and question mark bubble
   useEffect(() => {
     if (isMobile) {
@@ -1445,7 +1451,7 @@ const HomePage = () => {
         </AppBar>
 
         {showGuide && <DrBubbles onClose={() => setShowGuide(false)} />}
-            
+
         {/* Help bubble that appears when guide is closed */}
         {!showGuide && isQuestionBubbleVisible && (
           <Tooltip title="Click for Dr. Bubbles' guide!" placement="right" arrow>
@@ -1512,7 +1518,7 @@ const HomePage = () => {
               >
                 ?
               </Box>
-              
+
               {/* Pulsing ring */}
               <Box
                 component={motion.div}
@@ -1558,6 +1564,7 @@ const HomePage = () => {
           </Tooltip>
         )}
 
+
         <Container 
           maxWidth="lg" 
           sx={{ 
@@ -1577,8 +1584,8 @@ const HomePage = () => {
           }}
         >
           {/* Add CreatePost component at the top with more visible styling */}
-          {/* <Box 
-            sx={{ 
+          {/* <Box
+            sx={{
               mb: 4,
               width: "100%",
               maxWidth: "800px",
@@ -1593,8 +1600,8 @@ const HomePage = () => {
           </Box>
 
           {/* Add PostFeed component */}
-          {/* <Box 
-            sx={{ 
+          {/* <Box
+            sx={{
               width: "100%",
               maxWidth: "800px",
               mx: "auto",
@@ -1645,7 +1652,7 @@ const HomePage = () => {
                 fontSize: { xs: "28px", sm: "42px", md: "52px" },
               }}
             >
-              Dive into Learning
+              {homeText.diveIntoLearning}
             </Typography>
 
             <Typography
@@ -1663,7 +1670,7 @@ const HomePage = () => {
                 }
               }}
             >
-              Explore our gamified courses and quizzes designed to make learning fun and engaging.
+              {homeText.learningSubtitle}
             </Typography>
 
             <Box sx={{ mt: 4, display: "flex", justifyContent: "center" }}>
@@ -1687,7 +1694,7 @@ const HomePage = () => {
                   boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                 }}
               >
-                Get Started
+                {homeText.getStarted}
               </Button>
 
             </Box>
@@ -1722,10 +1729,10 @@ const HomePage = () => {
               }
             }}
           >
-            <Box sx={{ 
-              display: "flex", 
-              justifyContent: "space-between", 
-              alignItems: "center", 
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
               mb: 2,
               position: 'relative',
               zIndex: 2,
@@ -1750,10 +1757,10 @@ const HomePage = () => {
                   mb: { xs: 1, sm: 0 }, // Add margin below title on mobile
                 }}
               >
-                Latest Communities
+                {homeText.latestCommunities}
               </Typography>
-              <Box sx={{ 
-                display: "flex", 
+              <Box sx={{
+                display: "flex",
                 gap: 1,
                 [theme.breakpoints.down('sm')]: {
                   position: 'relative',
@@ -1892,7 +1899,7 @@ const HomePage = () => {
                           fontSize: { xs: "12px", md: "14px" },
                         }}
                       >
-                        {community.members} members
+                        {community.members} {homeText.members}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -1907,7 +1914,7 @@ const HomePage = () => {
                       fontSize: { xs: "14px", md: "16px" },
                     }}
                   >
-                    No communities found. Create one to get started!
+                    {homeText.noCommunities}
                   </Typography>
                 </Box>
               )}
@@ -1923,18 +1930,18 @@ const HomePage = () => {
                   fontSize: { xs: "14px", md: "16px" },
                 }}
               >
-                View All Communities
+                {homeText.viewAllCommunities}
               </Button>
             </Box>
           </Box>
 
           {/* Two-column layout for Champions and User Achievements */}
-          <Grid 
-            container 
-            spacing={0} 
-            sx={{ 
-              mt: 3, 
-              mb: 6, 
+          <Grid
+            container
+            spacing={0}
+            sx={{
+              mt: 3,
+              mb: 6,
               px: { xs: 0, sm: 0, md: 0 },
               width: "100%",
               mx: 0,
@@ -1969,13 +1976,13 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Box sx={{ 
-                  display: "flex", 
+                <Box sx={{
+                  display: "flex",
                   flexDirection: 'column', // Stack title and subtitle
                   justifyContent: "center", // Center vertically within this box
                   alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
-                  mb: 2, 
-                  position: "relative", 
+                  mb: 2,
+                  position: "relative",
                   zIndex: 1,
                   width: '100%', // Ensure box takes full width for centering
                   textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
@@ -1989,7 +1996,7 @@ const HomePage = () => {
                       color: "#1D1D20",
                     }}
                   >
-                    Bubble Brainiacs
+                    {homeText.bubbleBrainiacs}
                   </Typography>
                   <Typography
                     sx={{
@@ -2004,7 +2011,7 @@ const HomePage = () => {
                       mt: 0.5, // Add slight top margin
                     }}
                   >
-                    Top students ranked by total study time. 
+                    {homeText.brainiacsSubtitle}
                   </Typography>
                 </Box>
 
@@ -2140,9 +2147,11 @@ const HomePage = () => {
                         <CardContent sx={{
                           pt: 1,
                           pb: 1,
+
                           pl: { xs: '38px', md: 6 }, // Reduced pl on xs to bring content closer to rank
                           pr: { xs: 1, md: 2 },
                           width: "100%",
+
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "center",
@@ -2152,7 +2161,9 @@ const HomePage = () => {
                           }
                         }}>
                           {/* Ensure smaller gap for mobile */}
+
                           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, md: 2 } }}> {/* Slightly increased gap on xs */}
+
                             <Avatar
                               alt={user.name}
                               sx={{
@@ -2170,8 +2181,8 @@ const HomePage = () => {
                               }}
                             >
                               {shouldShowPics && user.avatar ? (
-                                <img 
-                                  src={user.avatar} 
+                                <img
+                                  src={user.avatar}
                                   alt={user.name.charAt(0).toUpperCase()}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                   onError={(e) => {
@@ -2332,13 +2343,13 @@ const HomePage = () => {
                   }
                 }}
               >
-                <Box sx={{ 
-                  display: "flex", 
+                <Box sx={{
+                  display: "flex",
                   flexDirection: 'column', // Stack title and subtitle
                   justifyContent: "center", // Center vertically
                   alignItems: { xs: "center", md: "flex-start" }, // Center horizontally on xs, left on md
-                  mb: 2, 
-                  position: "relative", 
+                  mb: 2,
+                  position: "relative",
                   zIndex: 1,
                   width: '100%', // Ensure box takes full width for centering
                   textAlign: { xs: 'center', md: 'left' }, // Center text on xs, left on md
@@ -2352,7 +2363,7 @@ const HomePage = () => {
                       color: "#1D1D20",
                     }}
                   >
-                    Bubble Achievers
+                    {homeText.bubbleAchievers}
                   </Typography>
                   <Typography
                     sx={{
@@ -2367,7 +2378,7 @@ const HomePage = () => {
                        mt: 0.5, // Add slight top margin
                     }}
                   >
-                    Remarkable feats across study categories.
+                    {homeText.achieversSubtitle}
                   </Typography>
                 </Box>
 
@@ -2377,10 +2388,10 @@ const HomePage = () => {
                   </Box>
                 ) : userStats.length === 0 ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography 
-                      variant="body1" 
-                      sx={{ 
-                        textAlign: 'center', 
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        textAlign: 'center',
                         mb: 2,
                         fontFamily: "SourGummy, sans-serif",
                         color: "#1D1D20",
@@ -2389,13 +2400,13 @@ const HomePage = () => {
                     >
                       No user badges available yet.
                     </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
+                    <Typography
+                      variant="body2"
+                      sx={{
                         textAlign: 'center',
                         fontFamily: "SourGummy, sans-serif",
                         color: "#1D1D20",
-                        fontSize: { xs: "12px", md: "14px" }, 
+                        fontSize: { xs: "12px", md: "14px" },
                       }}
                     >
                       Start studying, answering quizzes, and collecting fish to earn badges!
@@ -2505,15 +2516,18 @@ const HomePage = () => {
                           </Box>
                         </Box>
 
+
                         <CardContent sx={{ 
                           pt: 1, 
                           pb: 1, 
                           pl: { xs: '38px', md: 4 }, // Reduced md padding from 6 to 4
+
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
                           display: "flex",
                           flexDirection: "column",
+
                           justifyContent: "space-between",
                           [theme.breakpoints.down('sm')]: {
                             padding: '0 4px', // Reduced internal padding slightly on xs
@@ -2542,8 +2556,8 @@ const HomePage = () => {
                               }}
                             >
                               {shouldShowPics && stat.avatar ? (
-                                <img 
-                                  src={stat.avatar} 
+                                <img
+                                  src={stat.avatar}
                                   alt={stat.name?.charAt(0).toUpperCase() || "?"}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
                                   onError={(e) => {
@@ -2637,7 +2651,7 @@ const HomePage = () => {
                                   </Typography>
                                 </Box>
                               </Box>
-                              {/* Caption text positioned normally below - Add back */}
+
                               <Typography
                                 sx={{
                                   width: "100%",
@@ -2669,6 +2683,284 @@ const HomePage = () => {
             </Grid>
           </Grid>
 
+
+          { /*Active Users Section*/
+          /*<Box
+            sx={{
+              mt: 6,
+              mb: 6,
+              bgcolor: "#FFFFFF",
+              py: { xs: 3, md: 4 },
+              px: { xs: 1, md: 2 }, // Ensure outer padding is 8px (1) on xs
+              overflow: 'visible', // Keep overflow visible
+              borderRadius: 2,
+              boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+              mx: { xs: 0, sm: 0, md: 0 },
+              width: { xs: '100%', sm: '100%' },
+              position: 'relative',
+              [theme.breakpoints.down('sm')]: {
+                margin: 0,
+                width: '100%',
+                borderRadius: 0,
+                // Remove specific padding Left/Right, rely on px above
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                overflowX: 'visible',
+                mt: 4,
+                ml: 0,
+                mr: 0,
+              }
+            }}
+          >
+            <Box sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+              position: 'relative',
+              zIndex: 2,
+              mt: { xs: 0, sm: 0 },
+              [theme.breakpoints.down('sm')]: {
+                padding: '0 8px',
+                mb: 3,
+                // Center title on mobile
+                flexDirection: 'column', // Stack title and arrows vertically
+                alignItems: 'center', // Center items horizontally
+              }
+            }}>
+              <Typography
+                variant="h3"
+                color="#1D1D20"
+                sx={{
+                  fontFamily: "SourGummy, sans-serif",
+                  fontWeight: 700,
+                  fontSize: { xs: "24px", sm: "30px", md: "36px" },
+                  [theme.breakpoints.down('sm')]: {
+                    mt: 1,
+                    ml: 1,
+                    // Ensure title is centered when stacked
+                    textAlign: 'center',
+                    width: '100%', // Take full width for centering
+                    mb: 1, // Add margin below title on mobile
+                  }
+                }}
+              >
+                {homeText.activeUsers}
+              </Typography>
+              <Box sx={{
+                display: "flex",
+                gap: 1,
+                [theme.breakpoints.down('sm')]: {
+                  position: 'relative',
+                  right: '0', // Reset right positioning if needed
+                  top: 0,
+                   // Shift arrows slightly left by reducing gap or adding negative margin
+                   marginLeft: '-5px', // Example shift
+                }
+              }}>
+                <Button
+                  onClick={() => scrollCarousel(usersRef, "left")}
+                  sx={{
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
+
+                  }}
+                >
+
+                  <ChevronLeft size={isMobile ? 16 : 24} />
+                </Button>
+                <Button
+                  onClick={() => scrollCarousel(usersRef, "right")}
+                  sx={{
+                    minWidth: { xs: "32px", md: "40px" },
+                    height: { xs: "32px", md: "40px" },
+                    borderRadius: "50%",
+                    bgcolor: "#EF7B6C",
+                    color: "white",
+                    "&:hover": { bgcolor: "#e66a59" },
+                    p: { xs: 0.5, md: 1 },
+                  }}
+                >
+                  <ChevronRight size={isMobile ? 16 : 24} />
+                </Button>
+              </Box>
+            </Box>
+
+            <Box
+              ref={usersRef}
+              sx={{
+                display: "flex",
+                overflowX: "auto",
+                gap: { xs: 1, md: 2 },
+                pb: 2,
+                scrollbarWidth: "none",
+                "&::-webkit-scrollbar": { display: "none" },
+                msOverflowStyle: "none",
+                minHeight: { xs: "130px", md: "150px" },
+                px: { xs: 0, md: 0 }, // Set inner padding to 0 on xs
+                width: '100%',
+                scrollSnapType: 'x mandatory',
+                boxSizing: 'border-box', // Keep box-sizing
+                [theme.breakpoints.down('sm')]: {
+                  paddingLeft: 0, // Ensure inner padding is 0
+                  paddingRight: 0, // Ensure inner padding is 0
+                  mt: 1,
+                }
+              }}
+            >
+              {loadingUsers ? (
+                <Box sx={{ display: "flex",
+                  overflowX: "auto", // allow scroll instead of pushing page
+                  gap: 2,
+                  paddingX: 1,
+                  scrollbarWidth: "none", // optional: hide scrollbar
+                  "&::-webkit-scrollbar": { display: "none" },}}>
+                  <CircularProgress sx={{ color: "#1D6EF1" }} />
+                </Box>
+              ) : activeUsers && activeUsers.length > 0 ? (
+                activeUsers.map((user) => (
+                  <Card
+                    key={user.id}
+                    sx={{
+                      minWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
+                      maxWidth: { xs: 'calc(50% - 4px)', sm: 240, md: 280 }, // Keep precise calculation
+                      bgcolor: user.isCurrentUser ? "#f0f8ff" : "#FFFFFF",
+                      borderRadius: 2,
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateY(-4px)",
+                        boxShadow: "0 6px 12px rgba(0,0,0,0.15)",
+                        cursor: "pointer",
+                      },
+                      flex: "0 0 auto",
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      p: { xs: 1, md: 2 },
+                      position: "relative",
+                      border: user.isCurrentUser ? "2px solid #1D6EF1" : "1px solid #e0e0e0",
+                      scrollSnapAlign: 'start',
+                      boxSizing: 'border-box',
+                      mx: { xs: '1px', sm: 0 }, // Add small horizontal margin on xs
+                    }}
+                    onClick={() => handleUserClick(user.id)}
+                  >
+                    <Box sx={{ position: "relative" }}>
+                      <Avatar
+                        alt={user.name}
+                        sx={{
+                          width: { xs: 40, sm: 50, md: 60 },
+                          height: { xs: 40, sm: 50, md: 60 },
+                          bgcolor: "#1D6EF1",
+                          mr: { xs: 1, md: 2 },
+                          border: user.isCurrentUser ? "2px solid #EF7B6C" : "none",
+                          color: "white",
+                          fontSize: { xs: "1.2rem", md: "1.5rem" },
+                        }}
+                      >
+                        {shouldShowPics && user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                            onError={(e) => {
+                              e.target.onerror = null; // prevent infinite loops
+                              e.target.style.display = 'none'; // hide broken image
+                              const avatarElement = e.target.closest('.MuiAvatar-root');
+                              if (avatarElement) {
+                                avatarElement.innerHTML = user.name ? user.name.charAt(0).toUpperCase() : "U";
+                              }
+                            }}
+                          />
+                        ) : (
+                          user.name ? user.name.charAt(0).toUpperCase() : "U"
+                        )}
+                      </Avatar>
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          right: { xs: 4, md: 8 },
+                          width: { xs: 8, md: 12 },
+                          height: { xs: 8, md: 12 },
+                          borderRadius: "50%",
+                          bgcolor: user.status === "online" ? "#4CAF50" : "#9e9e9e",
+                          border: "2px solid white",
+                        }}
+                      />
+                    </Box>
+                    <Box sx={{ overflow: "hidden" }}>
+                      <Tooltip title={user.name + (user.isCurrentUser ? " (You)" : "")} placement="top" arrow>
+                        <Typography
+                          variant="h6"
+                          color="#1D1D20"
+                          sx={{
+                            fontFamily: "SourGummy, sans-serif",
+                            fontWeight: 600,
+                            fontSize: { xs: "14px", sm: "16px", md: "18px" },
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {truncateText(user.name, isMobile ? 8 : 10)} {user.isCurrentUser && "(You)"}
+                        </Typography>
+                      </Tooltip>
+                      <Typography
+                        color={user.status === "online" ? "#4CAF50" : "#9e9e9e"}
+                        sx={{
+                          fontFamily: "SourGummy, sans-serif",
+                          fontWeight: 500,
+                          fontSize: "14px",
+                        }}
+                      >
+                        {user.activity}
+                      </Typography>
+                      <Tooltip title={user.email} placement="top" arrow>
+                        <Typography
+                          color="#666"
+                          sx={{
+                            fontFamily: "SourGummy, sans-serif",
+                            fontWeight: 500,
+                            fontSize: "12px",
+                            mt: 0.5,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "180px",
+                          }}
+                        >
+                          {truncateText(user.email, 20)}
+                        </Typography>
+                      </Tooltip>
+                    </Box>
+                  </Card>
+                ))
+              ) : (
+                <Box sx={{ display: "flex", justifyContent: "center", width: "100%", alignItems: "center" }}>
+                  <Typography
+                    color="#1D1D20"
+                    sx={{
+                      fontFamily: "SourGummy, sans-serif",
+                      fontWeight: 500,
+                      fontSize: "16px",
+                    }}
+                  >
+                     {homeText.noActiveUsers}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box> */}
+
         </Container>
       </Box>
       <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>
@@ -2678,7 +2970,7 @@ const HomePage = () => {
       </Snackbar>
     </>
   )
-  
+
 }
 
 export default HomePage

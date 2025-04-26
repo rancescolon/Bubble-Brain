@@ -3,7 +3,18 @@
 import { useState, useEffect, createContext, useContext } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material"
-import { IconButton, Tooltip, Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Grid } from "@mui/material"
+import {
+  IconButton,
+  Tooltip,
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Grid,
+} from "@mui/material"
 import { Image } from "lucide-react"
 import { styled } from "@mui/material/styles"
 import HomePage from "./Component/HomePage"
@@ -26,15 +37,16 @@ import AboutJacob from "./Component/AboutJacob"
 import AboutCayden from "./Component/AboutCayden"
 import StyleGuidePage from "./Component/StyleGuide/StyleGuide"
 import Profile from "./Component/Profile"
-import BubbleTrapAnimation from "./Component/BubbleTrapAnimation"
 import Communities from "./Component/Communities"
 import CommunityView from "./Component/CommunityView"
 import Upload from "./Component/Upload"
 import StudySetView from "./Component/StudySetView"
+
 import socketService from './services/socketService'
 import Feed from './pages/Feed'
 import Shop from './Component/Shop'
 import { ShopProvider, useShop as useShopContextHook } from './Context/ShopContext'
+
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 // Import default background and other backgrounds you want to use
@@ -44,108 +56,112 @@ import background1 from "./assets/gang.png" // Create this file
 import background2 from "./assets/voyage.png" // Create this file
 import background3 from "./assets/war.png" // Create this file
 import background4 from "./assets/building.png"
-import CategorySelection from "./Component/category-selection"; // Create this file
+import CategorySelection from "./Component/category-selection"
+import LanguageSelectionPage from "./Component/LanguageSelectionPage" // Create this file
 
 // Create Background Context
-export const BackgroundContext = createContext();
+export const BackgroundContext = createContext()
+
+
+export function getSelectedLanguage() {
+  // fall back to “English” if nothing’s been saved yet
+  return localStorage.getItem("selectedLanguage") || "English";
+}
 
 // Styled component for background thumbnails
 const BackgroundThumbnail = styled(Box)(({ selected }) => ({
-  width: '100%',
-  height: '60px',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  transition: 'transform 0.2s, box-shadow 0.2s',
-  border: selected ? '3px solid #1D6EF1' : '3px solid transparent',
-  '&:hover': {
-    transform: 'scale(1.05)',
-    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.2)',
+  width: "100%",
+  height: "60px",
+  borderRadius: "8px",
+  cursor: "pointer",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  transition: "transform 0.2s, box-shadow 0.2s",
+  border: selected ? "3px solid #1D6EF1" : "3px solid transparent",
+  "&:hover": {
+    transform: "scale(1.05)",
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
   },
-}));
+}))
 
 // Background selector component - moved inside Router context
 function BackgroundSelector() {
-  const { backgroundOptions, currentBackground, changeBackground } = useContext(BackgroundContext);
-  const [showSelector, setShowSelector] = useState(false);
+  const { backgroundOptions, currentBackground, changeBackground } = useContext(BackgroundContext)
+  const [showSelector, setShowSelector] = useState(false)
 
   return (
-    <>
-      <Tooltip title="Change Background">
-        <IconButton
-          onClick={() => setShowSelector(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
-            bgcolor: 'rgba(255, 255, 255, 0.8)',
-            zIndex: 1000,
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 0.95)',
-            },
-            boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-          }}
-        >
-          <Image size={24} color="#1D6EF1" />
-        </IconButton>
-      </Tooltip>
-
-      <Dialog
-        open={showSelector}
-        onClose={() => setShowSelector(false)}
-        maxWidth="xs"
-        PaperProps={{
-          sx: {
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center' }}>Choose Background</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            {backgroundOptions.map((bg) => (
-              <Grid item xs={6} key={bg.id}>
-                <BackgroundThumbnail
-                  selected={currentBackground.id === bg.id}
-                  onClick={() => {
-                    changeBackground(bg);
-                    setShowSelector(false);
-                  }}
-                  sx={{
-                    backgroundImage: `url(${bg.image})`,
-                  }}
-                />
-                <Typography align="center" variant="body2" sx={{ mt: 0.5 }}>
-                  {bg.name}
-                </Typography>
-              </Grid>
-            ))}
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => setShowSelector(false)}
-            sx={{ color: '#1D6EF1', fontWeight: 'bold' }}
+      <>
+        <Tooltip title="Change Background">
+          <IconButton
+              onClick={() => setShowSelector(true)}
+              sx={{
+                position: "fixed",
+                bottom: 20,
+                right: 20,
+                bgcolor: "rgba(255, 255, 255, 0.8)",
+                zIndex: 1000,
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.95)",
+                },
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+              }}
           >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
-  );
+            <Image size={24} color="#1D6EF1" />
+          </IconButton>
+        </Tooltip>
+
+        <Dialog
+            open={showSelector}
+            onClose={() => setShowSelector(false)}
+            maxWidth="xs"
+            PaperProps={{
+              sx: {
+                borderRadius: "12px",
+                overflow: "hidden",
+              },
+            }}
+        >
+          <DialogTitle sx={{ fontWeight: "bold", textAlign: "center" }}>Choose Background</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              {backgroundOptions.map((bg) => (
+                  <Grid item xs={6} key={bg.id}>
+                    <BackgroundThumbnail
+                        selected={currentBackground.id === bg.id}
+                        onClick={() => {
+                          changeBackground(bg)
+                          setShowSelector(false)
+                        }}
+                        sx={{
+                          backgroundImage: `url(${bg.image})`,
+                        }}
+                    />
+                    <Typography align="center" variant="body2" sx={{ mt: 0.5 }}>
+                      {bg.name}
+                    </Typography>
+                  </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowSelector(false)} sx={{ color: "#1D6EF1", fontWeight: "bold" }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
+  )
 }
 
 // Safe conditional component that uses useLocation inside Router
 function ConditionalBackgroundSelector({ loggedIn }) {
-  const location = useLocation();
-  const hideBackgroundSelectorPaths = ["/login", "/register", "/style-guide"];
-  const showBackgroundSelector = loggedIn && !hideBackgroundSelectorPaths.includes(location.pathname);
-  
-  if (!showBackgroundSelector) return null;
-  
-  return <BackgroundSelector />;
+  const location = useLocation()
+  const hideBackgroundSelectorPaths = ["/login", "/register", "/style-guide"]
+  const showBackgroundSelector = loggedIn && !hideBackgroundSelectorPaths.includes(location.pathname)
+
+  if (!showBackgroundSelector) return null
+
+  return <BackgroundSelector />
 }
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
@@ -159,130 +175,130 @@ const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
   reconnectionDelay: 1000,
   timeout: 10000,
   autoConnect: true,
-  forceNew: true
+  forceNew: true,
 })
 
 // Enhanced socket connection handling with detailed logging
 socket.on("connect", () => {
-  console.log("Connected to chat server with socket ID:", socket.id);
-  
+  console.log("Connected to chat server with socket ID:", socket.id)
+
   // Log detailed connection info
   console.log("Socket connection details:", {
     url: process.env.REACT_APP_API_PATH_SOCKET,
-    transport: socket.io?.engine?.transport?.name || 'unknown',
+    transport: socket.io?.engine?.transport?.name || "unknown",
     path: "/hci/api/realtime-socket/socket.io",
     query: { tenantID: "droptable" },
-    timestamp: new Date().toISOString()
-  });
-  
-  const userId = sessionStorage.getItem("user");
+    timestamp: new Date().toISOString(),
+  })
+
+  const userId = sessionStorage.getItem("user")
   if (userId) {
-    socket.emit("user_connected", { userId: parseInt(userId) });
-    console.log("Emitted user_connected event for user:", userId);
+    socket.emit("user_connected", { userId: Number.parseInt(userId) })
+    console.log("Emitted user_connected event for user:", userId)
   }
-});
+})
 
 socket.on("connect_error", (error) => {
-  console.error("Socket connection error:", error);
+  console.error("Socket connection error:", error)
   console.log("Connection details:", {
     url: process.env.REACT_APP_API_PATH_SOCKET,
-    transport: socket.io?.engine?.transport?.name || 'unknown',
+    transport: socket.io?.engine?.transport?.name || "unknown",
     userId: sessionStorage.getItem("user"),
     path: "/hci/api/realtime-socket/socket.io",
     query: { tenantID: "droptable" },
     timestamp: new Date().toISOString(),
     errorMessage: error.message,
-    errorStack: error.stack
-  });
-});
+    errorStack: error.stack,
+  })
+})
 
 socket.on("disconnect", (reason) => {
-  console.log("Disconnected from chat server. Reason:", reason);
+  console.log("Disconnected from chat server. Reason:", reason)
   if (reason === "io server disconnect" || reason === "transport close") {
-    console.log("Attempting to reconnect...");
-    socket.connect();
+    console.log("Attempting to reconnect...")
+    socket.connect()
   }
-});
+})
 
 // Enhanced reconnection logging
 socket.on("reconnect", (attemptNumber) => {
-  console.log("Reconnected to chat server after", attemptNumber, "attempts at", new Date().toISOString());
-  
-  const userId = sessionStorage.getItem("user");
+  console.log("Reconnected to chat server after", attemptNumber, "attempts at", new Date().toISOString())
+
+  const userId = sessionStorage.getItem("user")
   if (userId) {
-    socket.emit("user_connected", { userId: parseInt(userId) });
-    console.log("Re-emitted user_connected event for user:", userId);
-    
+    socket.emit("user_connected", { userId: Number.parseInt(userId) })
+    console.log("Re-emitted user_connected event for user:", userId)
+
     // Re-join any active rooms after reconnection
-    const activeRoom = sessionStorage.getItem("activeRoomID");
-    const activeCommunityRoom = sessionStorage.getItem("activeCommunityRoomID");
-    const communityId = sessionStorage.getItem("activeCommunityID");
-    
+    const activeRoom = sessionStorage.getItem("activeRoomID")
+    const activeCommunityRoom = sessionStorage.getItem("activeCommunityRoomID")
+    const communityId = sessionStorage.getItem("activeCommunityID")
+
     if (activeRoom) {
-      console.log("Rejoining direct message room after reconnection:", activeRoom);
+      console.log("Rejoining direct message room after reconnection:", activeRoom)
       socket.emit("/chat/join-room", {
-        fromUserID: parseInt(userId),
-        toUserID: parseInt(sessionStorage.getItem("toUserID") || 0),
-        roomID: activeRoom
-      });
+        fromUserID: Number.parseInt(userId),
+        toUserID: Number.parseInt(sessionStorage.getItem("toUserID") || 0),
+        roomID: activeRoom,
+      })
     }
-    
+
     if (activeCommunityRoom && communityId) {
-      console.log("Rejoining community room after reconnection:", activeCommunityRoom);
+      console.log("Rejoining community room after reconnection:", activeCommunityRoom)
       socket.emit("/community/join-room", {
-        userID: parseInt(userId),
-        communityID: parseInt(communityId),
-        roomID: activeCommunityRoom
-      });
+        userID: Number.parseInt(userId),
+        communityID: Number.parseInt(communityId),
+        roomID: activeCommunityRoom,
+      })
     }
   }
-});
+})
 
 socket.on("reconnect_attempt", (attemptNumber) => {
-  console.log("Attempting to reconnect:", attemptNumber, "at", new Date().toISOString());
-});
+  console.log("Attempting to reconnect:", attemptNumber, "at", new Date().toISOString())
+})
 
 socket.on("reconnect_error", (error) => {
-  console.error("Reconnection error:", error);
-});
+  console.error("Reconnection error:", error)
+})
 
 socket.on("reconnect_failed", () => {
-  console.error("Failed to reconnect after all attempts");
-});
+  console.error("Failed to reconnect after all attempts")
+})
 
 // Direct message chat event handlers
 socket.on("/chat/join-room", (data) => {
-  console.log("Join room event received:", data);
-});
+  console.log("Join room event received:", data)
+})
 
 socket.on("/room-created", (data) => {
-  console.log("Room created event received:", data);
-});
+  console.log("Room created event received:", data)
+})
 
 socket.on("/send-message", (data) => {
-  console.log("Message received:", data);
-});
+  console.log("Message received:", data)
+})
 
 // Community chat event handlers
 socket.on("/community/join-room", (data) => {
-  console.log("Community room join event received:", data);
-});
+  console.log("Community room join event received:", data)
+})
 
 socket.on("/room-created-community", (data) => {
-  console.log("Community room created event received:", data);
-});
+  console.log("Community room created event received:", data)
+})
 
 socket.on("/community/message", (data) => {
-  console.log("Community message received:", data);
-});
+  console.log("Community message received:", data)
+})
 
 socket.on("/community/member-online", (data) => {
-  console.log("Community member online status received:", data);
-});
+  console.log("Community member online status received:", data)
+})
 
 socket.on("/community/member-offline", (data) => {
-  console.log("Community member offline status received:", data);
-});
+  console.log("Community member offline status received:", data)
+})
 
 export { socket }
 
@@ -346,7 +362,7 @@ const theme = createTheme({
   },
 })
 
-function AppContent({ backgroundOptions, currentBackground, changeBackground }) {
+function AppContent({ backgroundOptions, currentBackground, changeBackground, language, setLanguage }) {
   const [loggedIn, setLoggedIn] = useState(false)
   const [openModal, setOpenModal] = useState(false)
   const [refreshPosts, setRefreshPosts] = useState(false)
@@ -375,20 +391,20 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
 
   const logout = (e) => {
     e.preventDefault()
-    
-    // Get the user ID before removing from sessionStorage 
-    const userStr = sessionStorage.getItem("user");
-    let userId = null;
-    
+
+    // Get the user ID before removing from sessionStorage
+    const userStr = sessionStorage.getItem("user")
+    let userId = null
+
     if (userStr) {
       try {
-        const user = JSON.parse(userStr);
-        userId = (typeof user === 'object' && user !== null && user.id !== undefined) ? user.id : userStr;
+        const user = JSON.parse(userStr)
+        userId = typeof user === "object" && user !== null && user.id !== undefined ? user.id : userStr
       } catch (e) {
-        userId = userStr; // Fallback if not JSON
+        userId = userStr // Fallback if not JSON
       }
     }
-    
+
     // Clear user-specific localStorage keys
     if (userId) {
       const keysToRemove = [
@@ -413,6 +429,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
     }
     
     // Clear general session storage items
+
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("activeRoomID")
@@ -440,6 +457,7 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
   }
 
   return (
+
     <>
       <div className="App">
         <header className="App-header">
@@ -552,6 +570,14 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
                   </ProtectedRoute>
                 }
               />
+              <Route
+                    path="/languageSelection"
+                    element={
+                      <ProtectedRoute>
+                        <LanguageSelectionPage language={language} setLanguage={setLanguage} />
+                      </ProtectedRoute>
+                    }
+              />
             </Routes>
           </div>
         </header>
@@ -564,60 +590,91 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground }) 
         <ConditionalBackgroundSelector loggedIn={loggedIn} />
       </div>
     </>
+
   )
 }
 
 function App() {
   // Background state
+  const [language, setLanguage] = useState(() => {
+    // Initialize from localStorage if available
+    return localStorage.getItem("selectedLanguage") || "English"
+  })
   const [backgroundOptions] = useState([
-    { id: 'default', image: defaultBackground, name: 'Default' },
-    { id: 'bg1', image: background1, name: 'Life of Crime' },
-    { id: 'bg2', image: background2, name: 'Voyage' },
-    { id: 'bg3', image: background3, name: 'War' },
-    { id: 'bg4', image: background4, name: 'Construction' },
-  ]);
-  
+    { id: "default", image: defaultBackground, name: "Default" },
+    { id: "bg1", image: background1, name: "Life of Crime" },
+    { id: "bg2", image: background2, name: "Voyage" },
+    { id: "bg3", image: background3, name: "War" },
+    { id: "bg4", image: background4, name: "Construction" },
+  ])
+
   const [currentBackground, setCurrentBackground] = useState(() => {
     // Initialize from localStorage if available
-    const savedBgId = localStorage.getItem('selectedBackground');
-    return backgroundOptions.find(bg => bg.id === savedBgId) || backgroundOptions[0];
-  });
-  
+    const savedBgId = localStorage.getItem("selectedBackground")
+    return backgroundOptions.find((bg) => bg.id === savedBgId) || backgroundOptions[0]
+  })
+
   // Function to change background
   const changeBackground = (backgroundOption) => {
-    setCurrentBackground(backgroundOption);
-    localStorage.setItem('selectedBackground', backgroundOption.id);
-  };
+    setCurrentBackground(backgroundOption)
+    localStorage.setItem("selectedBackground", backgroundOption.id)
+  }
+
+
+  // Get user ID from sessionStorage to use as key
+  // This should re-render App when login/logout happens, assuming login/logout triggers a state change in App or a parent
+  const userStr = sessionStorage.getItem("user")
+  let userIdKey = null
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      userIdKey = typeof user === "object" && user !== null && user.id !== undefined ? user.id : userStr
+    } catch (e) {
+      userIdKey = userStr // Fallback if not JSON but potentially an ID
+    }
+  }
+
+  // Add timestamp to force re-render when re-logging in as the same user
+  const timestamp = sessionStorage.getItem("loginTimestamp") || Date.now().toString()
+
+  // Use a fallback like 'logged_out' if userIdKey is null/undefined to ensure key changes
+  const shopProviderKey =
+      userIdKey !== null && userIdKey !== undefined ? `${String(userIdKey)}_${timestamp}` : "logged_out"
 
   return (
-    <BackgroundContext.Provider value={{ backgroundOptions, currentBackground, changeBackground }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Box
-          sx={{
-            minHeight: '100vh',
-            width: '100%',
-            maxWidth: '100vw',
-            overflowX: 'hidden',
-            backgroundImage: `url(${currentBackground.image})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundAttachment: 'fixed',
-            transition: 'background-image 0.5s ease-in-out',
-          }}
-        >
-          <Router basename={process.env.PUBLIC_URL}>
-            <ShopProvider>
-              <AppContent 
-                backgroundOptions={backgroundOptions}
-                currentBackground={currentBackground}
-                changeBackground={changeBackground}
-              />
-            </ShopProvider>
-          </Router>
-        </Box>
-      </ThemeProvider>
-    </BackgroundContext.Provider>
+      <BackgroundContext.Provider
+          value={{ backgroundOptions, currentBackground, changeBackground, language, setLanguage }}
+      >
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Box
+              sx={{
+                minHeight: "100vh",
+                width: "100%",
+                maxWidth: "100vw",
+                overflowX: "hidden",
+                backgroundImage: `url(${currentBackground.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundAttachment: "fixed",
+                transition: "background-image 0.5s ease-in-out",
+              }}
+          >
+            <Router basename={process.env.PUBLIC_URL}>
+              <ShopProvider key={shopProviderKey}>
+                <AppContent
+                    backgroundOptions={backgroundOptions}
+                    currentBackground={currentBackground}
+                    changeBackground={changeBackground}
+                    language={language}
+                    setLanguage={setLanguage}
+                />
+              </ShopProvider>
+            </Router>
+          </Box>
+        </ThemeProvider>
+      </BackgroundContext.Provider>
+
   )
 }
 

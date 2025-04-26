@@ -2,6 +2,8 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { useBackground } from './BackgroundContext';
 import BackgroundSelector from './BackgroundSelector';
+import { getSelectedLanguage } from "../App";
+import text from "../text.json";
 
 /**
  * AppWrapper - Wraps the entire app with background styling
@@ -11,7 +13,9 @@ import BackgroundSelector from './BackgroundSelector';
  * @returns {React.Component}
  */
 const AppWrapper = ({ children }) => {
-  const { backgroundOptions, currentBackground, changeBackground, currentBackgroundId } = useBackground();
+  const { backgroundOptions, currentBackground, changeBackground, currentBackgroundId, language } = useBackground();
+  const langKey = language === "English" ? "en" : "es";
+  const appWrapperText = text[langKey].appWrapper;
 
   return (
     <Box
@@ -34,6 +38,9 @@ const AppWrapper = ({ children }) => {
         currentBackgroundId={currentBackgroundId}
         position="bottom-right"
         miniPalette={true}
+        title={appWrapperText.backgroundSelector.title}
+        selectLabel={appWrapperText.backgroundSelector.selectBackground}
+        currentLabel={appWrapperText.backgroundSelector.currentBackground}
       />
 
       {/* App Content */}

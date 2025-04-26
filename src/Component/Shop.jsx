@@ -39,7 +39,16 @@ import {
   Tooltip
 } from '@mui/material';
 import { ShoppingCart, CheckCircle, HelpCircle, PlusCircle, MinusCircle, RefreshCw } from 'lucide-react'; // Added RefreshCw
+import text from '../text.json'; // Added import
+// Add Spanish button imports
+import spanishBuyButtonImage from '../assets/spanishbuybutton.png'; 
+import spanishEquipButtonImage from '../assets/spanishequipbutton.png'; 
+import spanishOwnedButtonImage from '../assets/spanishownedbutton.png'; 
+import spanishEquippedButtonImage from '../assets/spanishequippedbutton.png';
+
+
 import { motion } from "framer-motion";
+
 //The code for the Shop page was assisted with the help of ChatGPT
 // Helper to format time (from HomePage.jsx)
 const formatTime = (seconds) => {
@@ -69,7 +78,12 @@ const Shop = () => {
     setEquippedSkinId: setContextEquippedSkinId,
   } = useShop();
 
-  const { currentBackground } = useContext(BackgroundContext);
+  const { 
+    currentBackground, 
+    language // Added language from context
+  } = useContext(BackgroundContext); 
+  const langKey = language === "English" ? "en" : "es"; // Determine language key
+  const shopText = text[langKey].shopPage; // Get shop specific text
 
   const [totalStudyTimeSeconds, setTotalStudyTimeSeconds] = useState(0);
   const [loadingStudyTime, setLoadingStudyTime] = useState(true);
@@ -90,7 +104,7 @@ const Shop = () => {
       if (!token || !userStr) {
         console.warn('User not logged in. Cannot fetch study time.');
         setLoadingStudyTime(false);
-        setSnackbar({ open: true, message: 'Please log in to access the shop', severity: 'warning' });
+        setSnackbar({ open: true, message: shopText.loginPromptShop, severity: 'warning' }); // Use shopText
         return;
       }
 
@@ -128,7 +142,7 @@ const Shop = () => {
         setTotalStudyTimeSeconds(totalSeconds);
       } catch (error) {
         console.error("Error fetching study time:", error);
-        setSnackbar({ open: true, message: 'Failed to load study time.', severity: 'error' });
+        setSnackbar({ open: true, message: shopText.loadTimeFail, severity: 'error' }); // Use shopText
       } finally {
         setLoadingStudyTime(false);
       }
@@ -141,7 +155,7 @@ const Shop = () => {
       setTotalStudyTimeSeconds(0);
       setLoadingStudyTime(false);
     }
-  }, [userId]); // Add userId dependency to refetch when user changes
+  }, [userId, shopText]); // Added shopText dependency
 
   // New useEffect to sync bubble bucks with study time
   useEffect(() => {
@@ -196,7 +210,7 @@ const Shop = () => {
           console.error("[Shop] Failed to update bubble bucks");
           setSnackbar({
             open: true,
-            message: "Failed to update Bubble Bucks. Try refreshing the page.",
+            message: shopText.updateBucksFail, // Use shopText
             severity: "error"
           });
         }
@@ -205,7 +219,8 @@ const Shop = () => {
       // No new minutes, but still update last synced time to current total
       localStorage.setItem(LAST_SYNCED_KEY, totalStudyTimeSeconds.toString());
     }
-  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks, isShopLoading]);
+
+  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks, isShopLoading, shopText]);
 
   // Load fisherman click time from localStorage when userId becomes available
   useEffect(() => {
@@ -245,10 +260,11 @@ const Shop = () => {
 
     // Make sure user is logged in
     if (!userId) {
-      console.log("[Fisherman] Exiting: No userId.");
-      setSnackbar({ 
+
+        setSnackbar({ 
         open: true, 
-        message: 'Please log in to use this feature.',
+        message: shopText.loginPromptFeature, // Use shopText
+
         severity: 'warning' 
       });
       return;
@@ -279,7 +295,7 @@ const Shop = () => {
       console.log(`[Fisherman] Exiting: Cooldown active. Remaining: ${remainingMinutes}m`);
       setSnackbar({ 
         open: true, 
-        message: `The fishing line snapped! Try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`,
+        message: shopText.cooldown.replace('{minutes}', remainingMinutes).replace('{plural}', remainingMinutes > 1 ? shopText.pluralS : ''), // Use shopText
         severity: 'error' 
       });
       return; 
@@ -312,21 +328,24 @@ const Shop = () => {
           const snackbarParams = { open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' };
           console.log("[Fisherman] Backend successful, setting snackbar:", snackbarParams);
           // Show success message after backend confirmation
-          setSnackbar(snackbarParams);
+
+          setSnackbar({ open: true, message: shopText.caughtBucks.replace('{amount}', amountToAdd), severity: 'success' }); // Use shopText
+
         } else {
           console.error("[Fisherman] Backend update failed. Reverting optimistic update.");
           // Revert optimistic update if backend fails
-          addBubbleBucks(-amountToAdd); 
-          setLastFishermanClickTime(null); 
-          localStorage.removeItem(userSpecificKey); 
-          setSnackbar({ open: true, message: 'Failed to save Bubble Bucks. Try again.', severity: 'error' });
+
+          addBubbleBucks(-amountToAdd); // Subtract the added amount
+          setLastFishermanClickTime(null); // Reset cooldown if backend failed
+          localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+          setSnackbar({ open: true, message: shopText.saveBucksFail, severity: 'error' }); // Use shopText
        }
     } else {
-       console.error("[Fisherman] Optimistic update failed.");
-       // Handle optimistic failure (unchanged)
-       setLastFishermanClickTime(null); 
-       localStorage.removeItem(userSpecificKey); 
-       setSnackbar({ open: true, message: 'Error adding Bubble Bucks.', severity: 'error' });
+       // This case should be rare (e.g., invalid amount), but handle it
+       setLastFishermanClickTime(null); // Reset cooldown if optimistic update failed
+       localStorage.removeItem(userSpecificKey); // Remove from localStorage too
+       setSnackbar({ open: true, message: shopText.addBucksError, severity: 'error' }); // Use shopText
+
     }
 
     // End animation after a delay
@@ -348,7 +367,7 @@ const Shop = () => {
     if (bubbleBucks < skin.price) {
       setSnackbar({ 
         open: true, 
-        message: `Not enough Bubble Bucks (need ${skin.price}) to buy ${skin.name}.`, 
+        message: shopText.notEnoughBucks.replace('{price}', skin.price).replace('{name}', skin.name), // Use shopText 
         severity: 'error' 
       });
       return;
@@ -357,7 +376,7 @@ const Shop = () => {
     // 2. Show "Purchasing..." Snackbar (unchanged)
     setSnackbar({ 
       open: true, 
-      message: `Purchasing ${skin.name}...`, 
+      message: shopText.purchasing.replace('{name}', skin.name), // Use shopText
       severity: 'info' 
     });
 
@@ -397,7 +416,9 @@ const Shop = () => {
       // 6. Show final success message (unchanged)
       setSnackbar({ 
         open: true, 
-        message: `Successfully purchased and equipped ${skin.name}!`, 
+
+        message: shopText.purchaseSuccess.replace('{name}', skin.name), // Use shopText
+
         severity: 'success' 
       });
 
@@ -416,7 +437,7 @@ const Shop = () => {
       // Revert optimistic "Purchasing..." snackbar with error message
       setSnackbar({ 
         open: true, 
-        message: `Failed to purchase ${skin.name}. Please try again.`, 
+        message: shopText.purchaseFail.replace('{name}', skin.name), // Use shopText
         severity: 'error' 
       });
       
@@ -433,7 +454,7 @@ const Shop = () => {
       await equipSkin(skinId); // Use the original equipSkin from context here
       setSnackbar({ 
         open: true, 
-        message: "Default skin equipped!", 
+        message: shopText.defaultEquipped, // Use shopText
         severity: 'info' 
       });
       return;
@@ -449,7 +470,7 @@ const Shop = () => {
         console.error(`[Shop] Skin with ID ${skinId} not found in available skins`);
         setSnackbar({ 
           open: true, 
-          message: "Error: Skin not found", 
+          message: shopText.skinNotFound, // Use shopText
           severity: 'error' 
         });
         return;
@@ -457,7 +478,7 @@ const Shop = () => {
       
       setSnackbar({ 
         open: true, 
-        message: `You need to purchase ${skin.name} before equipping it.`, 
+        message: shopText.purchaseToEquip.replace('{name}', skin.name), // Use shopText
         severity: 'warning' 
       });
       return;
@@ -490,7 +511,7 @@ const Shop = () => {
       const currentSkin = availableSkins.find(s => s.id === skinId) || { name: "skin" };
       setSnackbar({ 
         open: true, 
-        message: `Equipped ${currentSkin.name}!`, 
+        message: shopText.equipSuccess.replace('{name}', currentSkin.name), // Use shopText
         severity: 'success' 
       });
       
@@ -499,7 +520,7 @@ const Shop = () => {
       console.error("[Shop] Error equipping skin:", error);
       setSnackbar({ 
         open: true, 
-        message: "Failed to equip skin. Please try again.", 
+        message: shopText.equipFail, // Use shopText
         severity: 'error' 
       });
     }
@@ -691,7 +712,7 @@ const Shop = () => {
     if (!userId || !refreshUserData) {
       setSnackbar({
         open: true,
-        message: "Cannot refresh shop data. Try logging in again.",
+        message: shopText.cannotRefresh, // Use shopText
         severity: "error"
       });
       return;
@@ -700,7 +721,7 @@ const Shop = () => {
     setIsRefreshing(true);
     setSnackbar({
       open: true,
-      message: "Refreshing shop data...",
+      message: shopText.refreshingData, // Use shopText
       severity: "info"
     });
     
@@ -776,7 +797,7 @@ const Shop = () => {
             console.error("[Shop] CRITICAL: Still missing skins after restore:", stillMissingSkins);
             setSnackbar({
               open: true,
-              message: "Some items may not have been properly restored. Try refreshing again.",
+              message: shopText.restoreFailSome, // Needs key
               severity: "warning"
             });
             return;
@@ -785,7 +806,7 @@ const Shop = () => {
           console.error("[Shop] Failed to restore data!");
           setSnackbar({
             open: true,
-            message: "Failed to restore your purchased items. Please try again.",
+            message: shopText.restoreFailAll, // Needs key
             severity: "error"
           });
           return;
@@ -808,7 +829,7 @@ const Shop = () => {
         console.error("[Shop] CRITICAL: Still missing skins after all recovery attempts:", finalMissingSkins);
         setSnackbar({
           open: true,
-          message: "Some items couldn't be restored. Please contact support.",
+          message: shopText.restoreFailCritical, // Needs key
           severity: "error"
         });
         return;
@@ -817,7 +838,7 @@ const Shop = () => {
       // Show success message
       setSnackbar({
         open: true,
-        message: "Shop refreshed successfully!",
+        message: shopText.refreshSuccess, // Use shopText
         severity: "success"
       });
       
@@ -831,7 +852,7 @@ const Shop = () => {
       
       setSnackbar({
         open: true,
-        message: "Failed to refresh shop data. Please try again.",
+        message: shopText.refreshFail, // Use shopText
         severity: "error"
       });
     } finally {
@@ -1046,8 +1067,10 @@ const Shop = () => {
               sx={{
                 // <<< RESTORED Original Positioning >>>
                 position: 'absolute',
-                // Default styles for different width breakpoints
-                top: { xs: '135px', sm: '62px', md: '62px' }, 
+                // Conditional top positioning based on language
+                top: langKey === 'es' 
+                  ? { xs: '130px', sm: '52px', md: '52px' } // Spanish position (5px higher)
+                  : { xs: '135px', sm: '62px', md: '62px' }, // Default position
                 left: { xs: 'calc(50% + 11px)', sm: 'calc(50% + 113px)', md: 'calc(50% + 113px)' }, 
                 width: '70px',
                 height: 'auto',
@@ -1055,66 +1078,103 @@ const Shop = () => {
                 pointerEvents: 'auto',
                 cursor: 'pointer',    
                 filter: 'none',       
-                transition: 'transform 0.2s ease-in-out, filter 0.3s ease-in-out',
+                transition: 'transform 0.2s ease-in-out, filter 0.3s ease-in-out, top 0.3s ease-in-out', // Added top transition
                 '&:hover': {
-                  filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))',
+
+                  filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', 
+
                   transform: 'scale(1.05)', 
                 },
                 '@media (aspect-ratio: 3/4)': {
-                  top: '60px',
+
+                  // Adjust top for Surface Duo based on language
+                  top: langKey === 'es' ? '55px' : '60px', // Spanish position higher here too       
+
                   left: 'calc(50% + 113px)', 
                 },
               }}
             />
             
             <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
-              Bubble Shop
+              {shopText.title}
             </Typography>
+            
+            {/* Refresh button */}
+            <IconButton
+              onClick={handleRefreshData}
+              disabled={isRefreshing || isLoading}
+              sx={{
+                position: 'absolute',
+                top: { xs: '-12px', md: '-12px' }, // Adjusted xs top value
+                right: { xs: '8px', md: '12px' },
+                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.95)',
+                },
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+                // Media query specifically for devices with aspect ratio = 3/4
+                '@media (aspect-ratio: 3/4)': {
+                  top: '-20px', // Adjust top position for Surface Duo
+                },
+              }}
+              aria-label={shopText.refreshAlt} // Use shopText for accessibility
+            >
+              <RefreshCw size={24} className={isRefreshing ? 'spin' : ''} />
+            </IconButton>
           </Box>
 
-          {/* User Stats Section - MODIFIED */} 
-          <Paper elevation={2} sx={{ 
-            p: 3, 
-            mb: 4, 
-            mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
-            borderRadius: '16px', 
-            bgcolor: 'rgba(244, 253, 255, 0.6)', 
-            backdropFilter: 'blur(2px)' 
-          }}>
-            <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
-              {/* Stats Display */}
-              <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
-                <Typography variant="h5" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mb: 2 }}>
-                    Your Stats
-                </Typography>
-                {/* Bubble Bucks Display with Tooltip */}
-                <Tooltip title="Earn Bubble Bucks from studying!" arrow>
-                  <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
-                  <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>Bubble Bucks:</Typography>
-                  <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
-                    <img src={bubbleBuckImage} alt="Bubble Buck" style={{ width: '80px', height: '80px', marginRight: '8px' }} />
-                    <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
-                  </Box>
-                </Box>
-                </Tooltip>
-                
-                {/* Add study time to bubble bucks conversion subtitle */}
-                <Typography variant="body2" sx={{ 
-                  fontFamily: 'SourGummy, sans-serif', 
-                  color: 'text.secondary', 
-                  mt: -1, 
-                  mb: 2,
-                  textAlign: 'center' 
-                }}>
-                  1 minute of study time = 1 Bubble Buck
-                </Typography>
-                
-                {/* Show refresh message if bubble bucks are 0 AND NOT LOADING */}
-                {bubbleBucks === 0 && purchasedSkins.length === 0 && !isShopLoading && (
-                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
-                    <RefreshCw size={18} style={{ marginRight: '8px' }} />
-                    <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
-                      If your data isn't showing, refresh the page
+          {/* --- Re-add Main Loading Indicator --- */}
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 5 }}>
+              <CircularProgress />
+              <Typography sx={{ ml: 2, fontFamily: 'SourGummy, sans-serif' }}>{shopText.loadingShop}</Typography> {/* Use shopText */}
+            </Box>
+          ) : (
+            <> {/* Render content only when not loading */} 
+              {/* User Stats Section - MODIFIED */} 
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                mb: 4, 
+                mt: { xs: 10, sm: 0 }, // Increased from 5 to 10 for mobile view
+                borderRadius: '16px', 
+                bgcolor: 'rgba(244, 253, 255, 0.6)', 
+                backdropFilter: 'blur(2px)' 
+              }}>
+                <Grid container spacing={3} alignItems="center" justifyContent="center"> {/* Center content */} 
+                  {/* Stats Display */}
+                  <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}> 
+                    <Typography variant="h5" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mb: 2 }}>
+                        {shopText.yourStats} {/* Use shopText */}
+                    </Typography>
+                    {/* Bubble Bucks Display with Tooltip */}
+                    <Tooltip title={shopText.earnBucksTooltip} arrow> {/* Use shopText */}
+                      <Box display="flex" alignItems="center" justifyContent='center' mb={2}> 
+                      <Typography sx={{ fontFamily: 'SourGummy, sans-serif', mr: 1, fontSize: '1.2rem' }}>{shopText.bubbleBucksLabel}</Typography> {/* Use shopText */}
+                      <Box display="flex" alignItems="center" sx={{ fontWeight: 'bold' }}>
+                        <img src={bubbleBuckImage} alt={shopText.bubbleBuckAlt} style={{ width: '80px', height: '80px', marginRight: '8px' }} /> {/* Use shopText */}
+                        <Typography variant="h5" component="span" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>{bubbleBucks}</Typography>
+                      </Box>
+                    </Box>
+                    </Tooltip>
+                    
+                    {/* Add study time to bubble bucks conversion subtitle */}
+                    <Typography variant="body2" sx={{ 
+                      fontFamily: 'SourGummy, sans-serif', 
+                      color: 'text.secondary', 
+                      mt: -1, 
+                      mb: 2,
+                      textAlign: 'center' 
+                    }}>
+                      {shopText.conversionRate} {/* Use shopText */}
+                    </Typography>
+                    
+                    {/* Show refresh message if bubble bucks are 0 */}
+                    {bubbleBucks === 0 && purchasedSkins.length === 0 && (
+                      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'primary.main' }}>
+                        <RefreshCw size={18} style={{ marginRight: '8px' }} />
+                        <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
+                          {shopText.refreshPrompt} {/* Use shopText */}
+
                     </Typography>
                   </Box>
                 )}
@@ -1122,30 +1182,32 @@ const Shop = () => {
             </Grid>
           </Paper>
 
-          {/* Available Skins Section */}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
-            <Typography variant="h4" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, color: '#1D1D20' }}>
-              Skins Store
-            </Typography>
-            {/* Sorting Dropdown */}
-            <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
-              <InputLabel id="sort-by-label" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Sort By</InputLabel>
-              <Select
-                labelId="sort-by-label"
-                id="sort-by-select"
-                value={sortBy}
-                label="Sort By"
-                onChange={(e) => setSortBy(e.target.value)}
-                sx={{ fontFamily: 'SourGummy, sans-serif' }}
-              >
-                <MenuItem value="default" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Default</MenuItem>
-                <MenuItem value="rarityAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: Low to High</MenuItem>
-                <MenuItem value="rarityDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Rarity: High to Low</MenuItem>
-                <MenuItem value="priceAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: Low to High</MenuItem>
-                <MenuItem value="priceDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>Price: High to Low</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+
+              {/* Available Skins Section */}
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
+                <Typography variant="h4" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, color: '#1D1D20' }}>
+                  {shopText.skinsStore} {/* Use shopText */}
+                </Typography>
+                {/* Sorting Dropdown */}
+                <FormControl sx={{ m: 1, minWidth: 150 }} size="small">
+                  <InputLabel id="sort-by-label" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortBy}</InputLabel> {/* Use shopText */}
+                  <Select
+                    labelId="sort-by-label"
+                    id="sort-by-select"
+                    value={sortBy}
+                    label={shopText.sortBy} // Use shopText
+                    onChange={(e) => setSortBy(e.target.value)}
+                    sx={{ fontFamily: 'SourGummy, sans-serif' }}
+                  >
+                    <MenuItem value="default" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortDefault}</MenuItem> {/* Use shopText */}
+                    <MenuItem value="rarityAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortRarityAsc}</MenuItem> {/* Use shopText */}
+                    <MenuItem value="rarityDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortRarityDesc}</MenuItem> {/* Use shopText */}
+                    <MenuItem value="priceAsc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortPriceAsc}</MenuItem> {/* Use shopText */}
+                    <MenuItem value="priceDesc" sx={{ fontFamily: 'SourGummy, sans-serif' }}>{shopText.sortPriceDesc}</MenuItem> {/* Use shopText */}
+                  </Select>
+                </FormControl>
+              </Box>
+
 
           <Grid container spacing={3}>
             {sortedSkins.map((skin, index) => {
@@ -1154,7 +1216,6 @@ const Shop = () => {
               const canAfford = bubbleBucks >= skin.price;
               const rarity = rarityMap[skin.rarityId];
               const isMythic = skin.rarityId === 'mythic';
-
               return (
                 <Grid item xs={12} sm={6} md={4} key={skin.id}>
                   <div
@@ -1166,59 +1227,60 @@ const Shop = () => {
                       animation: 'fadeInUp 0.3s ease forwards'
                     }}
                   >
-                    <Card sx={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column', 
-                      borderRadius: '16px', 
-                      boxShadow: 3,
-                      bgcolor: 'rgba(255, 255, 255, 0.9)',
-                      border: '2px solid transparent',
-                    }}>
-                      <CardMedia
-                        component="img"
-                        sx={{ 
-                          height: 180, 
-                          objectFit: 'contain', 
-                          pt: 2, 
-                          backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
-                        }}
-                        image={skin.image} 
-                        alt={skin.name}
-                        onError={(e) => { // Basic error handling for missing images
-                          e.target.onerror = null; 
-                          e.target.style.display='none'; 
-                          // Optionally show a placeholder text or icon
-                          const placeholder = e.target.parentNode.querySelector('.image-placeholder');
-                          if(placeholder) placeholder.style.display='block';
-                        }}
-                      />
-                      {/* Placeholder for missing image */}
-                      <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
-                         <HelpCircle size={48} style={{marginTop: '30px'}}/>
-                         <Typography variant="caption">Image not found</Typography>
-                      </Box>
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
-                          {skin.name}
-                        </Typography>
-                        {rarity && (
-                          <Typography variant="body2" sx={{
-                            fontFamily: 'SourGummy, sans-serif',
-                            fontWeight: 'bold',
-                            color: rarity.textColor || '#000000',
-                            mb: 1,
-                            // Removed textShadow
-                            textShadow: 'none' 
-                          }}>
-                            {rarity.name}
+                     <Card sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          borderRadius: '16px', 
+                          boxShadow: 3, // Base shadow for all cards
+                          bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          border: '2px solid transparent', // Reverted to default transparent border
+                        }}>
+                        <CardMedia
+                          component="img"
+                          sx={{ 
+                              height: 180, 
+                              objectFit: 'contain', 
+                              pt: 2, 
+                              backgroundColor: rarity ? rarity.bgColor : '#f5f5f5' // Use rarity background color
+                          }}
+                          image={skin.image} 
+                          alt={skin.name}
+                          onError={(e) => { // Basic error handling for missing images
+                            e.target.onerror = null; 
+                            e.target.style.display='none'; 
+                            // Optionally show a placeholder text or icon
+                            const placeholder = e.target.parentNode.querySelector('.image-placeholder');
+                            if(placeholder) placeholder.style.display='block';
+                          }}
+                        />
+                        {/* Placeholder for missing image */}
+                        <Box className="image-placeholder" sx={{ display: 'none', height: 180, pt: 2, backgroundColor: '#f5f5f5', textAlign: 'center', color: '#999'}}>
+                           <HelpCircle size={48} style={{marginTop: '30px'}}/>
+                           <Typography variant="caption">{shopText.imageNotFound}</Typography> {/* Use shopText */}
+                        </Box>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography gutterBottom variant="h6" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600 }}>
+                            {shopText[`skin_${skin.id}`] || skin.name} {/* Use translated name */}
                           </Typography>
-                        )}
-                        <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
-                          <img 
-                            src={bubbleBuckImage} 
-                            alt="" 
-                            style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
+                          {rarity && (
+                            <Typography variant="body2" sx={{
+                              fontFamily: 'SourGummy, sans-serif',
+                              fontWeight: 'bold',
+                              color: rarity.textColor || '#000000',
+                              mb: 1,
+                              // Removed textShadow
+                              textShadow: 'none' 
+                            }}>
+                              {/* Translate rarity name if key exists in shopText.rarityNames */}
+                              {shopText.rarityNames && shopText.rarityNames[rarity.id] ? shopText.rarityNames[rarity.id] : rarity.name} 
+                            </Typography>
+                          )}
+                          <Box display="flex" alignItems="center" justifyContent="center" mb={1}> {/* Center price */}
+                            <img 
+                              src={bubbleBuckImage} 
+                              alt="" 
+                              style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
                           />
                           <Typography 
                             variant="h6" // Slightly larger variant
@@ -1232,176 +1294,180 @@ const Shop = () => {
                           </Typography>
                         </Box>
 
-                        {/* Button/Status Display (Moved Here) */}
-                        <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
-                          {isEquipped ? (
-                            <Box
-                              component="img"
-                              src={finalEquippedButtonImage}
-                              alt="Equipped"
-                              sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} // Added negative mt specifically here
-                            />
-                          ) : isOwned ? (
-                            <Box
-                              component="img"
-                              src={actualOwnedButtonImage}
-                              alt="Owned"
-                              sx={{ width: 'auto', height: '50px', display: 'block', mx: 'auto' }}
-                            />
-                          ) : (
-                            // Buy Button
-                            <Box
-                              component="img"
-                              src={actualBuyButtonImage}
-                              alt="Buy"
-                              onClick={() => handleBuy(skin)}
-                              sx={{
-                                width: 'auto',
-                                height: '100%',
-                                maxHeight: '45px', // Matched to Owned button height
-                                cursor: canAfford ? 'pointer' : 'not-allowed',
-                                opacity: canAfford ? 1 : 0.6,
-                                display: 'block',
-                                transition: 'transform 0.1s ease',
-                                '&:hover': {
-                                  transform: canAfford ? 'scale(1.05)' : 'none',
-                                }
-                              }}
-                            />
+                          {/* Button/Status Display (Moved Here) */}
+                          <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
+                            {isEquipped ? (
+                              <Box
+                                component="img"
+                                src={langKey === 'es' ? spanishEquippedButtonImage : finalEquippedButtonImage} // Conditional image
+                                alt={shopText.equippedAlt} 
+                                sx={{ width: 'auto', height: '110px', display: 'block', mx: 'auto', mt: -1.5 }} 
+                              />
+                            ) : isOwned ? (
+                              <Box
+                                component="img"
+                                src={langKey === 'es' ? spanishOwnedButtonImage : actualOwnedButtonImage} // Conditional image
+                                alt={shopText.ownedAlt} 
+                                sx={{ 
+                                  width: 'auto', 
+                                  height: langKey === 'es' ? '75px' : '50px', // Increased Spanish height further
+                                  display: 'block', 
+                                  mx: 'auto' 
+                                }}
+                              />
+                            ) : (
+                              // Buy Button
+                              <Box
+                                component="img"
+                                src={langKey === 'es' ? spanishBuyButtonImage : actualBuyButtonImage} // Conditional image
+                                alt={shopText.buyAlt} 
+                                onClick={() => handleBuy(skin)}
+                                sx={{
+                                  width: 'auto',
+                                  height: '100%', // Keep height relative
+                                  maxHeight: langKey === 'es' ? '75px' : '45px', // Increased Spanish max height further
+                                  cursor: canAfford ? 'pointer' : 'not-allowed',
+                                  opacity: canAfford ? 1 : 0.6,
+                                  display: 'block',
+                                  transition: 'transform 0.1s ease',
+                                  '&:hover': {
+                                    transform: canAfford ? 'scale(1.05)' : 'none',
+                                  }
+                                }}
+                              />
+                            )}
+                          </Box>
+                          {/* Not enough bucks message */}
+                          {!isOwned && !canAfford && (
+                            <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
+                              {shopText.need} {skin.price} {shopText.bucks} {/* Use shopText */}
+                            </Typography>
                           )}
-                        </Box>
-                        {/* Not enough bucks message */}
-                        {!isOwned && !canAfford && (
-                          <Typography variant="caption" display="block" color="error" textAlign="center" sx={{ mt: 0.5, fontFamily: 'SourGummy, sans-serif', height: '1em' }}> {/* Adjusted spacing */}
-                            Need {skin.price} Bucks!
-                          </Typography>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </Grid>
-              );
-            })}
-          </Grid> { /* Closing Available Skins Grid */ }
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid> { /* Closing Available Skins Grid */ }
 
-          {/* ADDED Owned Skins Section */}
-          <Typography variant="h4" gutterBottom sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mt: 6, mb: 2, color: '#1D1D20' }}>
-            Your Wardrobe
-          </Typography>
-          <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
-            
-            
-            <Grid container spacing={2}> 
-              {/* Include default skin and purchased skins only */}
-              {[
-                defaultSkin,
-                // Always include the equipped skin if it's not the default and not already in the list
-                ...(equippedSkinId !== defaultSkin.id && !purchasedSkins.includes(equippedSkinId) && availableSkins.find(s => s.id === equippedSkinId) 
-                  ? [availableSkins.find(s => s.id === equippedSkinId)] 
-                  : []),
-                // Filter purchased skins that aren't the default (already included)
-                ...availableSkins.filter(skin => 
-                  purchasedSkins.includes(skin.id) && 
-                  skin.id !== defaultSkin.id
-                )
-              ].filter(Boolean).map((skin) => {
-                // Always treat currently equipped skin as purchased to avoid display issues
-                const isCurrentlyEquipped = equippedSkinId === skin.id;
-                const isPurchasedOrEquipped = purchasedSkins.includes(skin.id) || skin.id === defaultSkin.id || isCurrentlyEquipped;
-                
-                return (
-                  <Grid item xs={6} sm={4} md={3} lg={2} key={`owned-${skin.id}`}>
-                    <Card 
-                      sx={{ 
-                        height: '100%', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        borderRadius: '12px', 
-                        boxShadow: isCurrentlyEquipped ? '0 0 15px rgba(29, 110, 241, 0.7)' : 2, 
-                        border: isCurrentlyEquipped ? '2px solid #1D6EF1' : '2px solid transparent',
-                        overflow: 'hidden', 
-                        bgcolor: 'rgba(255, 255, 255, 0.95)'
-                      }}
-                    >
-                      <CardMedia
-                        component="img"
-                        sx={{ height: 100, objectFit: 'contain', pt: 1, backgroundColor: '#eee' }}
-                        image={skin.image} 
-                        alt={skin.name}
-                        onError={(e) => { 
-                          e.target.onerror = null; 
-                          e.target.style.display='none'; 
-                          const placeholder = e.target.parentNode.querySelector('.image-placeholder-owned');
-                          if(placeholder) placeholder.style.display='block';
-                        }}
-                      />
-                      <Box className="image-placeholder-owned" sx={{ display: 'none', height: 100, pt: 1, backgroundColor: '#eee', textAlign: 'center', color: '#999'}}>
-                        <HelpCircle size={32} style={{marginTop: '15px'}}/>
-                        <Typography variant="caption">Image missing</Typography>
-                      </Box>
-                      <CardContent sx={{ flexGrow: 1, p: 1, textAlign: 'center', display: 'flex', flexDirection: 'column' }}> 
-                        <Typography gutterBottom variant="body2" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, lineHeight: 1.2 }}>
-                          {skin.name}
-                        </Typography>
-                        
-                        {/* 
-                          Never show "Buy to keep" message - equipped skins are auto-purchased
-                          by our fixed handleEquip function
-                        */}
-                        {false && !purchasedSkins.includes(skin.id) && isCurrentlyEquipped && skin.id !== defaultSkin.id && (
-                          <Typography variant="caption" sx={{ color: 'orange', mb: 1, fontFamily: 'SourGummy, sans-serif' }}>
-                            Currently equipped! Buy to keep
-                          </Typography>
-                        )}
-                        
-                        {/* Button/Status Display - Add negative mt */}
-                        <Box sx={{ mt: -0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> 
-                          {isCurrentlyEquipped ? (
-                            <Box
-                              component="img"
-                              src={finalEquippedButtonImage}
-                              alt="Equipped"
-                              sx={{
-                                width: 'auto',
-                                height: '100px',
-                                display: 'block',
-                                mx: 'auto'
-                              }}
-                            />
-                          ) : (
-                            <Box
-                              component="img"
-                              src={updatedEquipButtonImage}
-                              alt="Equip"
-                              onClick={() => handleEquip(skin.id)}
-                              sx={{
-                                width: 'auto',
-                                height: '70px',
-                                cursor: 'pointer',
-                                display: 'block',
-                                mx: 'auto',
-                                transition: 'transform 0.1s ease',
-                                '&:hover': {
-                                  transform: 'scale(1.05)',
-                                }
-                              }}
-                            />
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-            
-            {/* No skins message */}
-            {(purchasedSkins.length === 0 && !isShopLoading) && (
-              <Typography sx={{textAlign: 'center', fontFamily: 'SourGummy, sans-serif', color: 'text.secondary', mt: 2}}>
-                Buy some skins from the store to see them here!
+              {/* ADDED Owned Skins Section */}
+              <Typography variant="h4" gutterBottom sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, mt: 6, mb: 2, color: '#1D1D20' }}>
+                {shopText.yourWardrobe} {/* Use shopText */}
               </Typography>
-            )}
-          </Paper> { /* Closing Wardrobe Paper */ }
+              <Paper elevation={2} sx={{ p: 3, borderRadius: '16px', bgcolor: 'rgba(244, 253, 255, 0.8)', backdropFilter: 'blur(2px)' }}>
+                
+                
+                <Grid container spacing={2}> 
+                  {/* Include default skin and purchased skins only */}
+                  {[
+                    defaultSkin,
+                    // Always include the equipped skin if it's not the default and not already in the list
+                    ...(equippedSkinId !== defaultSkin.id && !purchasedSkins.includes(equippedSkinId) && availableSkins.find(s => s.id === equippedSkinId) 
+                      ? [availableSkins.find(s => s.id === equippedSkinId)] 
+                      : []),
+                    // Filter purchased skins that aren't the default (already included)
+                    ...availableSkins.filter(skin => 
+                      purchasedSkins.includes(skin.id) && 
+                      skin.id !== defaultSkin.id
+                    )
+                  ].filter(Boolean).map((skin) => {
+                    // Always treat currently equipped skin as purchased to avoid display issues
+                    const isCurrentlyEquipped = equippedSkinId === skin.id;
+                    const isPurchasedOrEquipped = purchasedSkins.includes(skin.id) || skin.id === defaultSkin.id || isCurrentlyEquipped;
+                    
+                    return (
+                      <Grid item xs={6} sm={4} md={3} lg={2} key={`owned-${skin.id}`}>
+                        <Card 
+                          sx={{ 
+                            height: '100%', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            borderRadius: '12px', 
+                            boxShadow: isCurrentlyEquipped ? '0 0 15px rgba(29, 110, 241, 0.7)' : 2, 
+                            border: isCurrentlyEquipped ? '2px solid #1D6EF1' : '2px solid transparent',
+                            overflow: 'hidden', 
+                            bgcolor: 'rgba(255, 255, 255, 0.95)'
+                          }}
+                        >
+                          <CardMedia
+                            component="img"
+                            sx={{ height: 100, objectFit: 'contain', pt: 1, backgroundColor: '#eee' }}
+                            image={skin.image} 
+                            alt={skin.name}
+                            onError={(e) => { 
+                              e.target.onerror = null; 
+                              e.target.style.display='none'; 
+                              const placeholder = e.target.parentNode.querySelector('.image-placeholder-owned');
+                              if(placeholder) placeholder.style.display='block';
+                            }}
+                          />
+                          <Box className="image-placeholder-owned" sx={{ display: 'none', height: 100, pt: 1, backgroundColor: '#eee', textAlign: 'center', color: '#999'}}>
+                            <HelpCircle size={32} style={{marginTop: '15px'}}/>
+                            <Typography variant="caption">{shopText.imageMissing}</Typography> {/* Use shopText */}
+                          </Box>
+                          <CardContent sx={{ flexGrow: 1, p: 1, textAlign: 'center', display: 'flex', flexDirection: 'column' }}> 
+                            <Typography gutterBottom variant="body2" component="div" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 600, lineHeight: 1.2 }}>
+                              {shopText[`skin_${skin.id}`] || skin.name} {/* Use translated name */}
+                            </Typography>
+                            
+                            {/* 
+                              Never show "Buy to keep" message - equipped skins are auto-purchased
+                              by our fixed handleEquip function
+                            */}
+                            {false && !purchasedSkins.includes(skin.id) && isCurrentlyEquipped && skin.id !== defaultSkin.id && (
+                              <Typography variant="caption" sx={{ color: 'orange', mb: 1, fontFamily: 'SourGummy, sans-serif' }}>
+                                {shopText.buyToKeep} {/* Use shopText (if needed later) */}
+                              </Typography>
+                            )}
+                            
+                            {/* Button/Status Display - Add negative mt */}
+                            <Box sx={{ mt: -0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> 
+                              {isCurrentlyEquipped ? (
+                                <Box
+                                  component="img"
+                                  src={langKey === 'es' ? spanishEquippedButtonImage : finalEquippedButtonImage} // Conditional image
+                                  alt={shopText.equippedAlt} 
+                                  sx={{
+                                    width: 'auto',
+                                    height: '100px',
+                                    display: 'block',
+                                    mx: 'auto'
+                                  }}
+                                />
+                              ) : (
+                                <Box
+                                  component="img"
+                                  src={langKey === 'es' ? spanishEquipButtonImage : updatedEquipButtonImage} // Conditional image
+                                  alt={shopText.equipAlt} 
+                                  onClick={() => handleEquip(skin.id)}
+                                  sx={{
+                                    width: 'auto',
+                                    height: '70px',
+                                    cursor: 'pointer',
+                                    display: 'block',
+                                    mx: 'auto',
+                                    transition: 'transform 0.1s ease',
+                                    '&:hover': {
+                                      transform: 'scale(1.05)',
+                                    }
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+                
+                {/* No skins message */}
+                {(purchasedSkins.length === 0 && !isLoading) && (
+                  <Typography sx={{textAlign: 'center', fontFamily: 'SourGummy, sans-serif', color: 'text.secondary', mt: 2}}>
+                    {shopText.buyPrompt} {/* Use shopText */}
+                  </Typography>
+                )}
+              </Paper> { /* Closing Wardrobe Paper */ }
 
         </Paper> {/* Close main content Paper */} 
       </Container> 

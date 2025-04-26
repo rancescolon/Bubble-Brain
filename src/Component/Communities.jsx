@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 } from "lucide-react"
 import { BackgroundContext } from "../App"
+import text from "../text.json"
 
 // Create a context for navigation state
 const NavContext = createContext({
@@ -69,8 +70,10 @@ const TopBar = () => {
 }
 
 const Communities = () => {
-  const { currentBackground } = useContext(BackgroundContext)
-  // Add this console log to verify the API path
+  const { currentBackground, language } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const comText = text[langKey]
+
   console.log("API Path:", process.env.REACT_APP_API_PATH)
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -224,7 +227,7 @@ const Communities = () => {
             return {
               id: group.id,
               name: group.name,
-              description: group.attributes?.description || "No description available",
+              description: group.attributes?.description || [comText.common.noDescription],
               authorId: group.ownerID,
               members: [],
               isJoined,
@@ -450,7 +453,7 @@ const Communities = () => {
 
       const checkData = await checkResponse.json()
       if (checkData && checkData[0] && checkData[0].length > 0) {
-        showCustomPopup("You are already a member of this community", "error")
+        showCustomPopup(comText.popup.alreadyMember, "error")
         return
       }
 
@@ -489,7 +492,7 @@ const Communities = () => {
       }
 
       // Show success message
-      showCustomPopup("Successfully joined the community!")
+      showCustomPopup(comText.popup.joinSuccess)
     } catch (error) {
       console.error("Error joining community:", error)
       showCustomPopup("Failed to join community. Please try again.", "error")
@@ -523,7 +526,7 @@ const Communities = () => {
         .writeText(communityLink)
         .then(() => {
           // Show success popup
-          showCustomPopup("Community link copied to clipboard!")
+          showCustomPopup(comText.popup.copySuccess)
 
           // Reset after 2 seconds
           setTimeout(() => {
@@ -696,7 +699,7 @@ const Communities = () => {
                 </div>
 
                 <h2 className="text-2xl font-bold text-[#1D1D20] mb-6" style={fontStyle}>
-                  Chat Room
+                  {comText.communityView.titles.chatRoom}
                 </h2>
 
                 <div className="space-y-2 mt-8">
@@ -1132,10 +1135,10 @@ const Communities = () => {
                   <div className="lg:w-3/4">
                     <div className="bg-[#F4FDFF] rounded-xl p-4 md:p-8 shadow-lg mb-6 md:mb-8">
                       <h1 className="text-3xl md:text-4xl font-extrabold text-[#1D1D20] mb-3 md:mb-4" style={fontStyle}>
-                        Communities
+                        {comText.header.title}
                       </h1>
                       <p className="text-[#1D1D20] text-base md:text-lg mb-4 md:mb-6" style={fontStyle}>
-                        Join existing communities or create your own to share study materials and collaborate with others.
+                        {comText.header.subtitle}
                       </p>
 
                       <div className="relative mb-6 md:mb-8">
@@ -1145,7 +1148,7 @@ const Communities = () => {
 
                         <input
                             type="text"
-                            placeholder="Search communities by name..."
+                            placeholder={comText.common.searchPlaceholder}
                             maxLength={30}
                             className="w-full p-3 md:p-4 pl-12 md:pl-16 rounded-lg border-2 border-[#97C7F1] text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                             value={searchQuery}
@@ -1161,7 +1164,7 @@ const Communities = () => {
                           <div className="bg-white rounded-xl p-6 md:p-8 text-center">
                             <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-[#1D6EF1] mx-auto mb-4"></div>
                             <p className="text-[#1D1D20] text-lg md:text-xl" style={fontStyle}>
-                              Loading communities...
+                              {comText.groupList.loading}
                             </p>
                           </div>
                       ) : error ? (
@@ -1176,7 +1179,7 @@ const Communities = () => {
                       ) : (
                           <>
                             <h2 className="text-xl md:text-2xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
-                              Available Communities
+                              {comText.section.available}
                             </h2>
 
                             {filteredCommunities.length > 0 ? (
@@ -1209,7 +1212,7 @@ const Communities = () => {
                                                   onClick={() => handleJoinCommunity(community.id)}
                                                   data-community-id={community.id}
                                               >
-                                                Join
+                                                {comText.communityCard.joinButton}
                                               </button>
                                               <button
                                                   className="bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-3 rounded-xl flex items-center justify-center w-full"
@@ -1249,14 +1252,14 @@ const Communities = () => {
                                           />
                                         </svg>
                                         <p className="text-[#1D1D20] text-lg md:text-xl" style={fontStyle}>
-                                          No communities yet. Create your own or search for others.
+                                          {comText.empty.noCommunities}
                                         </p>
                                       </>
                                   ) : (
                                       <>
                                         <Search className="h-12 w-12 md:h-16 md:w-16 mx-auto text-[#97C7F1] mb-4" />
                                         <p className="text-[#1D1D20] text-lg md:text-xl" style={fontStyle}>
-                                          No communities match your search.
+                                          {comText.empty.noSearchResults}
                                         </p>
                                       </>
                                   )}
@@ -1278,12 +1281,12 @@ const Communities = () => {
                       >
                         <Plus className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                         <span style={fontStyle} className="text-sm md:text-base font-semibold">
-                      Create Your Own
+                     {comText.sidebar.createButton}
                     </span>
                       </button>
 
                       <h2 className="text-[#1D1D20] text-lg md:text-xl font-semibold mb-3 md:mb-4" style={fontStyle}>
-                        My Communities
+                        {comText.section.myCommunities}
                       </h2>
 
                       <div className="space-y-2 md:space-y-3">
@@ -1308,7 +1311,7 @@ const Communities = () => {
                         ) : (
                             <div className="bg-white p-3 md:p-4 rounded-lg text-center">
                               <p className="text-[#1D1D20] text-sm md:text-base" style={fontStyle}>
-                                No joined communities yet
+                                {comText.empty.noJoined}
                               </p>
                             </div>
                         )}
@@ -1325,18 +1328,18 @@ const Communities = () => {
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div ref={modalRef} className="bg-[#F4FDFF] p-5 md:p-8 rounded-xl shadow-2xl w-full max-w-md">
                 <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-[#1D1D20] text-center" style={fontStyle}>
-                  Create Community
+                  {comText.modal.title}
                 </h2>
 
                 <div className="space-y-4 md:space-y-6">
                   <div>
                     <label className="block text-[#1D1D20] mb-1 md:mb-2 text-base md:text-lg" style={fontStyle}>
-                      Community Name
+                      {comText.modal.nameLabel}
                     </label>
                     <input
                         type="text"
                         maxLength={20}
-                        placeholder="Enter a name for your community"
+                        placeholder= {comText.modal.namePlaceholder}
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
                         onChange={(e) => setCommunityName(e.target.value)}
@@ -1346,10 +1349,10 @@ const Communities = () => {
 
                   <div>
                     <label className="block text-[#1D1D20] mb-1 md:mb-2 text-base md:text-lg" style={fontStyle}>
-                      Description
+                      {comText.modal.descriptionLabel}
                     </label>
                     <textarea
-                        placeholder="Describe your community"
+                        placeholder = {comText.modal.descriptionPlaceholder}
                         maxLength={200}
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent min-h-[80px] md:min-h-[100px] text-sm md:text-base"
                         value={communityDescription}
@@ -1363,14 +1366,14 @@ const Communities = () => {
                         className="flex-1 bg-gray-300 hover:bg-gray-400 text-[#1D1D20] py-2 md:py-3 px-3 md:px-4 rounded-lg transition-colors text-sm md:text-base"
                         onClick={() => setShowModal(false)}
                     >
-                      <span style={fontStyle}>Cancel</span>
+                      <span style={fontStyle}>{comText.modal.cancelButton}</span>
                     </button>
                     <button
                         className="flex-1 bg-[#48BB78] hover:bg-[#9DDCB1] text-white py-2 md:py-3 px-3 md:px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                         onClick={handleSubmit}
                         disabled={!communityName.trim()}
                     >
-                      <span style={fontStyle}>Create</span>
+                      <span style={fontStyle}>{comText.modal.createButton}</span>
                     </button>
                   </div>
                 </div>
