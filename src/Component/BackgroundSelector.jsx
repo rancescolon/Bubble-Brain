@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -14,7 +14,8 @@ import {
 } from '@mui/material';
 import { Image } from 'lucide-react';
 import { styled } from '@mui/material/styles';
-import { getSelectedLanguage } from "../App";
+import { BackgroundContext } from "../App";
+import text from "../translations.json";
 
 // Styled thumbnail component for background options
 const BackgroundThumbnail = styled(Box)(({ selected }) => ({
@@ -65,9 +66,9 @@ const BackgroundSelector = ({
 }) => {
   const [showSelector, setShowSelector] = useState(false);
   const [quickPalette, setQuickPalette] = useState(false);
-  const language = getSelectedLanguage();
+  const { language } = useContext(BackgroundContext);
   const langKey = language === "English" ? "en" : "es";
-  const backgroundSelectorText = text[langKey].appWrapper.backgroundSelector;
+  const commonText = text[langKey].common;
 
   // Position styles mapping
   const positionStyles = {
@@ -77,16 +78,12 @@ const BackgroundSelector = ({
     'bottom-left': { bottom: 16, left: 16 },
   };
 
-  // Get current background object
-  const currentBackground = backgroundOptions.find(bg => bg.id === currentBackgroundId) || backgroundOptions[0];
-
   const handleBackgroundChange = (bgOption) => {
     onBackgroundChange(bgOption);
     setShowSelector(false);
     setQuickPalette(false);
   };
 
-  // Show quick palette with most recent selections
   const toggleQuickPalette = () => {
     if (miniPalette) {
       setQuickPalette(!quickPalette);
@@ -97,7 +94,6 @@ const BackgroundSelector = ({
 
   return (
     <>
-      {/* Button Container */}
       <Box
         sx={{
           position: 'fixed',
@@ -106,7 +102,7 @@ const BackgroundSelector = ({
           ...style,
         }}
       >
-        <Tooltip title={currentLabel || backgroundSelectorText.currentBackground}>
+        <Tooltip title={currentLabel || commonText.changeBackground}>
           <IconButton
             onClick={toggleQuickPalette}
             sx={{
@@ -121,7 +117,6 @@ const BackgroundSelector = ({
           </IconButton>
         </Tooltip>
 
-        {/* Mini Palette (when enabled) */}
         {miniPalette && quickPalette && (
           <Box
             sx={{
@@ -162,21 +157,20 @@ const BackgroundSelector = ({
                 }}
                 sx={{ fontSize: '0.7rem' }}
               >
-                {selectLabel || backgroundSelectorText.selectBackground}
+                {selectLabel || commonText.selectBackground}
               </Button>
             </Box>
           </Box>
         )}
       </Box>
 
-      {/* Full Dialog Selector */}
       <Dialog
         open={showSelector}
         onClose={() => setShowSelector(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontWeight: 'bold' }}>{title || backgroundSelectorText.title}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>{title || commonText.selectBackground}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             {backgroundOptions.map((bg) => (
@@ -196,7 +190,7 @@ const BackgroundSelector = ({
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowSelector(false)}>{text[langKey].common.cancel}</Button>
+          <Button onClick={() => setShowSelector(false)}>{commonText.cancel}</Button>
         </DialogActions>
       </Dialog>
     </>

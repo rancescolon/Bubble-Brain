@@ -3,10 +3,14 @@
 import { useState, useEffect, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { Search, UserPlus, UserMinus, Ban, MessageCircle } from "lucide-react"
-import { socket, BackgroundContext } from "../App" // Import BackgroundContext along with socket
+import { socket, BackgroundContext } from "../App"
+import { getSelectedLanguage } from "../App"
+import text from "../translations.json"
 
 const Friends = () => {
-  const { currentBackground } = useContext(BackgroundContext);
+  const { currentBackground, language } = useContext(BackgroundContext)
+  const langKey = language === "English" ? "en" : "es"
+  const friendsText = text[langKey].friends
   const [connections, setConnections] = useState([])
   const [blockedUsers, setBlockedUsers] = useState([])
   const [pendingRequests, setPendingRequests] = useState([])
@@ -622,10 +626,10 @@ const Friends = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-[#1D1D20]" style={fontStyle}>
-                  Friends
+                  {friendsText.pageTitle}
                 </h1>
                 <p className="text-gray-600 mt-2" style={fontStyle}>
-                  Manage your Bubble Brain connections
+                  {friendsText.subtitle}
                 </p>
               </div>
               <div className="flex gap-4">
@@ -638,7 +642,7 @@ const Friends = () => {
                   }`}
                   style={fontStyle}
                 >
-                  Option 1
+                  {friendsText.tabs.option1}
                 </button>
                 <button
                   onClick={() => setSelectedOption(2)}
@@ -649,7 +653,7 @@ const Friends = () => {
                   }`}
                   style={fontStyle}
                 >
-                  Option 2
+                  {friendsText.tabs.option2}
                 </button>
               </div>
             </div>
@@ -661,7 +665,7 @@ const Friends = () => {
               <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder={searchMode === "friends" ? "Search friends..." : "Search users..."}
+                  placeholder={searchMode === "friends" ? friendsText.search.friendsPlaceholder : friendsText.search.usersPlaceholder}
                   className="w-full p-4 pl-12 rounded-xl border-2 border-[#97C7F1] bg-white text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent shadow-sm transition-all duration-200"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -675,7 +679,7 @@ const Friends = () => {
                 style={fontStyle}
               >
                 <UserPlus className="mr-2" size={20} />
-                {searchMode === "friends" ? "Find New Friends" : "Search Friends"}
+                {searchMode === "friends" ? friendsText.buttons.findUsers : friendsText.buttons.hideUsers}
               </button>
             </div>
 
@@ -713,9 +717,8 @@ const Friends = () => {
                                   alt={displayInitial}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   onError={(e) => {
-                                    e.target.onerror = null; // prevent infinite loops
-                                    e.target.style.display = 'none'; // hide broken image
-                                    // Find the parent div and replace img with initial
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
                                     const avatarContainer = e.target.parentNode;
                                     if (avatarContainer) {
                                       avatarContainer.innerHTML = `<span style="font-family: SourGummy, sans-serif;">${displayInitial}</span>`;
@@ -740,7 +743,7 @@ const Friends = () => {
                             className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors self-end sm:self-center flex-shrink-0"
                             style={fontStyle}
                           >
-                            Add Friend
+                            {friendsText.buttons.addFriend}
                           </button>
                         </div>
                       )
@@ -754,7 +757,7 @@ const Friends = () => {
           {pendingRequests.length > 0 && (
             <div className="bg-white p-6 border-b border-gray-200">
               <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
-                Pending Friend Requests ({pendingRequests.length})
+                {friendsText.sections.pendingRequests} ({pendingRequests.length})
               </h2>
               <div className="space-y-4">
                 {pendingRequests.map((request) => (
@@ -783,14 +786,14 @@ const Friends = () => {
                         className="px-4 py-2 bg-[#48BB78] hover:bg-[#9DDCB1] text-white rounded-lg transition-colors"
                         style={fontStyle}
                       >
-                        Accept
+                        {friendsText.buttons.accept}
                       </button>
                       <button
                         onClick={() => handleDeclineRequest(request.id)}
                         className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                         style={fontStyle}
                       >
-                        Decline
+                        {friendsText.buttons.decline}
                       </button>
                     </div>
                   </div>
@@ -802,7 +805,7 @@ const Friends = () => {
           {/* Friends List */}
           <div className="bg-white rounded-b-xl p-6 shadow-lg">
             <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
-              Your Friends
+              {friendsText.sections.yourFriends}
             </h2>
             {isLoaded ? (
               connections.length > 0 ? (
@@ -828,9 +831,7 @@ const Friends = () => {
                       const chatUserId = isOutgoing ? friend.toUserID : friend.fromUserID
                       const displayName = friendUser?.attributes?.name || friendUser?.email || "Unknown User"
                       const displayInitial = (displayName[0] || "?").toUpperCase()
-                      // --- Extract picture URL for the friend ---
                       const pictureUrl = friendUser?.picture || friendUser?.avatar || friendUser?.attributes?.picture || friendUser?.attributes?.profilePicture;
-                      // --- End of picture extraction ---
 
                       return (
                         <div
@@ -845,15 +846,13 @@ const Friends = () => {
                                   alt={displayInitial}
                                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   onError={(e) => {
-                                    e.target.onerror = null; // prevent infinite loops
-                                    e.target.style.display = 'none'; // hide broken image
-                                    // Find the parent div and replace img with initial
+                                    e.target.onerror = null;
+                                    e.target.style.display = 'none';
                                     const avatarContainer = e.target.parentNode;
                                     if (avatarContainer) {
-                                      // Need to recreate the span with styles
-                                      avatarContainer.innerHTML = ''; // Clear broken img
+                                      avatarContainer.innerHTML = '';
                                       const span = document.createElement('span');
-                                      span.style.fontFamily = 'SourGummy, sans-serif'; // Apply font style
+                                      span.style.fontFamily = 'SourGummy, sans-serif';
                                       span.textContent = displayInitial;
                                       avatarContainer.appendChild(span);
                                     }
@@ -876,7 +875,7 @@ const Friends = () => {
                             <button
                               onClick={() => handleStartChat(chatUserId)}
                               className="p-2 text-[#1D6EF1] hover:bg-[#97C7F1] hover:text-white rounded-lg transition-colors"
-                              title="Message"
+                              title={friendsText.buttons.startChat}
                             >
                               <MessageCircle size={20} />
                             </button>
@@ -884,7 +883,7 @@ const Friends = () => {
                               <button
                                 onClick={() => handleBlockUser(chatUserId, friend.id)}
                                 className="p-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-                                title="Block"
+                                title={friendsText.buttons.blockUser}
                               >
                                 <Ban size={20} />
                               </button>
@@ -892,7 +891,7 @@ const Friends = () => {
                             <button
                               onClick={() => handleRemoveFriend(friend.id)}
                               className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                              title="Remove"
+                              title={friendsText.buttons.removeFriend}
                             >
                               <UserMinus size={20} />
                             </button>
@@ -904,7 +903,7 @@ const Friends = () => {
               ) : (
                 <div className="text-center py-8 bg-[#F4FDFF] rounded-lg">
                   <p className="text-gray-600" style={fontStyle}>
-                    No friends yet. Add some friends to get started!
+                    {friendsText.messages.noFriends}
                   </p>
                 </div>
               )
@@ -918,7 +917,7 @@ const Friends = () => {
             {selectedOption === 1 && blockedUsers.length > 0 && (
               <div className="mt-8">
                 <h2 className="text-xl font-bold text-[#1D1D20] mb-4" style={fontStyle}>
-                  Blocked Users
+                  {friendsText.sections.blockedUsers}
                 </h2>
                 <div className="space-y-4">
                   {blockedUsers.map((blocked) => {
@@ -936,7 +935,7 @@ const Friends = () => {
                               {displayName}
                             </h3>
                             <p className="text-gray-600 text-sm" style={fontStyle}>
-                              Blocked
+                              {friendsText.statuses.blocked}
                             </p>
                           </div>
                         </div>
@@ -945,7 +944,7 @@ const Friends = () => {
                           className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
                           style={fontStyle}
                         >
-                          Unblock
+                          {friendsText.buttons.unblockUser}
                         </button>
                       </div>
                     )
