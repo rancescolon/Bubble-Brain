@@ -1,11 +1,65 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
-import { AppBar, Toolbar, Typography, Button, TextField, Box, Container, Snackbar, Alert } from "@mui/material"
+import { AppBar, Toolbar, Typography, Button, TextField, Box, Container, Snackbar, Alert, Grid, Card, CardContent } from "@mui/material"
+import { Globe, Check } from "lucide-react"
 import BubbleTrapAnimation from "./BubbleTrapAnimation"
 import Frame from "../assets/Frame.png"
 import background from "../assets/image3.png"
+import { BackgroundContext } from "../App"
+
+const LanguageCard = ({ language, flag, onClick, isSelected }) => {
+    const [isHovered, setIsHovered] = useState(false)
+
+    return (
+        <Card
+            sx={{
+                bgcolor: isSelected ? "rgba(91, 140, 90, 0.2)" : "rgba(197, 237, 253, 0.5)",
+                backdropFilter: "blur(4px)",
+                cursor: "pointer",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                position: "relative",
+                overflow: "hidden",
+                border: isSelected ? "2px solid #5B8C5A" : "none",
+                "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: 3,
+                },
+            }}
+            onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
+            <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Typography variant="h3" sx={{ fontSize: "26px", fontWeight: 600, color: "#1D1D20" }}>
+                        {language}
+                    </Typography>
+                    {isSelected && (
+                        <Box sx={{ ml: "auto" }}>
+                            <Check size={24} color="#5B8C5A" />
+                        </Box>
+                    )}
+                </Box>
+
+                {isHovered && !isSelected && (
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: "4px",
+                            bgcolor: "#5B8C5A",
+                            animation: "color-change 4s infinite",
+                        }}
+                    />
+                )}
+            </CardContent>
+        </Card>
+    )
+}
 
 const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
     const [email, setEmail] = useState("")
@@ -19,6 +73,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
     const [snackbarSeverity, setSnackbarSeverity] = useState("error")
     const navigate = useNavigate()
     const location = useLocation()
+    const { language, setLanguage } = useContext(BackgroundContext)
 
     // Check for registration success message
     useEffect(() => {
@@ -36,6 +91,14 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
             window.history.replaceState({}, document.title)
         }
     }, [location])
+
+    // Simplified to only include English and Spanish
+    const languages = [{ language: "English" }, { language: "Español" }]
+
+    const handleLanguageSelect = (selectedLanguage) => {
+        setLanguage(selectedLanguage)
+        localStorage.setItem("selectedLanguage", selectedLanguage)
+    }
 
     const submitHandler = (event) => {
         event.preventDefault()
@@ -220,6 +283,16 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                         boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
                     }}
                 >
+                    <style jsx="true">{`
+                        @keyframes color-change {
+                            0%, 100% {
+                                background-color: #5B8C5A;
+                            }
+                            50% {
+                                background-color: #9DDCB1;
+                            }
+                        }
+                    `}</style>
                     <Typography
                         variant="h4"
                         align="center"
@@ -328,26 +401,32 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                             </Link>
                         </Typography>
                     </Box>
-                    <Box sx={{ mt: 2, textAlign: "center" }}>
-                        <Button
-                            component={Link}
-                            to="/languageSelection"
-                            variant="outlined"
+                    <Box sx={{ mt: 4, textAlign: "center" }}>
+                        <Typography
+                            variant="h6"
                             sx={{
                                 fontFamily: "SourGummy, sans-serif",
-                                fontWeight: 500,
-                                fontSize: "16px",
-                                color: "#1D6EF1",
-                                borderColor: "#1D6EF1",
-                                "&:hover": {
-                                    bgcolor: "#f0f8ff",
-                                    borderColor: "#1D6EF1",
-                                },
+                                fontWeight: 600,
+                                fontSize: "18px",
+                                color: "#1D1D20",
+                                mb: 2
                             }}
                         >
-                            Choose Language
-                        </Button>
-</Box>
+                            Choose Your Language
+                        </Typography>
+                        <Grid container spacing={2} sx={{ justifyContent: "center" }}>
+                            {languages.map((lang) => (
+                                <Grid item xs={12} sm={6} key={lang.language}>
+                                    <LanguageCard
+                                        language={lang.language}
+                                        flag={lang.flag}
+                                        isSelected={language === lang.language}
+                                        onClick={() => handleLanguageSelect(lang.language)}
+                                    />
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </Box>
                 </Box>
             </Container>
 
