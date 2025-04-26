@@ -92,7 +92,7 @@ const HomePage = () => {
   const [loadingUsers, setLoadingUsers] = useState(true)
 
   // Import shop context and refreshUserData function
-  const { refreshUserData, userId } = useShop();
+  const { refreshUserData, userId, availableSkins, defaultSkin } = useShop();
   const hasRefreshedDataRef = useRef(false);
 
   // Add effect to refresh skin data on initial load
@@ -101,6 +101,7 @@ const HomePage = () => {
 
     // Only run once when component mounts and we have a logged-in user
     if (token && userId && !hasRefreshedDataRef.current) {
+
       console.log("[HomePage] First load after login, refreshing skin data");
 
       // Set ref to prevent multiple refreshes
@@ -114,8 +115,9 @@ const HomePage = () => {
           console.warn("[HomePage] Failed to refresh skin data on login");
         }
       });
+
     }
-  }, [refreshUserData, userId]);
+  }, [refreshUserData, userId]); // Keep dependencies for effect logic
 
   const [leaderboardData, setLeaderboardData] = useState([])
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true)
@@ -130,7 +132,9 @@ const HomePage = () => {
   const [shouldShowPics, setShouldShowPics] = useState(true); // Add state for pic visibility
 
   // Adjust initial Y position for mobile
+
   const initialX = isMobile ? 100 : 50;
+
   const initialY = isMobile ? -75 : 5;
   const [helpBubblePosition, setHelpBubblePosition] = useState({ x: initialX, y: initialY })
   const [isQuestionBubbleVisible, setIsQuestionBubbleVisible] = useState(true)
@@ -739,6 +743,16 @@ const HomePage = () => {
       // Fetch study time for each user
       const leaderboardPromises = users.map(async (user) => {
         try {
+          // Fetch detailed user data first to get equippedSkinId
+          const userDetailsResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users/${user.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!userDetailsResponse.ok) {
+            console.warn(`Failed to fetch details for user ${user.id} in leaderboard`);
+            // Continue without details if needed, or return null
+          }
+          const userDetails = userDetailsResponse.ok ? await userDetailsResponse.json() : null;
+
           const studyTimeResponse = await fetch(
             `${process.env.REACT_APP_API_PATH}/posts?type=study_time&authorID=${user.id}`,
             {
@@ -799,6 +813,7 @@ const HomePage = () => {
             avatar: pictureUrl, // Use the prioritized picture URL
             totalStudyTime,
             studySessions,
+            equippedSkinId: userDetails?.attributes?.equippedSkinId || defaultSkin.id, // Add equipped skin ID
           }
         } catch (error) {
           console.error(`Error processing user ${user.id}:`, error)
@@ -869,6 +884,16 @@ const HomePage = () => {
             console.error("User without ID found:", user)
             return null
           }
+
+          // Fetch detailed user data to get equippedSkinId
+          const userDetailsResponse = await fetch(`${process.env.REACT_APP_API_PATH}/users/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!userDetailsResponse.ok) {
+            console.warn(`Failed to fetch details for user ${userId} in stats`);
+            // Continue without details if needed, or return null
+          }
+          const userDetails = userDetailsResponse.ok ? await userDetailsResponse.json() : null;
 
           // Get study sessions for timing statistics
           const studySessionsResponse = await fetch(
@@ -962,7 +987,8 @@ const HomePage = () => {
             avatar: pictureUrl, // Use the prioritized picture URL
             longestSession,
             sessionCount,
-            todaySessionCount
+            todaySessionCount,
+            equippedSkinId: userDetails?.attributes?.equippedSkinId || defaultSkin.id, // Add equipped skin ID
           }
         } catch (error) {
           console.error(`Error processing statistics for user:`, error)
@@ -1360,18 +1386,17 @@ const HomePage = () => {
             backgroundRepeat: "no-repeat",
             opacity: 1.0,
             width: "100%",
-            maxWidth: "100vw",
-            overflowX: "hidden",
+            maxWidth: "100vw", // Keep from old
+            overflowX: "hidden", // Keep from old
             position: "relative",
-            paddingLeft: {
-              xs: '72px', // <- Add padding for mobile to avoid nav overlap
-              sm: 0,      // <- Reset to 0 on larger screens
+            paddingLeft: { // Use old padding logic
+              xs: 0, // Set mobile paddingLeft to 0 as requested
+              sm: 0,
             },
-            [theme.breakpoints.down('sm')]: {
+            [theme.breakpoints.down('sm')]: { // Use old mobile block structure
               maxWidth: '100%',
               margin: 0,
               padding: 0,
-              paddingLeft: '72px', // <- Repeat here to enforce for mobile view
               width: '100%',
               overflowX: 'hidden',
             }
@@ -1433,8 +1458,8 @@ const HomePage = () => {
             <Box
               component={motion.div}
               animate={{
-                x: helpBubblePosition.x,
-                y: helpBubblePosition.y,
+                x: helpBubblePosition.x, // Revert to old desktop animate
+                y: helpBubblePosition.y, // Revert to old desktop animate
                 transition: {
                   type: "spring",
                   stiffness: 100,
@@ -1444,7 +1469,7 @@ const HomePage = () => {
               onClick={() => setShowGuide(true)}
               sx={{
                 position: "fixed",
-                left: { xs: '80px', sm: 'auto' }, // ✅ Push it right of drawer on mobile
+                left: { xs: '80px', sm: 'auto' }, // Revert to old left position
                 zIndex: 1400, // ✅ Must be higher than the nav (usually 1200)
                 width: "60px",
                 height: "60px",
@@ -1539,16 +1564,19 @@ const HomePage = () => {
           </Tooltip>
         )}
 
-        <Container
-          maxWidth="lg"
-          sx={{
-            px: { xs: 2, sm: 2, md: 3 },
+
+        <Container 
+          maxWidth="lg" 
+          sx={{ 
+            px: { xs: 2, sm: 2, md: 3 }, // Revert to old px
             width: '100%',
             maxWidth: { xs: '100%', sm: 'lg' },
             overflow: 'hidden',
-            [theme.breakpoints.down('sm')]: {
+            // boxSizing: 'border-box', // Remove this if added in new version
+            // ml: { xs: '72px', sm: 0 }, // Remove this if added in new version
+            [theme.breakpoints.down('sm')]: { // Use old mobile block
               maxWidth: '100%',
-              padding: '0 8px',
+              padding: '0 8px', // Keep current mobile padding style
               margin: 0,
               width: '100%',
               overflowX: 'hidden',
@@ -1590,23 +1618,24 @@ const HomePage = () => {
             sx={{
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 8 },
-              px: { xs: 2, md: 3 },
+              px: { xs: 2, md: 3 }, // Revert to old px
               mt: 2,
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              mx: { xs: 0, sm: 0, md: 0 },
-              width: { xs: '100%', sm: '100%' },
+              mx: { xs: 0, sm: 0, md: 0 }, // Revert to old mx
+              width: { xs: '100%', sm: '100%' }, // Revert to old width
               overflow: 'hidden',
               position: 'relative',
-              [theme.breakpoints.down('sm')]: {
-                margin: '24px 0',
-                width: '100%',
-                borderRadius: 0,
-                paddingTop: '16px',
-                paddingBottom: '16px',
-                overflowX: 'hidden',
-                ml: 0,
-                mr: 0,
+              // boxSizing: 'border-box', // Remove if added in new version
+              [theme.breakpoints.down('sm')]: { // Use old mobile block
+                margin: '24px 0', // Keep current mobile margin
+                width: '100%', // Keep current mobile width
+                borderRadius: 0, // Keep current mobile radius
+                paddingTop: '16px', // Keep current mobile padding
+                paddingBottom: '16px', // Keep current mobile padding
+                overflowX: 'hidden', // Keep current mobile overflow
+                ml: 0, // Keep current mobile margin
+                mr: 0, // Keep current mobile margin
               }
             }}
           >
@@ -1678,24 +1707,25 @@ const HomePage = () => {
               mb: 6,
               bgcolor: "#FFFFFF",
               py: { xs: 3, md: 4 },
-              px: { xs: 1, md: 2 }, // Keep outer padding 8px (1) on xs
-              overflow: 'visible', // Remove overflow: hidden
+              px: { xs: 1, md: 2 }, // Revert to old px
+              overflow: 'visible', // Revert to old overflow
               borderRadius: 2,
               boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-              mx: { xs: 0, sm: 0, md: 0 },
-              width: { xs: '100%', sm: '100%' },
+              mx: { xs: 0, sm: 0, md: 0 }, // Revert to old mx
+              width: { xs: '100%', sm: '100%' }, // Revert to old width
               position: 'relative',
-              [theme.breakpoints.down('sm')]: {
-                margin: '24px 0',
-                width: '100%',
-                borderRadius: 0,
-                paddingTop: '16px',
-                paddingBottom: '16px',
-                paddingLeft: theme.spacing(1), // Use px property above for padding
-                paddingRight: theme.spacing(1), // Use px property above for padding
-                overflowX: 'visible', // Ensure not hidden on mobile either
-                ml: 0, // Ensure no extra margin
-                mr: 0, // Ensure no extra margin
+              // boxSizing: 'border-box', // Remove if added in new version
+              [theme.breakpoints.down('sm')]: { // Use old mobile block
+                margin: '24px 0', // Keep current mobile margin
+                width: '100%', // Keep current mobile width
+                borderRadius: 0, // Keep current mobile radius
+                paddingTop: '16px', // Keep current mobile padding
+                paddingBottom: '16px', // Keep current mobile padding
+                paddingLeft: theme.spacing(1), // Keep current mobile paddingLeft
+                paddingRight: theme.spacing(1), // Keep current mobile paddingRight
+                overflowX: 'visible', // Keep current mobile overflowX
+                ml: 0, // Keep current mobile ml
+                mr: 0, // Keep current mobile mr
               }
             }}
           >
@@ -1787,10 +1817,12 @@ const HomePage = () => {
                 "&::-webkit-scrollbar": { display: "none" },
                 msOverflowStyle: "none",
                 minHeight: { xs: "250px", md: "280px" },
-                px: { xs: 1, md: 0 }, // Add inner padding 8px (1) on xs
+                px: { xs: 1, md: 0 }, // Revert to old px
                 width: '100%',
                 // overflow: 'hidden', // Remove this from inner box
                 scrollSnapType: 'x mandatory',
+                // Explicitly set box-sizing
+                // boxSizing: 'border-box', // Remove if added in new version
                 [theme.breakpoints.down('sm')]: {
                   paddingLeft: theme.spacing(1), // Ensure inner padding is 8px
                   paddingRight: theme.spacing(1), // Ensure inner padding is 8px
@@ -1807,8 +1839,8 @@ const HomePage = () => {
                   <Card
                     key={community.id}
                     sx={{
-                      minWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Set width to calc(50% - 4px)
-                      maxWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Set width to calc(50% - 4px)
+                      minWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Revert to old minWidth xs
+                      maxWidth: { xs: 'calc(50% - 4px)', sm: 250, md: 280 }, // Revert to old maxWidth xs
                       bgcolor: "#FFFFFF",
                       borderRadius: 2,
                       transition: "transform 0.2s, box-shadow 0.2s",
@@ -1924,15 +1956,19 @@ const HomePage = () => {
                 sx={{
                   bgcolor: "#FFFFFF",
                   py: { xs: 2, md: 3 },
-                  px: { xs: 2, md: 2 },
-                  borderRadius: "24px",
+                  px: { xs: 0, md: 2 }, // Changed xs padding from 1 to 0
+                  borderRadius: "24px", // Changed from 2 to '24px' for consistency
                   boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
                   position: "relative",
                   overflow: "hidden",
-                  height: "100%",
-                  width: "100%",
+                  // height: "100%", // Remove height
+                  // display: 'flex', // Remove flex
+                  // flexDirection: 'column', // Remove flex direction
+                  width: { xs: '100%', md: 'auto' }, // Explicitly set width on xs
+                  mx: { xs: 0 }, // Ensure mx is 0 on xs
+                  boxSizing: 'border-box', // Added box-sizing
                   [theme.breakpoints.down('sm')]: {
-                    padding: '16px 8px', // Adjusted padding for mobile consistency
+                    // padding: '16px 8px', // Keep vertical padding, horizontal is handled by px above
                     // Center title and subtitle box
                     display: 'flex',
                     flexDirection: 'column',
@@ -1988,12 +2024,10 @@ const HomePage = () => {
                     gap: 2,
                     maxHeight: "unset",
                     padding: 1,
-                    paddingRight: 2,
+                    paddingRight: 2, // Keep right padding for potential scrollbar space if needed later
                     width: '100%', // Ensure container takes full width
                     [theme.breakpoints.down('sm')]: {
-                      // Shift cards slightly right
-                      pl: 'calc(1rem + 5px)', // Add 5px to existing padding/margin
-                      pr: 'calc(1rem - 5px)', // Adjust right padding if needed
+                      // Remove specific pl/pr adjustments here, handled by parent/card styles
                       boxSizing: 'border-box',
                     }
                     // Remove scrollbar styles
@@ -2009,6 +2043,7 @@ const HomePage = () => {
                       <Card
                         key={user.id}
                         sx={{
+                          minHeight: { md: '120px' }, // Add consistent minHeight
                           width: "100%",
                           background: "#FFFFFF",
                           backdropFilter: "blur(10px)",
@@ -2026,7 +2061,6 @@ const HomePage = () => {
                           overflow: "hidden",
                           position: "relative",
                           mb: 3,
-                          height: { xs: "70px", md: "80px" },
                           display: "flex",
                           alignItems: "center",
                           [theme.breakpoints.down('sm')]: {
@@ -2113,20 +2147,23 @@ const HomePage = () => {
                         <CardContent sx={{
                           pt: 1,
                           pb: 1,
-                          pl: { xs: '44px', md: 6 },
+
+                          pl: { xs: '38px', md: 6 }, // Reduced pl on xs to bring content closer to rank
                           pr: { xs: 1, md: 2 },
                           width: "100%",
-                          height: "100%",
+
                           display: "flex",
                           flexDirection: "column",
                           justifyContent: "center",
                           [theme.breakpoints.down('sm')]: {
-                            padding: '0 8px',
-                            pl: '44px',
+                            padding: '0 4px', // Reduced internal padding slightly on xs
+                            pl: '38px', // Match the pl adjustment
                           }
                         }}>
                           {/* Ensure smaller gap for mobile */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}>
+
+                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, md: 2 } }}> {/* Slightly increased gap on xs */}
+
                             <Avatar
                               alt={user.name}
                               sx={{
@@ -2164,25 +2201,67 @@ const HomePage = () => {
                             </Avatar>
 
                             {/* Apply negative margin on mobile */}
-                            <Box sx={{ flexGrow: 1, marginLeft: { xs: '-2px', md: 0 } }}>
-                              <Tooltip title={user.name} placement="top" arrow>
-                                <Typography
-                                  variant="h5"
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    fontWeight: 600,
-                                    fontSize: { xs: "16px", md: "18px" },
-                                    color: "#1D1D20",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    lineHeight: 1.2,
-                                  }}
-                                >
-                                  {truncateText(user.name, isMobile ? 8 : 10)}
-                                </Typography>
-                              </Tooltip>
-                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+                            <Box sx={{ flexGrow: 1, marginLeft: { xs: 0, md: 0 } }}> {/* Removed negative margin */}
+                              {/* Wrap username and icon */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', mt: { xs: 0.5, md: 0 } }}> {/* Added mt on xs */}
+                                <Tooltip title={user.name} placement="top" arrow>
+                                  <Typography
+                                    variant="h5"
+                                    sx={{
+                                      fontFamily: "SourGummy, sans-serif",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "16px", md: "18px" },
+                                      color: "#1D1D20",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      lineHeight: 1.2,
+                                      maxWidth: { xs: "60px", md: "120px" }, // Adjust max width to fit icon
+                                      mr: 0.5, // Add margin between name and icon
+                                    }}
+                                  >
+                                    {truncateText(user.name, isMobile ? 6 : 8)}
+                                  </Typography>
+                                </Tooltip>
+                                {/* Display Equipped Skin Icon */}
+                                {(() => {
+                                  const skin = availableSkins.find(s => s.id === user.equippedSkinId) || defaultSkin; // Fallback to defaultSkin if not found
+                                  
+                                  // Determine glow color based on index
+                                  let glowColor = 'rgba(0,0,0,0)'; // Transparent default
+                                  if (index === 0) {
+                                    glowColor = '#FFD700'; // Gold
+                                  } else if (index === 1) {
+                                    glowColor = '#A9A9A9'; // Darker gray for better silver glow contrast
+                                  } else if (index === 2) {
+                                    glowColor = '#CD7F32'; // Bronze
+                                  }
+                                  
+                                  return skin && (
+                                    <Tooltip title={`Equipped: ${skin.name}`} placement="top">
+                                      <img
+                                        src={skin.logo}
+                                        alt="" // Decorative
+                                        style={{ 
+                                           width: '38px', 
+                                           height: '38px', 
+                                           verticalAlign: 'middle',
+                                           filter: `drop-shadow(0 0 2px ${glowColor})` // Made glow effect more subtle
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  );
+                                })()}
+                              </Box>
+                              {/* Stats Box - Stack below name on xs */}
+                              <Box sx={{ 
+                                display: "flex", 
+                                justifyContent: { xs: 'flex-start', md: "space-between" }, // Align start on xs
+                                alignItems: { xs: 'flex-start', md: "center" }, 
+                                mt: { xs: 0.5, md: 0.5 }, // Adjusted top margin for xs
+                                flexDirection: { xs: 'column', md: 'row' }, // Stack vertically on xs
+                                gap: { xs: 0, md: 1 } // Add gap for md, none for xs column
+                              }}>
                                 <Typography
                                   sx={{
                                     fontFamily: "SourGummy, sans-serif",
@@ -2234,20 +2313,28 @@ const HomePage = () => {
             </Grid>
 
             {/* User Achievements */}
-            <Grid item xs={12} md={6} sx={{ pl: { md: 1.5 }, pr: 0, position: "relative" }}>
+            <Grid item xs={12} md={6} sx={{ 
+              pl: { md: 1.5 }, 
+              pr: 0, 
+              position: "relative",
+              mt: { xs: 3, md: 0 } // Added top margin for xs/sm, none for md+
+            }}>
               <Box
                 sx={{
                   bgcolor: "#FFFFFF",
                   py: { xs: 2, md: 3 },
-                  px: { xs: 2, md: 2 },
-                  borderRadius: "24px",
+                  px: { xs: 0, md: 2 }, // Changed xs padding from 1 to 0
+                  borderRadius: "24px", // Changed from 2 to '24px' for consistency
                   boxShadow: "0 4px 20px rgba(29, 110, 241, 0.15)",
                   position: "relative",
                   overflow: "hidden",
-                  height: "100%",
-                  width: "100%",
+                  // height: "100%", // Remove height
+                  // display: 'flex', // Remove flex
+                  // flexDirection: 'column', // Remove flex direction
+                  width: { xs: '100%', md: 'auto' }, // Explicitly set width on xs
+                  mx: { xs: 0 }, // Ensure mx is 0 on xs
+                  boxSizing: 'border-box', // Added box-sizing
                   [theme.breakpoints.down('sm')]: {
-                    padding: '16px 8px', // Adjusted padding
                     mt: 2, // Add margin top on mobile to separate from brainiacs
                     // Center title and subtitle box
                     display: 'flex',
@@ -2331,16 +2418,15 @@ const HomePage = () => {
                       display: "flex",
                       flexDirection: "column",
                       gap: 2,
+                      // flexGrow: 1, // Remove flex grow
+                      // overflowY: 'auto', // Remove overflow
                       maxHeight: "unset",
                       padding: 1,
-                      paddingRight: 2,
-                      width: '100%', // Ensure container takes full width
-                       [theme.breakpoints.down('sm')]: {
-                         // Shift cards slightly right
-                         pl: 'calc(1rem + 5px)', // Add 5px to existing padding/margin
-                         pr: 'calc(1rem - 5px)', // Adjust right padding if needed
-                         boxSizing: 'border-box',
-                       }
+                      paddingRight: 2, // Keep right padding for potential scrollbar space if needed later
+                      [theme.breakpoints.down('sm')]: {
+                        // Remove specific pl/pr adjustments here
+                        boxSizing: 'border-box',
+                      }
                       // Remove scrollbar styles
                     }}
                   >
@@ -2348,6 +2434,7 @@ const HomePage = () => {
                       <Card
                         key={`${stat.id}-${index}`}
                         sx={{
+                          minHeight: { md: '120px' }, // Add consistent minHeight
                           width: "100%",
                           background: "#FFFFFF",
                           backdropFilter: "blur(10px)",
@@ -2365,7 +2452,8 @@ const HomePage = () => {
                           overflow: "hidden",
                           position: "relative",
                           mb: 3,
-                          height: { xs: "70px", md: "80px" },
+                          // Remove fixed height to allow dynamic sizing
+                          // height: { xs: "70px", md: "80px" },
                           display: "flex",
                           alignItems: "center",
                           [theme.breakpoints.down('sm')]: {
@@ -2423,32 +2511,37 @@ const HomePage = () => {
                             },
                           }}
                         >
-                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "center", transform: 'translateY(3px)' }}> {/* Increased transform */}
                             {getStatIcon(stat.statType)}
                           </Box>
                         </Box>
 
-                        <CardContent sx={{
-                          pt: 1,
-                          pb: 1,
-                          pl: { xs: '40px', md: 6 },
+
+                        <CardContent sx={{ 
+                          pt: 1, 
+                          pb: 1, 
+                          pl: { xs: '38px', md: 4 }, // Reduced md padding from 6 to 4
+
                           pr: { xs: 1, md: 2 },
                           width: "100%",
                           height: "100%",
                           display: "flex",
                           flexDirection: "column",
-                          justifyContent: "center",
+
+                          justifyContent: "space-between",
                           [theme.breakpoints.down('sm')]: {
-                            padding: '0 8px',
+                            padding: '0 4px', // Reduced internal padding slightly on xs
                             // Reduce mobile pl override
-                            pl: '40px',
+                            pl: '38px', // Match the pl adjustment
                           }
                         }}>
-                          {/* Remove gap for mobile */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 2 } }}>
+                          {/* Main content area wrapper (Avatar + Text details) */}
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: { xs: 0.5, md: 2 } }}> {/* Changed alignItems */}
+                            {/* Avatar reinstated */}
                             <Avatar
                               alt={stat.name}
                               sx={{
+                                mt: 1, // Increased top margin
                                 width: { xs: 40, md: 50 },
                                 height: { xs: 40, md: 50 },
                                 background: `linear-gradient(135deg, ${
@@ -2481,84 +2574,100 @@ const HomePage = () => {
                               )}
                             </Avatar>
 
-                            {/* Apply negative margin on mobile */}
-                            <Box sx={{ flexGrow: 1, position: "relative", marginLeft: { xs: '-2px', md: 0 } }}>
-                              {/* Title and caption container */}
-                              <Box sx={{ position: "relative" }}>
+                            {/* Text content wrapper (Title, User/Stat, Caption) */}
+                            <Box sx={{
+                                flexGrow: 1,
+                                marginLeft: { xs: '-2px', md: 0 },
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'space-between', 
+                                height: '100%' 
+                            }}>
+                              {/* Top Content Wrapper (Badge Title + User/Stat) */}
+                              <Box>
                                 <Typography
-                                  variant="h5"
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    fontWeight: 600,
-                                    fontSize: { xs: "14px", md: "18px" },
-                                    color: "#1D1D20",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    mb: 0.5,
-                                    lineHeight: 1.2,
-                                    textAlign: "center",
-                                  }}
-                                >
-                                  {getStatTitle(stat.statType)}
-                                </Typography>
-                              </Box>
+                                    variant="h5"
+                                    sx={{
+                                      fontFamily: "SourGummy, sans-serif",
+                                      fontWeight: 600,
+                                      fontSize: { xs: "14px", md: "18px" },
+                                      color: "#1D1D20",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      mb: .5, // Keep mb from old structure
+                                      lineHeight: 1.2,
+                                      textAlign: 'left', // Always align left
+                                      // pl: { md: 2 }, // Remove left padding
+                                      // width: '100%' // Remove width: 100%
+                                    }}
+                                  >
+                                    {getStatTitle(stat.statType)}
+                                  </Typography>
 
-                              {/* User name and stat value */}
-                              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: { xs: 0.5, md: 1.5 } }}>
-                                <Tooltip title={stat.name} placement="top" arrow>
+                                {/* User name and stat value - Stacked Vertically on xs */}
+                                <Box sx={{
+                                    display: "flex",
+                                    alignItems: 'flex-start', // Keep mobile alignment
+                                    flexDirection: 'column', // Keep mobile stacking (now applies to md too)
+                                    // justifyContent: { md: 'space-between' }, // Remove justification
+                                    mt: { xs: 0.5, md: 0.5 }, // Adjust margin-top
+                                    width: '100%' // Keep width 100%
+                                }}>
+                                  {/* Wrap username and icon */}
+                                  <Tooltip title={stat.name} placement="top" arrow>
+                                    <Typography
+                                      sx={{
+                                        fontFamily: "SourGummy, sans-serif",
+                                        color: "#1D1D20",
+                                        fontWeight: 600,
+                                        fontSize: { xs: "12px", md: "14px" },
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        lineHeight: 1.1,
+                                        maxWidth: { xs: "80px", md: "140px" }, // Restore original max width
+                                      }}
+                                    >
+                                      {truncateText(stat.name, isMobile ? 8 : 10)} 
+                                    </Typography>
+                                  </Tooltip>
                                   <Typography
                                     sx={{
                                       fontFamily: "SourGummy, sans-serif",
-                                      color: "#1D1D20",
-                                      fontWeight: 600,
-                                      fontSize: { xs: "12px", md: "14px" },
+                                      color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
+                                             index === 1 ? "#5B8C5A" : // Sea 2 from style guide
+                                             index === 2 ? "#1D6EF1" : // Sea 1 from style guide
+                                             "#48BB78",
+                                      fontSize: { xs: "10px", md: "12px" },
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
                                       lineHeight: 1.1,
-                                      maxWidth: { xs: "80px", md: "140px" }, // Smaller max width on mobile
+                                      mt: 0.25 // Add small margin-top under username
                                     }}
                                   >
-                                    {truncateText(stat.name, isMobile ? 8 : 10)}
+                                    {formatStatValue(stat.statType, stat.statValue)}
                                   </Typography>
-                                </Tooltip>
-                                <Typography
-                                  sx={{
-                                    fontFamily: "SourGummy, sans-serif",
-                                    color: index === 0 ? "#EF7B6C" : // Sea 3 from style guide
-                                           index === 1 ? "#5B8C5A" : // Sea 2 from style guide
-                                           index === 2 ? "#1D6EF1" : // Sea 1 from style guide
-                                           "#48BB78",
-                                    fontSize: { xs: "10px", md: "12px" },
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                    lineHeight: 1.1,
-                                  }}
-                                >
-                                  {formatStatValue(stat.statType, stat.statValue)}
-                                </Typography>
+                                </Box>
                               </Box>
 
-                              {/* Caption text positioned at the bottom and centered - hide on mobile */}
                               <Typography
                                 sx={{
-                                  position: "absolute",
-                                  bottom: "2px",
-                                  left: 0,
-                                  right: 0,
                                   width: "100%",
                                   textAlign: "center",
                                   fontFamily: "SourGummy, sans-serif",
                                   color: "#555",
-                                  fontSize: { xs: "8px", md: "10px" },
-                                  lineHeight: 1,
+                                  fontSize: { xs: "8px", sm: "10px", md: "10px" }, // Adjusted font size for sm/md
+                                  lineHeight: 1.1, // Keep slightly larger mobile line height
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
+                                  whiteSpace: "normal", // Allow wrapping
                                   opacity: 0.9,
-                                  display: { xs: "none", sm: "block" },
+                                  display: { xs: "block", sm: "block" }, // Ensure display block on mobile
+                                  mt: 'auto', // Push to bottom via margin auto
+                                  pt: 0.5, // Add padding top for spacing from content above
+                                  // pl: { md: 2 } // Remove left padding
                                 }}
                               >
                                 {getStatCaption(stat.statType)}
@@ -2573,6 +2682,7 @@ const HomePage = () => {
               </Box>
             </Grid>
           </Grid>
+
 
           { /*Active Users Section*/
           /*<Box
@@ -2850,6 +2960,7 @@ const HomePage = () => {
               )}
             </Box>
           </Box> */}
+
         </Container>
       </Box>
       <Snackbar open={streakPopup.open} autoHideDuration={5000} onClose={() => setStreakPopup({ ...streakPopup, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }}>

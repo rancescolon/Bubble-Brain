@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import { useShop, availableSkins, rarityLevels as importedRarityLevels } from '../Context/ShopContext';
+import { useShop, availableSkins, rarityLevels as importedRarityLevels, setBubbleBucks, setPurchasedSkins as setContextPurchasedSkins, setEquippedSkinId } from '../Context/ShopContext';
 import { BackgroundContext } from '../App';
 import bubbleBuckImage from '../assets/bubblebuck.png'; // Import buck image
 import actualBuyButtonImage from '../assets/actualbuybutton.png'; // Add this import
@@ -46,6 +46,9 @@ import spanishEquipButtonImage from '../assets/spanishequipbutton.png';
 import spanishOwnedButtonImage from '../assets/spanishownedbutton.png'; 
 import spanishEquippedButtonImage from '../assets/spanishequippedbutton.png';
 
+
+import { motion } from "framer-motion";
+
 //The code for the Shop page was assisted with the help of ChatGPT
 // Helper to format time (from HomePage.jsx)
 const formatTime = (seconds) => {
@@ -70,7 +73,9 @@ const Shop = () => {
     updateBackendUserData, 
     userId,
     refreshUserData,
-    setPurchasedSkins
+    setPurchasedSkins: setContextPurchasedSkins,
+    setBubbleBucks: setContextBubbleBucks,
+    setEquippedSkinId: setContextEquippedSkinId,
   } = useShop();
 
   const { 
@@ -154,7 +159,12 @@ const Shop = () => {
 
   // New useEffect to sync bubble bucks with study time
   useEffect(() => {
-    // Skip if still loading or no user ID
+    // *** ADD CHECK: Don't run if shop is loading ***
+    if (isShopLoading) {
+      console.log("[Shop] Skipping study time sync because shop is loading.");
+      return;
+    }
+    // Skip if still loading study time or no user ID or no study time data
     if (loadingStudyTime || !userId || !totalStudyTimeSeconds) return;
     
     // Create user-specific localStorage key for tracking last synced time
@@ -209,7 +219,8 @@ const Shop = () => {
       // No new minutes, but still update last synced time to current total
       localStorage.setItem(LAST_SYNCED_KEY, totalStudyTimeSeconds.toString());
     }
-  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks, shopText]); // Added shopText dependency
+
+  }, [totalStudyTimeSeconds, bubbleBucks, userId, loadingStudyTime, updateBackendUserData, addBubbleBucks, isShopLoading, shopText]);
 
   // Load fisherman click time from localStorage when userId becomes available
   useEffect(() => {
@@ -243,13 +254,17 @@ const Shop = () => {
     localStorage.setItem(userSpecificKey, lastFishermanClickTime.toString());
   }, [lastFishermanClickTime, userId]); // Run when either changes
 
-  // Handle clicking the fisherman - UPDATED LOGIC
-  const handleFishermanClick = async () => { // Make async for backend update
+  // Handle clicking the fisherman - ADDED LOGGING
+  const handleFishermanClick = async () => {
+    console.log("[Fisherman] Click handler entered. Current state:", { userId, isMachineShaking });
+
     // Make sure user is logged in
     if (!userId) {
-            setSnackbar({ 
-              open: true, 
+
+        setSnackbar({ 
+        open: true, 
         message: shopText.loginPromptFeature, // Use shopText
+
         severity: 'warning' 
       });
       return;
@@ -277,6 +292,7 @@ const Shop = () => {
     if (timeSinceLastClick < cooldownDuration) {
       const remainingTime = cooldownDuration - timeSinceLastClick;
       const remainingMinutes = Math.ceil(remainingTime / (60 * 1000));
+      console.log(`[Fisherman] Exiting: Cooldown active. Remaining: ${remainingMinutes}m`);
       setSnackbar({ 
         open: true, 
         message: shopText.cooldown.replace('{minutes}', remainingMinutes).replace('{plural}', remainingMinutes > 1 ? shopText.pluralS : ''), // Use shopText
@@ -286,11 +302,15 @@ const Shop = () => {
     }
 
     // Prevent double-click during animation
-    if (isMachineShaking) return;
+    console.log("[Fisherman] Checking if machine is shaking:", isMachineShaking);
+    if (isMachineShaking) {
+        console.log("[Fisherman] Exiting: Machine is already shaking.");
+        return;
+    }
 
-      setIsMachineShaking(true); 
-    setLastFishermanClickTime(currentTime); // Update state
-    localStorage.setItem(userSpecificKey, currentTime.toString()); // Update localStorage directly
+    setIsMachineShaking(true); 
+    setLastFishermanClickTime(currentTime);
+    localStorage.setItem(userSpecificKey, currentTime.toString());
 
     // 1. Optimistic UI update
     const optimisticSuccess = addBubbleBucks(amountToAdd);
@@ -299,13 +319,22 @@ const Shop = () => {
        const newBucksTotal = bubbleBucks + amountToAdd; // Calculate new total for backend
        
        // 2. Update backend
+       console.log("[Fisherman] Attempting backend update with new total:", newBucksTotal);
        const backendSuccess = await updateBackendUserData({ bubbleBucks: newBucksTotal });
+       console.log("[Fisherman] Backend update result:", backendSuccess); // Log backend success
 
        if (backendSuccess) {
+          // DEBUG: Log before setting snackbar
+          const snackbarParams = { open: true, message: `Caught ${amountToAdd} Bubble Bucks!`, severity: 'success' };
+          console.log("[Fisherman] Backend successful, setting snackbar:", snackbarParams);
           // Show success message after backend confirmation
+
           setSnackbar({ open: true, message: shopText.caughtBucks.replace('{amount}', amountToAdd), severity: 'success' }); // Use shopText
+
         } else {
+          console.error("[Fisherman] Backend update failed. Reverting optimistic update.");
           // Revert optimistic update if backend fails
+
           addBubbleBucks(-amountToAdd); // Subtract the added amount
           setLastFishermanClickTime(null); // Reset cooldown if backend failed
           localStorage.removeItem(userSpecificKey); // Remove from localStorage too
@@ -316,6 +345,7 @@ const Shop = () => {
        setLastFishermanClickTime(null); // Reset cooldown if optimistic update failed
        localStorage.removeItem(userSpecificKey); // Remove from localStorage too
        setSnackbar({ open: true, message: shopText.addBucksError, severity: 'error' }); // Use shopText
+
     }
 
     // End animation after a delay
@@ -324,18 +354,17 @@ const Shop = () => {
     }, 1200); 
   };
 
+  // REFACTORED handleBuy
   const handleBuy = async (skin) => {
-    console.log("[Shop] Before buying: bubbleBucks =", bubbleBucks, "purchasedSkins =", [...purchasedSkins]);
+    console.log("[Shop] handleBuy started for skin:", skin.id);
     
-    // If we already own this skin, just equip it
+    // 1. Pre-checks (unchanged)
     if (purchasedSkins.includes(skin.id)) {
-      console.log("[Shop] Skin already owned, equipping instead of buying");
-      await equipSkin(skin.id);
+      console.log("[Shop] Skin already owned, equipping instead.");
+      await handleEquip(skin.id); // Call the existing handleEquip function
       return;
     }
-    
-    // Check if user can afford the skin
-      if (bubbleBucks < skin.price) {
+    if (bubbleBucks < skin.price) {
       setSnackbar({ 
         open: true, 
         message: shopText.notEnoughBucks.replace('{price}', skin.price).replace('{name}', skin.name), // Use shopText 
@@ -343,85 +372,86 @@ const Shop = () => {
       });
       return;
     }
-    
-    // Show loading message
+
+    // 2. Show "Purchasing..." Snackbar (unchanged)
     setSnackbar({ 
       open: true, 
       message: shopText.purchasing.replace('{name}', skin.name), // Use shopText
       severity: 'info' 
     });
-    
+
+    // 3. Prepare updated data
+    const newBucks = bubbleBucks - skin.price;
+    const newPurchasedSkins = [...purchasedSkins, skin.id];
+    // Automatically equip the purchased skin
+    const newEquippedSkinId = skin.id; 
+
+    console.log("[Shop] Preparing backend update:", {
+      bubbleBucks: newBucks,
+      purchasedSkins: newPurchasedSkins,
+      equippedSkinId: newEquippedSkinId
+    });
+
     try {
-      // Step 1: Update backend FIRST with direct API call
-      const newBucks = bubbleBucks - skin.price;
-      const newPurchasedSkins = [...purchasedSkins, skin.id];
-      
-      console.log("[Shop] Updating backend with purchase:", {
-        bubbleBucks: newBucks,
-        purchasedSkins: newPurchasedSkins,
-        equippedSkinId: skin.id
-      });
-      
+      // 4. Update backend FIRST
       const updateSuccess = await updateBackendUserData({
         bubbleBucks: newBucks,
         purchasedSkins: newPurchasedSkins,
-        equippedSkinId: skin.id
+        equippedSkinId: newEquippedSkinId // Update equipped skin in the same call
       });
-      
+
       if (!updateSuccess) {
+        console.error("[Shop] Backend update failed during purchase for skin:", skin.id);
         throw new Error("Backend update failed");
       }
       
-      // Step 2: Call buySkin to update local state
-      const buySuccess = await buySkin(skin.id);
+      console.log("[Shop] Backend update successful for purchase.");
+
+      // 5. Update local context state DIRECTLY after successful backend update
+      console.log("[Shop] Updating local context state directly after purchase.");
+      if (setContextBubbleBucks) setContextBubbleBucks(newBucks);
+      if (setContextPurchasedSkins) setContextPurchasedSkins(newPurchasedSkins);
+      if (setContextEquippedSkinId) setContextEquippedSkinId(newEquippedSkinId);
       
-      // Step 3: Refresh user data to ensure consistency
-      await refreshUserData();
-      
-      // Step 4: Verify purchase was successful
-      if (!purchasedSkins.includes(skin.id)) {
-        console.error("[Shop] Purchase verification failed - skin not in purchasedSkins after refresh");
-        
-        // One more attempt to fix it
-        await updateBackendUserData({
-          purchasedSkins: [...purchasedSkins, skin.id]
-        });
-        
-        await refreshUserData();
-      }
-      
-      // Step 5: Equip the skin
-      await equipSkin(skin.id);
-      
-      // Show success message
+      // 6. Show final success message (unchanged)
       setSnackbar({ 
         open: true, 
+
         message: shopText.purchaseSuccess.replace('{name}', skin.name), // Use shopText
+
         severity: 'success' 
       });
+
+      console.log("[Shop] Purchase and equip completed locally for skin:", skin.id);
       
-      console.log("[Shop] Purchase completed. Current state:", {
-        bubbleBucks,
-        purchasedSkins: [...purchasedSkins],
-        equippedSkinId
-      });
+      // --- Optional: Log final state for verification ---
+      // Note: Context state updates might be async, so logging 'bubbleBucks' here
+      // might still show the old value immediately after the setter call.
+      // Rely on the UI reflecting the change.
+      // console.log("[Shop] Final context state likely updated (async):", {
+      //   newBucks, newPurchasedSkins, newEquippedSkinId
+      // });
+
     } catch (error) {
-      console.error("[Shop] Error during purchase:", error);
-      
+      console.error("[Shop] Error during purchase transaction:", error);
+      // Revert optimistic "Purchasing..." snackbar with error message
       setSnackbar({ 
         open: true, 
         message: shopText.purchaseFail.replace('{name}', skin.name), // Use shopText
         severity: 'error' 
       });
+      
+      // Optional: Refresh data to try and sync with potential partial backend changes
+      // await refreshUserData(); 
     }
   };
 
+  // UNCHANGED handleEquip
   const handleEquip = async (skinId) => {
-    console.log("[Shop] Before equipping: skinId =", skinId, "equippedSkinId =", equippedSkinId, "purchasedSkins =", [...purchasedSkins]);
-    
+    console.log("[Shop] handleEquip called for skin:", skinId);
     // Default skin can always be equipped
     if (skinId === defaultSkin.id) {
-      await equipSkin(skinId);
+      await equipSkin(skinId); // Use the original equipSkin from context here
       setSnackbar({ 
         open: true, 
         message: shopText.defaultEquipped, // Use shopText
@@ -455,21 +485,27 @@ const Shop = () => {
     }
     
     try {
-      // Call equipSkin function to update local state
-      await equipSkin(skinId);
+      // Call equipSkin function from context to update state and backend
+      await equipSkin(skinId); 
       
-      // Make sure this skin is in the purchased skins array
+      // Add robust check/fix: Ensure equipped skin is in purchased list *after* equipSkin call
       if (!purchasedSkins.includes(skinId)) {
-        console.log("[Shop] Adding equipped skin to purchased skins list");
+        console.warn("[Shop] Equipped skin still not in purchased list after equipSkin. Forcing update.");
+        const updatedSkins = [...purchasedSkins, skinId];
         
-        // Update backend directly
-        await updateBackendUserData({
-          purchasedSkins: [...purchasedSkins, skinId],
-          equippedSkinId: skinId
+        // Force backend update
+        const fixSuccess = await updateBackendUserData({
+          purchasedSkins: updatedSkins,
+          equippedSkinId: skinId // Ensure equipped ID is also sent
         });
         
-        // Refresh to ensure consistency
-        await refreshUserData();
+        if (fixSuccess) {
+          // Update local state directly
+          if (setContextPurchasedSkins) setContextPurchasedSkins(updatedSkins);
+          console.log("[Shop] Successfully forced equipped skin into purchased list.");
+        } else {
+          console.error("[Shop] Failed to force equipped skin into purchased list.");
+        }
       }
       
       const currentSkin = availableSkins.find(s => s.id === skinId) || { name: "skin" };
@@ -516,7 +552,6 @@ const Shop = () => {
   // --- End Sorting Logic ---
 
   const equippedSkin = getEquippedSkin();
-  const isLoading = isShopLoading; // Only need shop loading state now
 
   // --- DEBUG LOG --- 
   console.log("[Shop.jsx] Purchased Skins:", purchasedSkins);
@@ -528,7 +563,7 @@ const Shop = () => {
   console.log("[Shop] Current skin from getEquippedSkin():", getEquippedSkin());
   // --- END DEBUG LOG ---
 
-  // Enhance the useEffect for handling purchased skins to make it more reliable between navigations
+  // Enhance the useEffect for handling purchased skins
   useEffect(() => {
     // Don't do anything if not logged in
     if (!userId) return;
@@ -606,25 +641,21 @@ const Shop = () => {
       if (bestSkinData && bestSkinData.length > 0) {
         // If current state is empty or has fewer skins, restore from storage
         if (purchasedSkins.length < bestSkinData.length) {
-          console.log("[Shop] After navigation: restoring skins from storage", {
-            current: purchasedSkins.length,
-            storage: bestSkinData.length
-          });
-          
-          // First update state
-          setPurchasedSkins(bestSkinData);
-          
-          // Then update backend to ensure data consistency
+          console.log("[Shop] Restoring skins from storage", { current: purchasedSkins.length, storage: bestSkinData.length });
+          // Update state DIRECTLY using the context setter
+          if (setContextPurchasedSkins) setContextPurchasedSkins(bestSkinData); 
+
+          // Update backend (unchanged logic, but ensures consistency)
           updateBackendUserData({
             purchasedSkins: bestSkinData,
-            // Include current equipped skin to ensure it's not lost
             equippedSkinId: equippedSkinId !== defaultSkin.id ? equippedSkinId : undefined
           }).then(success => {
             if (success) {
-              console.log("[Shop] Successfully restored skins after navigation");
-              refreshUserData(); // Refresh to ensure everything is in sync
+              console.log("[Shop] Successfully synced restored skins to backend");
+              // Optional: Refresh might still be useful here IF backend sync has side effects
+              // refreshUserData(); 
             } else {
-              console.error("[Shop] Failed to restore skins after navigation");
+              console.error("[Shop] Failed to sync restored skins to backend");
             }
           });
         } else {
@@ -640,7 +671,7 @@ const Shop = () => {
         }
       }
     }
-  }, [userId, isShopLoading, purchasedSkins, equippedSkinId, defaultSkin.id]);
+  }, [userId, isShopLoading, purchasedSkins, equippedSkinId, defaultSkin.id, setContextPurchasedSkins, updateBackendUserData]); // Added setters and backend update to dependency array
   
   // Add an event listener for page visibility changes to handle tab switching
   useEffect(() => {
@@ -858,7 +889,7 @@ const Shop = () => {
     };
     
     syncEquippedSkin();
-  }, [userId, equippedSkinId, purchasedSkins]);
+  }, [userId, equippedSkinId, purchasedSkins, updateBackendUserData, refreshUserData, setContextPurchasedSkins]); // Added context setters/funcs
 
   // Add a one-time effect to save and restore bubble bucks between sessions
   useEffect(() => {
@@ -895,7 +926,7 @@ const Shop = () => {
       localStorage.setItem(STORAGE_KEY, bubbleBucks.toString());
     }
     
-  }, [userId, bubbleBucks]);
+  }, [userId, bubbleBucks, updateBackendUserData, refreshUserData, setContextBubbleBucks]); // Added context setters/funcs
 
   // Add a safe one-time load effect with a strict mounting check
   useEffect(() => {
@@ -903,6 +934,12 @@ const Shop = () => {
     let isMounted = true;
     
     const loadInitialData = async () => {
+      // *** ADD CHECK: Only run if context is still in initial loading phase ***
+      if (!isShopLoading && !isRefreshing) {
+        console.log("[Shop] Skipping loadInitialData because context/shop is already loaded/refreshing.");
+        return; 
+      }
+
       // Skip if no user data is available
       if (!userId || !refreshUserData) return;
       
@@ -940,7 +977,7 @@ const Shop = () => {
             console.log("[Shop] No skins loaded from backend, restoring from cache");
             
             // Update state optimistically
-            setPurchasedSkins(cachedSkins);
+            if (setContextPurchasedSkins) setContextPurchasedSkins(cachedSkins);
             
             // Update backend to ensure data is saved
             const updateSuccess = await updateBackendUserData({
@@ -973,7 +1010,20 @@ const Shop = () => {
     return () => {
       isMounted = false;
     };
-  }, []); // Empty dependency array ensures this runs only on mount
+  }, [userId, isShopLoading, refreshUserData, updateBackendUserData, setContextPurchasedSkins]); // Added context setters/funcs
+
+  // --- Moved Loading Check Higher --- 
+  // This check now happens BEFORE the main Box is defined
+  if (isShopLoading) {
+    // Return ONLY the loading indicator, not nested in the styled Box
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 'calc(100vh - 64px)', bgcolor: 'rgba(255, 255, 255, 0.7)' }}>
+        <CircularProgress />
+        <Typography sx={{ ml: 2, fontFamily: 'SourGummy, sans-serif', fontSize: '1.5rem' }}>Loading Shop...</Typography>
+      </Box>
+    );
+  }
+  // --- End Loading Check ---
 
   return (
     <Box
@@ -1002,15 +1052,20 @@ const Shop = () => {
             overflow: 'hidden' 
           }}
         >
-          {/* Add relative positioning to the title container */}
+          {/* <<< Fisherman Image moved back inside this Box >>> */}
+          {/* Title container */}
           <Box sx={{ position: 'relative', textAlign: 'center', mb: 4 }}>
             {/* Positioned Fisherman Image */}
             <Box
               component="img"
               src={sittingFishermanImage}
               alt="Click for Bucks!"
-              onClick={handleFishermanClick} 
+              onClick={() => {
+                console.log("<<< FISHERMAN IMAGE CLICKED IN JSX >>>"); 
+                handleFishermanClick(); 
+              }}
               sx={{
+                // <<< RESTORED Original Positioning >>>
                 position: 'absolute',
                 // Conditional top positioning based on language
                 top: langKey === 'es' 
@@ -1019,23 +1074,27 @@ const Shop = () => {
                 left: { xs: 'calc(50% + 11px)', sm: 'calc(50% + 113px)', md: 'calc(50% + 113px)' }, 
                 width: '70px',
                 height: 'auto',
-                zIndex: 2, 
+                zIndex: 2, // Original zIndex
                 pointerEvents: 'auto',
                 cursor: 'pointer',    
                 filter: 'none',       
                 transition: 'transform 0.2s ease-in-out, filter 0.3s ease-in-out, top 0.3s ease-in-out', // Added top transition
                 '&:hover': {
+
                   filter: 'drop-shadow(0 0 15px rgba(255, 0, 0, 1))', 
+
                   transform: 'scale(1.05)', 
                 },
-                // Media query specifically for devices with aspect ratio = 3/4 (like Surface Duo portrait)
                 '@media (aspect-ratio: 3/4)': {
+
                   // Adjust top for Surface Duo based on language
                   top: langKey === 'es' ? '55px' : '60px', // Spanish position higher here too       
+
                   left: 'calc(50% + 113px)', 
                 },
               }}
             />
+            
             <Typography variant="h2" gutterBottom align="center" sx={{ fontFamily: 'SourGummy, sans-serif', fontWeight: 1000, color: '#1D1D20' }}>
               {shopText.title}
             </Typography>
@@ -1115,12 +1174,14 @@ const Shop = () => {
                         <RefreshCw size={18} style={{ marginRight: '8px' }} />
                         <Typography variant="body2" sx={{ fontFamily: 'SourGummy, sans-serif' }}>
                           {shopText.refreshPrompt} {/* Use shopText */}
+
                     </Typography>
-                      </Box>
-                    )}
-                  </Grid>
-                </Grid>
-              </Paper>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          </Paper>
+
 
               {/* Available Skins Section */}
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} mt={4}>
@@ -1147,18 +1208,26 @@ const Shop = () => {
                 </FormControl>
               </Box>
 
-              <Grid container spacing={3}>
-                {sortedSkins.map((skin) => {
-                  const isOwned = purchasedSkins.includes(skin.id);
-                  const isEquipped = equippedSkinId === skin.id;
-                  // Use context bubbleBucks for affordability check
-                  const canAfford = bubbleBucks >= skin.price;
-                  const rarity = rarityMap[skin.rarityId]; // Get rarity details
-                  const isMythic = skin.rarityId === 'mythic'; // Check if mythic
 
-                  return (
-                    <Grid item xs={12} sm={6} md={4} key={skin.id}>
-                      <Card sx={{ 
+          <Grid container spacing={3}>
+            {sortedSkins.map((skin, index) => {
+              const isOwned = purchasedSkins.includes(skin.id);
+              const isEquipped = equippedSkinId === skin.id;
+              const canAfford = bubbleBucks >= skin.price;
+              const rarity = rarityMap[skin.rarityId];
+              const isMythic = skin.rarityId === 'mythic';
+              return (
+                <Grid item xs={12} sm={6} md={4} key={skin.id}>
+                  <div
+                    className="skin-item"
+                    style={{ 
+                      animationDelay: `${index * 0.1}s`,
+                      opacity: 0,
+                      transform: 'translateY(20px)',
+                      animation: 'fadeInUp 0.3s ease forwards'
+                    }}
+                  >
+                     <Card sx={{ 
                           height: '100%', 
                           display: 'flex', 
                           flexDirection: 'column', 
@@ -1212,18 +1281,18 @@ const Shop = () => {
                               src={bubbleBuckImage} 
                               alt="" 
                               style={{ width: '80px', height: '80px', marginRight: '8px' }} // Increased size
-                            />
-                            <Typography 
-                              variant="h6" // Slightly larger variant
-                              sx={{ 
-                                fontFamily: 'SourGummy, sans-serif', 
-                                fontWeight: 600, // Bolder 
-                                color: '#000000' // Theme black color
-                              }}
-                            >
-                              {skin.price}
-                            </Typography>
-                          </Box>
+                          />
+                          <Typography 
+                            variant="h6" // Slightly larger variant
+                            sx={{ 
+                              fontFamily: 'SourGummy, sans-serif', 
+                              fontWeight: 600, // Bolder 
+                              color: '#000000' // Theme black color
+                            }}
+                          >
+                            {skin.price}
+                          </Typography>
+                        </Box>
 
                           {/* Button/Status Display (Moved Here) */}
                           <Box sx={{ mt: 1, mb: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}> {/* Reverted mt */}
@@ -1400,52 +1469,21 @@ const Shop = () => {
                 )}
               </Paper> { /* Closing Wardrobe Paper */ }
 
-            </>
-          )}
-          {/* --- End Content Wrapper --- */}
-
-          {/* Snackbar for feedback */}
-          <Snackbar 
-            open={snackbar.open} 
-            autoHideDuration={4000} 
-            onClose={handleCloseSnackbar} 
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          >
-            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-
-          {/* Keyframes for animation */}
-          <style>{`
-            @keyframes shake {
-              10%, 90% {
-                transform: translate3d(-1px, 0, 0);
-              }
-              20%, 80% {
-                transform: translate3d(2px, 0, 0);
-              }
-              30%, 50%, 70% {
-                transform: translate3d(-3px, 0, 0);
-              }
-              40%, 60% {
-                transform: translate3d(3px, 0, 0);
-              }
-            }
-          `}</style>
-
-          {/* Keyframes for refresh animation */}
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            .spin {
-              animation: spin 1s linear infinite;
-            }
-          `}</style>
         </Paper> {/* Close main content Paper */} 
       </Container> 
+      
+      {/* <<< ADDED MISSING SNACKBAR COMPONENT >>> */}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
     </Box> // Close outer Box
   );
 };

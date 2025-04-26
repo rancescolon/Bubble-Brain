@@ -631,7 +631,7 @@ const Friends = () => {
               <div className="flex gap-4">
                 <button
                   onClick={() => setSelectedOption(1)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-4 py-2 rounded-full transition-colors ${
                     selectedOption === 1
                       ? "bg-[#1D6EF1] text-white"
                       : "bg-gray-200 text-gray-800 hover:bg-gray-300"
@@ -642,7 +642,7 @@ const Friends = () => {
                 </button>
                 <button
                   onClick={() => setSelectedOption(2)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-4 py-2 rounded-full transition-colors ${
                     selectedOption === 2
                       ? "bg-[#1D6EF1] text-white"
                       : "bg-gray-200 text-gray-800 hover:bg-gray-300"

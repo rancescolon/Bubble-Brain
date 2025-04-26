@@ -41,9 +41,12 @@ import Communities from "./Component/Communities"
 import CommunityView from "./Component/CommunityView"
 import Upload from "./Component/Upload"
 import StudySetView from "./Component/StudySetView"
-import Feed from "./pages/Feed"
-import Shop from "./Component/Shop"
-import { ShopProvider } from "./Context/ShopContext"
+
+import socketService from './services/socketService'
+import Feed from './pages/Feed'
+import Shop from './Component/Shop'
+import { ShopProvider, useShop as useShopContextHook } from './Context/ShopContext'
+
 // import SideBar from "./Component/StyleGuide/SideBar"
 
 // Import default background and other backgrounds you want to use
@@ -365,6 +368,9 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground, la
   const [refreshPosts, setRefreshPosts] = useState(false)
   const [hasSeenAnimation, setHasSeenAnimation] = useState(false)
 
+  // Access context values including setters
+  const { clearUserData, refreshUserData, setUserId, setToken } = useShopContextHook(); 
+
   useEffect(() => {
     const hasLoggedInBefore = localStorage.getItem("hasLoggedInBefore")
     setHasSeenAnimation(!!hasLoggedInBefore)
@@ -399,41 +405,46 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground, la
       }
     }
 
-    // If we have a userId, clear the user-specific localStorage keys
+    // Clear user-specific localStorage keys
     if (userId) {
-      // Clear fisherman cooldown
-      const fishermanCooldownKey = `lastFishermanClickTime_${userId}`
-      localStorage.removeItem(fishermanCooldownKey)
-
-      localStorage.removeItem("lastEquippedSkinId")
+      const keysToRemove = [
+        `lastFishermanClickTime_${userId}`,
+        `lastKnownBubbleBucks_${userId}`,
+        `lastKnownPurchasedSkins_${userId}`,
+        `lastEquippedSkinId_${userId}`,
+        `sessionPurchasedSkins_${userId}`, // Also clear session storage specific key
+        `lastSyncedStudyTime_${userId}`
+      ];
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      sessionStorage.removeItem(`sessionPurchasedSkins_${userId}`); // Ensure session key is cleared too
+      console.log(`Cleared user-specific local and session storage for userId: ${userId}`);
     }
-
-    // Try to access ShopContext and clear data
-    try {
-      // Import and use the ShopContext directly
-      const { clearUserData } = require("../Context/ShopContext").useShop()
-      if (typeof clearUserData === "function") {
-        clearUserData()
-        console.log("Shop data cleared during logout")
-      }
-    } catch (err) {
-      console.warn("Could not clear shop data:", err)
+    
+    // Call clearUserData from context if available
+    if (clearUserData) {
+      clearUserData();
+      console.log("Shop data cleared during logout via context");
+    } else {
+      console.warn("clearUserData function not available from context during logout");
     }
+    
+    // Clear general session storage items
 
-    // Clear session storage as before
     sessionStorage.removeItem("token")
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("activeRoomID")
     sessionStorage.removeItem("activeCommunityID")
     sessionStorage.removeItem("activeCommunityRoomID")
+    // Add other general session items if needed
+    
     setLoggedIn(false)
-    window.location.reload()
+    window.location.reload() // Force reload to ensure clean state
   }
 
   const login = (e) => {
-    e.preventDefault()
-    setRefreshPosts(true)
-    setLoggedIn(true)
+    e.preventDefault();
+    setRefreshPosts(true);
+    setLoggedIn(true);
   }
 
   const doRefreshPosts = () => {
@@ -446,139 +457,140 @@ function AppContent({ backgroundOptions, currentBackground, changeBackground, la
   }
 
   return (
-      <>
-        <div className="App">
-          <header className="App-header">
-            <NavbarWrapper toggleModal={toggleModal} logout={logout} />
-            <div className="maincontent" id="mainContent">
-              <Routes>
-                <Route
-                    path="/"
-                    element={
-                      loggedIn ? (
-                          <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
-                      ) : (
-                          <Navigate to="/login" replace />
-                      )
-                    }
-                />
-                <Route
-                    path="/login"
-                    element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} /> : <Navigate to="/" replace />}
-                />
-                <Route path="/select-categories" element={<CategorySelection />} />
-                <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route
-                    path="/friends"
-                    element={
-                      <ProtectedRoute>
-                        <Friends />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/groups"
-                    element={
-                      <ProtectedRoute>
-                        <Groups />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile setLoggedIn={setLoggedIn} />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route path="/promise" element={<PromiseComponent />} />
-                <Route
-                    path="/messages/:roomID"
-                    element={
-                      <ProtectedRoute>
-                        <Messaging />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/community"
-                    element={
-                      <ProtectedRoute>
-                        <Communities />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/community/view/:id"
-                    element={
-                      <ProtectedRoute>
-                        <CommunityView />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/community/:communityId/chat"
-                    element={
-                      <ProtectedRoute>
-                        <CommunityMessaging />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route path="/akibmahdi" element={<AboutMe />} />
-                <Route path="/rances" element={<AboutRances />} />
-                <Route path="/biviji" element={<AboutTariq />} />
-                <Route path="/aboutus" element={<AboutUs />} />
-                <Route path="/jacobmie" element={<AboutJacob />} />
-                <Route path="/caydenla" element={<AboutCayden />} />
-                <Route path="/style-guide" element={<StyleGuidePage />} />
-                <Route
-                    path="/upload"
-                    element={
-                      <ProtectedRoute>
-                        <Upload />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/community/:communityId/study-set/:studySetId"
-                    element={
-                      <ProtectedRoute>
-                        <StudySetView />
-                      </ProtectedRoute>
-                    }
-                />
-                <Route path="/feed" element={<Feed />} />
-                <Route
-                    path="/shop"
-                    element={
-                      <ProtectedRoute>
-                        <Shop />
-                      </ProtectedRoute>
-                    }
-                />
 
-                <Route
+    <>
+      <div className="App">
+        <header className="App-header">
+          <NavbarWrapper toggleModal={toggleModal} logout={logout} />
+          <div className="maincontent" id="mainContent">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  loggedIn ? (
+                    <HomePage setLoggedIn={setLoggedIn} doRefreshPosts={doRefreshPosts} appRefresh={refreshPosts} />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+              <Route
+                path="/login"
+                element={!loggedIn ? <LoginForm setLoggedIn={setLoggedIn} setShopUserId={setUserId} setShopToken={setToken} /> : <Navigate to="/" replace />}
+              />
+              <Route path="/select-categories" element={<CategorySelection />} />
+              <Route path="/register" element={<RegisterForm setLoggedIn={setLoggedIn} />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/friends"
+                element={
+                  <ProtectedRoute>
+                    <Friends />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/groups"
+                element={
+                  <ProtectedRoute>
+                    <Groups />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile setLoggedIn={setLoggedIn} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/promise" element={<PromiseComponent />} />
+              <Route
+                path="/messages/:roomID"
+                element={
+                  <ProtectedRoute>
+                    <Messaging />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community"
+                element={
+                  <ProtectedRoute>
+                    <Communities />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/community/view/:id" 
+                element={
+                  <ProtectedRoute>
+                    <CommunityView />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/community/:communityId/chat" 
+                element={
+                  <ProtectedRoute>
+                    <CommunityMessaging />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/akibmahdi" element={<AboutMe />} />
+              <Route path="/rances" element={<AboutRances />} />
+              <Route path="/biviji" element={<AboutTariq />} />
+              <Route path="/aboutus" element={<AboutUs />} />
+              <Route path="/jacobmie" element={<AboutJacob />} />
+              <Route path="/caydenla" element={<AboutCayden />} />
+              <Route path="/style-guide" element={<StyleGuidePage />} />
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <Upload />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/community/:communityId/study-set/:studySetId"
+                element={
+                  <ProtectedRoute>
+                    <StudySetView />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/feed" element={<Feed />} />
+              <Route 
+                path="/shop" 
+                element={
+                  <ProtectedRoute>
+                    <Shop />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                     path="/languageSelection"
                     element={
                       <ProtectedRoute>
                         <LanguageSelectionPage language={language} setLanguage={setLanguage} />
                       </ProtectedRoute>
                     }
-                />
-              </Routes>
-            </div>
-          </header>
+              />
+            </Routes>
+          </div>
+        </header>
 
-          <Modal show={openModal} onClose={toggleModal}>
-            This is a modal dialog!
-          </Modal>
+        <Modal show={openModal} onClose={toggleModal}>
+          This is a modal dialog!
+        </Modal>
+        
+        {/* Background Selector - Now safely inside Router context */}
+        <ConditionalBackgroundSelector loggedIn={loggedIn} />
+      </div>
+    </>
 
-          {/* Background Selector - Now safely inside Router context */}
-          <ConditionalBackgroundSelector loggedIn={loggedIn} />
-        </div>
-      </>
   )
 }
 
@@ -607,6 +619,7 @@ function App() {
     setCurrentBackground(backgroundOption)
     localStorage.setItem("selectedBackground", backgroundOption.id)
   }
+
 
   // Get user ID from sessionStorage to use as key
   // This should re-render App when login/logout happens, assuming login/logout triggers a state change in App or a parent
@@ -661,6 +674,7 @@ function App() {
           </Box>
         </ThemeProvider>
       </BackgroundContext.Provider>
+
   )
 }
 

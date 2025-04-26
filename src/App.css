@@ -400,3 +400,21 @@
 
 /* Rest of your App.css styles */
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.post-item,
+.template-item,
+.skin-item {
+  animation: fadeInUp 0.3s ease forwards;
+  opacity: 0;
+}
+
