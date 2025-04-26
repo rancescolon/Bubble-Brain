@@ -328,6 +328,26 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                             </Link>
                         </Typography>
                     </Box>
+                    <Box sx={{ mt: 2, textAlign: "center" }}>
+                        <Button
+                            component={Link}
+                            to="/languageSelection"
+                            variant="outlined"
+                            sx={{
+                                fontFamily: "SourGummy, sans-serif",
+                                fontWeight: 500,
+                                fontSize: "16px",
+                                color: "#1D6EF1",
+                                borderColor: "#1D6EF1",
+                                "&:hover": {
+                                    bgcolor: "#f0f8ff",
+                                    borderColor: "#1D6EF1",
+                                },
+                            }}
+                        >
+                            Choose Language
+                        </Button>
+</Box>
                 </Box>
             </Container>
 
