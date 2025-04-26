@@ -161,15 +161,14 @@ export default function Profile({ setLoggedIn }) {
   }, [])
 
   useEffect(() => {
-    // Load profile picture visibility setting from local storage
     const storedSetting = localStorage.getItem("showProfilePics")
     setShowProfilePics(storedSetting === null ? true : storedSetting === "true") // Default to true if not set
 
-    const storedPic = sessionStorage.getItem("profilePicture")
-    const storedUsername = sessionStorage.getItem("username")
-    const storedFirstName = sessionStorage.getItem("firstname")
-    const storedLastName = sessionStorage.getItem("lastname")
-    const storedEmail = sessionStorage.getItem("email")
+    const storedPic = localStorage.getItem("profilePicture")
+    const storedUsername = localStorage.getItem("username")
+    const storedFirstName = localStorage.getItem("firstname")
+    const storedLastName = localStorage.getItem("lastname")
+    const storedEmail = localStorage.getItem("email")
 
     if (storedPic) setProfilePic(storedPic)
     if (storedUsername) setUsername(storedUsername)
@@ -550,10 +549,10 @@ export default function Profile({ setLoggedIn }) {
 
       const reader = new FileReader()
       reader.onloadend = () => {
-         const base64String = reader.result
+        const base64String = reader.result
         // Optimistically update UI
         setProfilePic(base64String)
-        sessionStorage.setItem("profilePicture", base64String)
+        localStorage.setItem("profilePicture", base64String)
         // Pass both new and old picture data to the API function
         saveProfilePictureToAPI(base64String, oldProfilePic)
       }
@@ -589,7 +588,7 @@ export default function Profile({ setLoggedIn }) {
 
         // --- Revert on API error ---
         setProfilePic(oldBase64String); 
-        sessionStorage.setItem("profilePicture", oldBase64String);
+        localStorage.setItem("profilePicture", oldBase64String);
         setUserData((prev) => ({ ...prev, picture: oldBase64String }));
         // --- End Revert ---
 
@@ -608,7 +607,7 @@ export default function Profile({ setLoggedIn }) {
     } catch (error) {
       // --- Revert on fetch/other error ---
       setProfilePic(oldBase64String); 
-      sessionStorage.setItem("profilePicture", oldBase64String);
+      localStorage.setItem("profilePicture", oldBase64String);
       setUserData((prev) => ({ ...prev, picture: oldBase64String }));
       // --- End Revert ---
 

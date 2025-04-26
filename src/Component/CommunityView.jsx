@@ -2364,7 +2364,7 @@ export default function CommunityView() {
                         </Typography>
 
                         <FormControl component="fieldset" sx={{ width: "100%" }}>
-                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px" }}>
+                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: 'black' }}>
                             {comViewText.upload.questionWhoCanView}
                           </Typography>
                           <Grid container direction="column" spacing={1}>
@@ -2386,7 +2386,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Unlock size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionEveryone}
 
                                       </Typography>
@@ -2418,7 +2418,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Lock size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionAllMembers}
 
                                       </Typography>
@@ -2449,7 +2449,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Users size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionSpecificMembers}
 
                                       </Typography>

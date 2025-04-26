@@ -179,14 +179,14 @@ const StudySetView = () => {
         }
       }
 
-      // Fallback to sessionStorage if API fetch failed or didn't find a picture
+      // Fallback to localStorage if API fetch failed or didn't find a picture
       if (!userPicFromAPI) {
-        const userPicFromSession = sessionStorage.getItem("profilePicture");
-        if (userPicFromSession) {
-          setCurrentUserPicture(userPicFromSession);
-          console.log("[Mount Effect] Set currentUserPicture from Session Storage (Fallback):", userPicFromSession);
+        const userPicFromLocal = localStorage.getItem("profilePicture");
+        if (userPicFromLocal) {
+          setCurrentUserPicture(userPicFromLocal);
+          console.log("[Mount Effect] Set currentUserPicture from Local Storage (Fallback):", userPicFromLocal);
         } else {
-          console.warn("[Mount Effect] User picture not found in API or Session Storage.");
+          console.warn("[Mount Effect] User picture not found in API or Local Storage.");
         }
       }
 
