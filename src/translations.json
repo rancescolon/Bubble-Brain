@@ -942,7 +942,7 @@
     },
     "categorySelector": {
       "title": "Choose Your Interests",
-      "subtitle": "Select up to {maxCategories} categories that interest you",
+      "subtitle": "Select up to",
       "description": "This helps us personalize your experience and show you relevant content",
       "saveButton": "Save Preferences",
       "saving": "Saving...",

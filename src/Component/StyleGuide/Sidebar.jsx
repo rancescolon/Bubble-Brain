@@ -85,7 +85,7 @@ const StyleGuideSidebar = () => {
     }
 
     const navItems = [
-        // { icon: Home, label: "Overview", section: "overview" },
+        { icon: Home, label: "Overview", section: "overview" },
         { icon: Layout, label: "Layout", section: "layout" },
         { icon: Book, label: "Typography", section: "typography" },
         { icon: Palette, label: "Colors", section: "colors" },
@@ -194,21 +194,21 @@ const StyleGuideSidebar = () => {
                 </List>
 
                 <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-                    {/*<Button*/}
-                    {/*    variant="contained"*/}
-                    {/*    startIcon={open ? <Home size={16} /> : null}*/}
-                    {/*    onClick={handleBackToHome}*/}
-                    {/*    sx={{*/}
-                    {/*        bgcolor: "#5B8C5A",*/}
-                    {/*        "&:hover": { bgcolor: "#4A7A49" },*/}
-                    {/*        color: "white",*/}
-                    {/*        minWidth: open ? "auto" : "40px",*/}
-                    {/*        padding: open ? undefined : "6px",*/}
-                    {/*        fontSize: "16px",*/}
-                    {/*    }}*/}
-                    {/*>*/}
-                    {/*    {open ? "Back" : <Home size={28} />}*/}
-                    {/*</Button>*/}
+                    <Button
+                        variant="contained"
+                        startIcon={open ? <Home size={16} /> : null}
+                        onClick={handleBackToHome}
+                        sx={{
+                            bgcolor: "#5B8C5A",
+                            "&:hover": { bgcolor: "#4A7A49" },
+                            color: "white",
+                            minWidth: open ? "auto" : "40px",
+                            padding: open ? undefined : "6px",
+                            fontSize: "16px",
+                        }}
+                    >
+                        {open ? "Back" : <Home size={28} />}
+                    </Button>
                     <Button
                         variant="contained"
                         startIcon={open ? <Download size={16} /> : null}

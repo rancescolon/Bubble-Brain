@@ -1046,12 +1046,13 @@
     },
     "categorySelector": {
       "title": "Choose Your Interests",
-      "subtitle": "Select up to {maxCategories} categories that interest you",
+      "subtitle1": "Select up to" ,
+      "subtitle2": " categories that interest you",
       "description": "This helps us personalize your experience and show you relevant content",
       "saveButton": "Save Preferences",
       "saving": "Saving...",
       "skipButton": "Skip for Now",
-      "selectedCount": "Selected: {count}/{maxCategories}"
+      "selectedCount": "Selected: "
     },
     "notification": {
       "errorNoSelection": "Please select at least one category",
@@ -2861,12 +2862,13 @@
     },
     "categorySelector": {
       "title": "Elige tus intereses",
-      "subtitle": "Selecciona hasta {maxCategories} categorías que te interesen",
+      "subtitle1": "Selecciona hasta ",
+      "subtitle2": " categorías que te interesen",
       "description": "Esto nos ayuda a personalizar tu experiencia y mostrar contenido relevante",
       "saveButton": "Guardar preferencias",
       "saving": "Guardando...",
       "skipButton": "Omitir por ahora",
-      "selectedCount": "Seleccionados: {count}/{maxCategories}"
+      "selectedCount": "Seleccionados:"
     },
     "notification": {
       "errorNoSelection": "Por favor, selecciona pol los menos una categoría",
