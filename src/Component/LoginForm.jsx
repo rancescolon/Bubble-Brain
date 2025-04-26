@@ -8,6 +8,7 @@ import BubbleTrapAnimation from "./BubbleTrapAnimation"
 import Frame from "../assets/Frame.png"
 import background from "../assets/image3.png"
 import { BackgroundContext } from "../App"
+import text from "../text.json";
 
 const LanguageCard = ({ language, flag, onClick, isSelected }) => {
     const [isHovered, setIsHovered] = useState(false)
@@ -74,6 +75,9 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
     const navigate = useNavigate()
     const location = useLocation()
     const { language, setLanguage } = useContext(BackgroundContext)
+    const langKey = language === "English" ? "en" : "es"
+    const comText = text[langKey].loginForm
+
 
     // Check for registration success message
     useEffect(() => {
@@ -304,7 +308,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                             color: "#1D1D20",
                         }}
                     >
-                        Welcome Back!
+                        {comText.welcomeBack}
                     </Typography>
 
                     <form onSubmit={submitHandler}>
@@ -358,7 +362,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                                 color: "#F4FDFF",
                             }}
                         >
-                            {isLoading ? "Logging in..." : "Login"}
+                            {isLoading ? comText.loggingIn : comText.loginButton}
                         </Button>
                     </form>
 
@@ -373,7 +377,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                                 textDecoration: "none",
                             }}
                         >
-                            Forgot Password?
+                            {comText.forgotPassword}
                         </Link>
                     </Box>
 
@@ -386,7 +390,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                                 color: "#1D1D20",
                             }}
                         >
-                            Don't have an account?{" "}
+                            {comText.noAccountPrompt}{" "}
                             <Link
                                 to="/register"
                                 style={{
@@ -397,7 +401,7 @@ const LoginForm = ({ setLoggedIn, setShopUserId, setShopToken }) => {
                                     textDecoration: "none",
                                 }}
                             >
-                                Sign Up
+                                {comText.signUpLink}
                             </Link>
                         </Typography>
                     </Box>
