@@ -1215,11 +1215,11 @@ const Communities = () => {
                                                 {comText.communityCard.joinButton}
                                               </button>
                                               <button
-                                                  className="bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-3 rounded-xl flex items-center justify-center w-full"
+                                                  className="bg-[#48BB78] hover:bg-[#97C7F1] text-[#F4FDFF] py-1 px-3 rounded-xl flex items-center justify-center w-full"
                                                   onClick={() => handleShareCommunity(community.id)}
                                               >
                                                 {copiedCommunityId === community.id ? (
-                                                    <span className="text-[14px]">Copied!</span>
+                                                    <span className="text-[14px]">{comText.common.copied}!</span>
                                                 ) : (
                                                     <>
                                                       <Share2 size={20} className="mr-1" />
