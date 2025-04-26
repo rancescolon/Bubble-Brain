@@ -639,6 +639,11 @@
       "signUpLink": "Sign Up",
       "incorrectCredentials": "Incorrect email or password"
     },
+    "bubbleTrap": {
+        "title": "Oh no! Dr. Bubbles is trapped!",
+        "subtitle": "Complete challenges to help free him.",
+        "button": "Start Your Journey"
+    },
     "homePage": {
       "diveIntoLearning": "Fuel Your Brain, One Bubble at a Time.",
       "learningSubtitle": "Explore our gamified courses and quizzes designed to make learning fun and engaging.",
@@ -2531,6 +2536,12 @@
       "signUpLink": "Registrarse",
       "incorrectCredentials": "Correo o contraseña incorrectos"
     },
+    "bubbleTrap": {
+      "title": "¡Oh, no! ¡El Dr. Bubbles está atrapado!",
+      "subtitle": "Completa los problemas para ayudar a liberarlo.",
+      "button": "Comienza tu aventura"
+    },
+
     "homePage": {
       "diveIntoLearning": "Alimenta tu cerebro, una burbuja a la vez.",
       "learningSubtitle": "Explora nuestros cursos y cuestionarios diseñados para hacer el aprendizaje divertido y atractivo.",
