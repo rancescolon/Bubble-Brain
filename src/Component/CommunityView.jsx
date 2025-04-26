@@ -2097,7 +2097,7 @@ export default function CommunityView() {
                                     <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
                                       <button
                                           // Change Share button bg to Water 4 (#C5EDFD), text to Water 2 (#1D6EF1), hover bg to Water 3 (#97C7F1)
-                                          className={`bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
+                                          className={`bg-[#48BB78] hover:bg-[#97C7F1] text-[#F4FDFF] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
                                           onClick={() => handleShareStudySet(studySet.id)}
                                       >
                                         {copiedSetId === studySet.id ? (
