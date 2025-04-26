@@ -2097,7 +2097,7 @@ export default function CommunityView() {
                                     <div className={`flex items-center ${isMobile ? "flex-wrap gap-1" : ""}`}>
                                       <button
                                           // Change Share button bg to Water 4 (#C5EDFD), text to Water 2 (#1D6EF1), hover bg to Water 3 (#97C7F1)
-                                          className={`bg-[#C5EDFD] hover:bg-[#97C7F1] text-[#1D6EF1] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
+                                          className={`bg-[#48BB78] hover:bg-[#97C7F1] text-[#F4FDFF] py-1 px-${isMobile ? "2" : "3"} rounded-xl mr-2 flex items-center`}
                                           onClick={() => handleShareStudySet(studySet.id)}
                                       >
                                         {copiedSetId === studySet.id ? (
@@ -2364,7 +2364,7 @@ export default function CommunityView() {
                         </Typography>
 
                         <FormControl component="fieldset" sx={{ width: "100%" }}>
-                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px" }}>
+                          <Typography sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, fontSize: "14px", color: 'black' }}>
                             {comViewText.upload.questionWhoCanView}
                           </Typography>
                           <Grid container direction="column" spacing={1}>
@@ -2386,7 +2386,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Unlock size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionEveryone}
 
                                       </Typography>
@@ -2418,7 +2418,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Lock size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionAllMembers}
 
                                       </Typography>
@@ -2449,7 +2449,7 @@ export default function CommunityView() {
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                       <Users size={16} />
 
-                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif" }}>
+                                      <Typography sx={{ fontFamily: "SourGummy, sans-serif", color: 'black' }}>
                                         {comViewText.upload.optionSpecificMembers}
 
                                       </Typography>

@@ -174,14 +174,6 @@ export const availableSkins = [
     logo: dirtyBubbleImage
   },
   {
-    id: 'mystery1',
-    name: 'Mystery Bubbles',
-    price: 850, 
-    rarityId: 'mythic',
-    image: mysteryImage,
-    logo: mysteryImage
-  },
-  {
     id: 'mindcontrol1',
     name: 'Mind Control Bubbles',
     price: 850, 
