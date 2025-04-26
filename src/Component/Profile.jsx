@@ -823,8 +823,9 @@ export default function Profile({ setLoggedIn }) {
       <Container
         maxWidth="xl"
         sx={{
-          maxHeight: { xs: "100vh", sm: "90vh" },
-          overflowY: "auto",
+          minHeight: "100vh",        // ✅ Full viewport height
+          maxHeight: "none",         // ✅ Remove cap
+          overflowY: "visible",      // ✅ Let it scroll the page, not the container
           px: { xs: 1, sm: 2 },
           pl: { xs: '50px', sm: 0 },
         }}
@@ -1218,7 +1219,7 @@ export default function Profile({ setLoggedIn }) {
                 sx={{
                   bgcolor: "white",
                   boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-                  height: { xs: "auto", md: "calc(50% - 8px)" },
+                  height: { xs: "auto", md: "200px" },
                 }}
               >
                 <CardContent sx={{ p: { xs: 1, sm: 2 } }}>
