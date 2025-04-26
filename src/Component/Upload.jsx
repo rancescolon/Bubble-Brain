@@ -36,6 +36,17 @@ const Upload = () => {
   const langKey = language === "English" ? "en" : "es"
   const uploadText = text[langKey].upload
   
+  const school_categories = text[langKey].school_categories
+
+  const categories = Object.keys(text[langKey].categories || {}).map(category => {
+    const translatedCategory = text[langKey].categories[category]
+    return {
+      original: category,
+      translated: translatedCategory,
+      tags: school_categories[category] || []
+    }
+  })
+
   const [studySetName, setStudySetName] = useState("")
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
@@ -58,35 +69,6 @@ const Upload = () => {
     postId: null,
     communityId: null,
   })
-
-  // School categories for tag selection
-  const school_categories = {
-    [text[langKey].categories.Math]: text[langKey].school_categories.Math,
-    [text[langKey].categories.Science]: text[langKey].school_categories.Science,
-    [text[langKey].categories.Literature]: text[langKey].school_categories.Literature,
-    [text[langKey].categories.History]: text[langKey].school_categories.History,
-    [text[langKey].categories.Geography]: text[langKey].school_categories.Geography,
-    [text[langKey].categories["Foreign Languages"]]: text[langKey].school_categories["Foreign Languages"],
-    [text[langKey].categories.Art]: text[langKey].school_categories.Art,
-    [text[langKey].categories.Music]: text[langKey].school_categories.Music,
-    [text[langKey].categories["Physical Education"]]: text[langKey].school_categories["Physical Education"],
-    [text[langKey].categories.Technology]: text[langKey].school_categories.Technology,
-    [text[langKey].categories["Business Studies"]]: text[langKey].school_categories["Business Studies"],
-    [text[langKey].categories.Philosophy]: text[langKey].school_categories.Philosophy,
-    [text[langKey].categories.Psychology]: text[langKey].school_categories.Psychology,
-    [text[langKey].categories.Sociology]: text[langKey].school_categories.Sociology,
-    [text[langKey].categories.Economics]: text[langKey].school_categories.Economics,
-    [text[langKey].categories["Health Education"]]: text[langKey].school_categories["Health Education"],
-    [text[langKey].categories["Home Economics"]]: text[langKey].school_categories["Home Economics"],
-    [text[langKey].categories["Public Speaking"]]: text[langKey].school_categories["Public Speaking"],
-    [text[langKey].categories["Technology & Engineering"]]: text[langKey].school_categories["Technology & Engineering"],
-    [text[langKey].categories.Debate]: text[langKey].school_categories.Debate,
-    [text[langKey].categories["Environmental Science"]]: text[langKey].school_categories["Environmental Science"],
-    [text[langKey].categories.Theatre]: text[langKey].school_categories.Theatre,
-    [text[langKey].categories.Law]: text[langKey].school_categories.Law,
-    [text[langKey].categories.Education]: text[langKey].school_categories.Education,
-    [text[langKey].categories["Career Development"]]: text[langKey].school_categories["Career Development"],
-  }
 
   // Fetch communities when component mounts
   useEffect(() => {
@@ -797,18 +779,18 @@ const Upload = () => {
                   {uploadText.instructionSelectCategories}
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-                  {Object.keys(school_categories).map((category) => (
+                  {categories.map(({ original, translated }) => (
                       <Chip
-                          key={category}
-                          label={category}
-                          onClick={() => handleCategorySelect(category)}
-                          color={selectedCategories.includes(category) ? "primary" : "default"}
+                          key={original}
+                          label={translated}
+                          onClick={() => handleCategorySelect(original)}
+                          color={selectedCategories.includes(original) ? "primary" : "default"}
                           sx={{
                             fontFamily: "SourGummy, sans-serif",
-                            bgcolor: selectedCategories.includes(category) ? "#1D6EF1" : "#F4FDFF",
-                            color: selectedCategories.includes(category) ? "white" : "#1D1D20",
+                            bgcolor: selectedCategories.includes(original) ? "#1D6EF1" : "#F4FDFF",
+                            color: selectedCategories.includes(original) ? "white" : "#1D1D20",
                             "&:hover": {
-                              bgcolor: selectedCategories.includes(category) ? "#1557B0" : "#E9ECEF",
+                              bgcolor: selectedCategories.includes(original) ? "#1557B0" : "#E9ECEF",
                             },
                           }}
                       />
@@ -832,10 +814,13 @@ const Upload = () => {
                                 variant="subtitle2"
                                 sx={{ fontFamily: "SourGummy, sans-serif", mb: 1, color: "#1D1D20" }}
                             >
-                              {uploadText.categoryTagLabel.replace("{{category}}", category)}
+                              {uploadText.categoryTagLabel.replace(
+                                "{{category}}", 
+                                text[langKey].categories[category] || category
+                              )}
                             </Typography>
                             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                              {school_categories[category].map((tag) => (
+                              {(school_categories[category] || []).map((tag) => (
                                   <Chip
                                       key={tag}
                                       label={tag}
