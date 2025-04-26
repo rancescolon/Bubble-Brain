@@ -1179,7 +1179,7 @@ export default function Profile({ setLoggedIn }) {
                     }}
                   >
                     {studyStats.streak ?? 0}{" "}
-                    {profileText.dayLabel}
+                    {/* {profileText.dayLabel} */}
                     {studyStats.streak === 1 ? "" : profileText.dayPlural}
                     {studyStats.streak >= 5 && "🔥".repeat(Math.floor(studyStats.streak / 5))}
                   </Typography>

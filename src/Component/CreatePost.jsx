@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import {
   Box,
   Button,
@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import { PhotoCamera, VideoLibrary, Public, People, Lock, Clear } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
+import { BackgroundContext } from "../App"
+import text from "../translations.json"
 
 const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
 
@@ -31,6 +33,10 @@ const VisuallyHiddenInput = styled("input")({
 });
 
 const CreatePost = ({ onPostCreated }) => {
+  const { language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const createPostText = text[langKey].createPost;
+
   const [postText, setPostText] = useState("");
   const [audience, setAudience] = useState("public");
   const [showSuccess, setShowSuccess] = useState(false);
@@ -213,14 +219,14 @@ const CreatePost = ({ onPostCreated }) => {
           mb: 3
         }}
       >
-        Create Post
+        {createPostText.title}
       </Typography>
 
       <TextField
         fullWidth
         multiline
         rows={4}
-        placeholder="What's on your mind?"
+        placeholder={createPostText.placeholder}
         value={postText}
         onChange={handlePostTextChange}
         disabled={uploading}
@@ -299,7 +305,7 @@ const CreatePost = ({ onPostCreated }) => {
             },
           }}
         >
-          Add Photo
+          {createPostText.buttons.addPhoto}
           <VisuallyHiddenInput 
             type="file" 
             ref={fileInputRef}
@@ -310,16 +316,16 @@ const CreatePost = ({ onPostCreated }) => {
         
         {/* Audience Selection */}
         <FormControl sx={{ flexGrow: 1 }}>
-          <InputLabel>Audience</InputLabel>
+          <InputLabel>{createPostText.audience.label}</InputLabel>
           <Select
             value={audience}
             onChange={handleAudienceChange}
             disabled={uploading}
             startAdornment={getAudienceIcon()}
           >
-            <MenuItem value="public">Public</MenuItem>
-            <MenuItem value="connections">Connections Only</MenuItem>
-            <MenuItem value="private">Private</MenuItem>
+            <MenuItem value="public">{createPostText.audience.public}</MenuItem>
+            <MenuItem value="connections">{createPostText.audience.connections}</MenuItem>
+            <MenuItem value="private">{createPostText.audience.private}</MenuItem>
           </Select>
         </FormControl>
       </Stack>
@@ -340,7 +346,7 @@ const CreatePost = ({ onPostCreated }) => {
           }
         }}
       >
-        {uploading ? "Posting..." : "Post"}
+        {uploading ? createPostText.buttons.posting : createPostText.buttons.post}
       </Button>
 
       {/* Success Message */}
@@ -355,7 +361,7 @@ const CreatePost = ({ onPostCreated }) => {
           onClose={() => setShowSuccess(false)}
           sx={{ width: '100%' }}
         >
-          Post created successfully!
+          {createPostText.snackbar.success}
         </Alert>
       </Snackbar>
 

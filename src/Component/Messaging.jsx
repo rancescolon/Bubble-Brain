@@ -1,14 +1,19 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useContext } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { socket } from "../App"
+import { socket, BackgroundContext } from "../App"
 import { Send, ArrowLeft } from "lucide-react"
 import background from "../assets/image3.png"
+import text from "../translations.json"
 
 // This Messaging component shows a way in which you can set up messaging between
 // two users with the use of websockets.
 const Messaging = () => {
+  const { language } = useContext(BackgroundContext);
+  const langKey = language === "English" ? "en" : "es";
+  const messagingText = text[langKey].messaging;
+
   const [userData, setUserData] = useState({})
   const [otherUserData, setOtherUserData] = useState({})
   const [message, setMessage] = useState("")
@@ -318,8 +323,8 @@ const Messaging = () => {
                   <ArrowLeft size={24} />
                 </button>
                 <div>
-                  <h2 className="text-xl font-bold">{otherUserData.attributes?.name || otherUserData.email || "Chat"}</h2>
-                  <p className="text-sm opacity-75">{isConnected ? "Online" : "Offline"}</p>
+                  <h2 className="text-xl font-bold">{otherUserData.attributes?.name || otherUserData.email || messagingText.chatDefaultTitle}</h2>
+                  <p className="text-sm opacity-75">{isConnected ? messagingText.statusOnline : messagingText.statusOffline}</p>
                 </div>
               </div>
               {error && <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">{error}</div>}
@@ -360,7 +365,7 @@ const Messaging = () => {
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type a message..."
+                    placeholder={messagingText.messagePlaceholder}
                     className="flex-1 p-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] text-[#1D1D20]"
                     disabled={!isConnected || isSending}
                     autoFocus

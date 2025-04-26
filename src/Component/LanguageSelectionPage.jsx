@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useContext } from "react"
 import { Box, Container, Typography, Card, CardContent, Button, Grid } from "@mui/material"
 import { Globe, Check } from "lucide-react"
 import { styled } from "@mui/material/styles"
 import { useNavigate } from "react-router-dom"
+import { BackgroundContext } from "../App"
 
 // Custom styled Component
 const GradientBackground = styled(Box)(({ theme }) => ({
@@ -69,6 +70,7 @@ const LanguageCard = ({ language, flag, onClick, isSelected }) => {
 }
 
 const LanguageSelectionPage = ({ language, setLanguage }) => {
+    const { currentBackground } = useContext(BackgroundContext);
     const navigate = useNavigate()
     const [isWiggling, setIsWiggling] = useState(false)
 
@@ -174,7 +176,23 @@ const LanguageSelectionPage = ({ language, setLanguage }) => {
     }
 
     return (
-        <GradientBackground>
+        <Box
+            sx={{
+                minHeight: "100vh",
+                width: "100%",
+                maxWidth: "100vw",
+                overflowX: "hidden",
+                bgcolor: "#1b1b1b",
+                backgroundImage: `url(${currentBackground.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                py: 3,
+                px: { xs: 1, sm: 2, md: 3 },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
             <SuccessNotification />
             <style jsx="true">{`
                 @import url('https://fonts.googleapis.com/css2?family=Sour+Gummy:wght@400;600;800&display=swap');
@@ -219,7 +237,18 @@ const LanguageSelectionPage = ({ language, setLanguage }) => {
             `}</style>
 
             <Container maxWidth="md">
-                <Box sx={{ py: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <Box 
+                    sx={{ 
+                        py: 8, 
+                        display: "flex", 
+                        flexDirection: "column", 
+                        alignItems: "center",
+                        bgcolor: "white", // Add white background to the content box
+                        borderRadius: 2,
+                        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+                        p: 4,
+                    }}
+                >
                     {/* Logo and Title */}
                     <Box
                         sx={{
@@ -276,7 +305,7 @@ const LanguageSelectionPage = ({ language, setLanguage }) => {
                     </Box>
                 </Box>
             </Container>
-        </GradientBackground>
+        </Box>
     )
 }
 

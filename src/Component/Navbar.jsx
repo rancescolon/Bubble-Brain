@@ -59,7 +59,6 @@ const StyledDrawer = styled(Drawer)(({ theme, open }) => ({
 }))
 
 const NavBar = () => {
-
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down("md"))
     const [isExpanded, setIsExpanded] = useState(!isMobile)
@@ -111,7 +110,6 @@ const NavBar = () => {
         console.log("[Navbar] Using default skin from context")
     }, [getEquippedSkin, equippedSkinId, userId, defaultSkin])
 
-
     // Update expanded state when screen size changes
     useEffect(() => {
         setIsExpanded(!isMobile)
@@ -125,7 +123,6 @@ const NavBar = () => {
     const langKey = language === "English" ? "en" : "es"
     const navViewText = text[langKey]
 
-
     const navItems = [
         // { icon: Home, label: "Home", path: "/", external: false },
         { icon: MessageSquare, label: [navViewText.navbar.items.friends], path: "/friends", external: false },
@@ -136,88 +133,6 @@ const NavBar = () => {
         { icon: Camera, label: [navViewText.navbar.items.feed], path: "/feed", external: false },
         { icon: ShoppingCart, label: [navViewText.navbar.items.shop], path: "/shop", external: false },
     ]
-
-  // Get values for logging
-  const currentIsLoading = isLoading;
-  const currentLogo = isLoading ? defaultSkin.logo : getEquippedSkin().logo;
-  
-  console.log(`[Navbar] Rendering. isLoading: ${currentIsLoading}, Logo: ${currentLogo === defaultSkin.logo ? 'Default' : 'Equipped'}`);
-
-  return (
-    <StyledDrawer variant="permanent" open={isExpanded}>
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-          <Box
-            onClick={toggleSidebar}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              backgroundColor: "#f5f5f5",
-              cursor: "pointer",
-              "&:hover": {
-                backgroundColor: "#e0e0e0",
-              },
-            }}
-          >
-            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            height: 80,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            p: 2,
-            transition: theme.transitions.create(["padding", "justify-content"], {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-          }}
-        >
-          <Box
-            sx={{
-              width: 60,
-              height: 60,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Box
-              component="img"
-              src={currentLogo}
-              alt="Bubble Brain Logo"
-              sx={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
-          </Box>
-          {isExpanded && (
-            <Typography
-              variant="h6"
-              sx={{
-                ml: 2,
-                fontFamily: '"Sour Gummy", sans-serif',
-                fontWeight: 600,
-                fontSize: "1.5rem",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              Bubble <br/>Brain
-            </Typography>
-          )}
-        </Box>
-
 
     return (
         <StyledDrawer variant="permanent" open={isExpanded}>
@@ -259,8 +174,8 @@ const NavBar = () => {
                         component={Link}
                         to="/"
                         sx={{
-                            width: 72, // 20% bigger (60 * 1.2 = 72)
-                            height: 72, // 20% bigger (60 * 1.2 = 72)
+                            width: 72,
+                            height: 72,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -357,27 +272,6 @@ const NavBar = () => {
                         )
                     })}
                 </List>
-
-                {/* <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
-          <Box
-            onClick={toggleSidebar}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              backgroundColor: "#f5f5f5",
-              cursor: "pointer",
-              "&:hover": {
-                backgroundColor: "#e0e0e0"
-              },
-            }}
-          >
-            {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </Box>
-        </Box> */}
             </Box>
         </StyledDrawer>
     )
