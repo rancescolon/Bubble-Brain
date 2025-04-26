@@ -1136,6 +1136,14 @@ export default function Profile({ setLoggedIn }) {
                   </IconButton>
                 </Box>
                 {/* --- End of Added Section --- */}
+                <Box sx={{ mt: 3, textAlign: "center" }}>
+                     <ActionButton
+                       onClick={() => navigate("/languageSelection")}
+                       sx={{ fontSize: { xs: "0.9rem", sm: "1.1rem" } }}
+                     >
+                       {profileText.changeLanguage}
+                     </ActionButton>
+                   </Box>
               </CardContent>
             </Card>
 
