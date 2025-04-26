@@ -1,10 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {useContext, useEffect, useState} from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { AppBar, Toolbar, Typography, Button, TextField, Box, Container } from "@mui/material"
 import Logo from "../assets/Frame.png"
 import background from "../assets/image3.png"
+import {BackgroundContext} from "../App";
+import text from "../text.json";
 
 const RegisterForm = ({ setLoggedIn }) => {
   const [email, setEmail] = useState("")
@@ -14,7 +16,11 @@ const RegisterForm = ({ setLoggedIn }) => {
   const [error, setError] = useState("")
   const navigate = useNavigate()
 
-  const submitHandler = (event) => {
+    const { language, setLanguage } = useContext(BackgroundContext)
+    const langKey = language === "English" ? "en" : "es"
+    const comText = text[langKey]
+
+    const submitHandler = (event) => {
     event.preventDefault()
     setIsLoading(true)
     setError("")
@@ -152,7 +158,7 @@ const RegisterForm = ({ setLoggedIn }) => {
               color: "#1D1D20",
             }}
           >
-            Create an Account
+              {comText.registerForm.title}
           </Typography>
 
           {error && (
@@ -236,7 +242,7 @@ const RegisterForm = ({ setLoggedIn }) => {
                 color: "#F4FDFF",
               }}
             >
-              {isLoading ? "Signing up..." : "Sign Up"}
+              {isLoading ? comText.registerForm.buttons.signingUp : comText.registerForm.buttons.signUp}
             </Button>
           </form>
 
@@ -249,7 +255,7 @@ const RegisterForm = ({ setLoggedIn }) => {
                 color: "#1D1D20",
               }}
             >
-              Have an account?{" "}
+                {comText.registerForm.links.haveAccount} {" "}
               <Link
                 to="/login"
                 style={{
@@ -260,7 +266,7 @@ const RegisterForm = ({ setLoggedIn }) => {
                   textDecoration: "none",
                 }}
               >
-                Login
+                  {comText.registerForm.links.login}
               </Link>
             </Typography>
           </Box>
@@ -275,7 +281,7 @@ const RegisterForm = ({ setLoggedIn }) => {
                 textDecoration: "none",
               }}
             >
-              Reset your password
+                {comText.registerForm.links.resetPassword}
             </Link>
           </Box>
         </Box>
