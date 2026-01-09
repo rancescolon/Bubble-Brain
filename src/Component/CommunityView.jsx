@@ -45,7 +45,7 @@ import { motion } from "framer-motion"
 
 
 // API base URL
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+const API_BASE_URL = "https://bubblebrain.app/api/api/default"
 
 export default function CommunityView() {
   const { currentBackground, language } = useContext(BackgroundContext)
@@ -471,9 +471,9 @@ export default function CommunityView() {
 
   // Get base URL for sharing
   const getBaseUrl = () => {
-    const isProduction = window.location.hostname.includes("webdev.cse.buffalo.edu")
+    const isProduction = window.location.hostname.includes("bubblebrain.app")
     if (isProduction) {
-      return `${window.location.origin}/hci/teams/droptable`
+      return `${window.location.origin}/bubblebrain`
     } else {
       return window.location.origin
     }

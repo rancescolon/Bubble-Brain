@@ -33,7 +33,7 @@ const CommunityMessaging = () => {
   const messagesEndRef = useRef(null);
 
   // API base URL
-  const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
+  const API_BASE_URL = "https://bubblebrain.app/api/api/default";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

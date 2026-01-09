@@ -90,7 +90,7 @@ const DeleteAccountButton = styled(Button)({
   },
 })
 
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+const API_BASE_URL = "https://bubblebrain.app/api/api/default"
 
 export default function Profile({ setLoggedIn }) {
     const { currentBackground, language } = useContext(BackgroundContext);

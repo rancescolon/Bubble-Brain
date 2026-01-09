@@ -502,11 +502,11 @@ const Communities = () => {
   // Add this function at the beginning of the Communities component to get the base URL
   const getBaseUrl = () => {
     // Check if we're in production by looking for the specific domain
-    const isProduction = window.location.hostname.includes("webdev.cse.buffalo.edu")
+    const isProduction = window.location.hostname.includes("bubblebrain.app")
 
     if (isProduction) {
       // In production, include the full path
-      return `${window.location.origin}/hci/teams/droptable`
+      return `${window.location.origin}/bubblebrain`
     } else {
       // In development, just use the origin
       return window.location.origin

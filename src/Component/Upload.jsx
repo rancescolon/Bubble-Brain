@@ -28,7 +28,7 @@ import { BackgroundContext } from "../App"
 import TemplateManager from "./TemplateManager"
 import text from "../text.json"
 
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+const API_BASE_URL = "https://bubblebrain.app/api/api/default"
 
 const Upload = () => {
   const { currentBackground, language } = useContext(BackgroundContext)

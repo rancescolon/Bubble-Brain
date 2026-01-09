@@ -165,9 +165,9 @@ function ConditionalBackgroundSelector({ loggedIn }) {
 }
 
 const socket = io(process.env.REACT_APP_API_PATH_SOCKET, {
-  path: "/hci/api/realtime-socket/socket.io",
+  path: "/api/realtime-socket/socket.io",
   query: {
-    tenantID: "droptable",
+    tenantID: "bubblebrain",
   },
   transports: ["websocket"],
   reconnection: true,
@@ -186,8 +186,8 @@ socket.on("connect", () => {
   console.log("Socket connection details:", {
     url: process.env.REACT_APP_API_PATH_SOCKET,
     transport: socket.io?.engine?.transport?.name || "unknown",
-    path: "/hci/api/realtime-socket/socket.io",
-    query: { tenantID: "droptable" },
+    path: "/api/realtime-socket/socket.io",
+    query: { tenantID: "bubblebrain" },
     timestamp: new Date().toISOString(),
   })
 
@@ -204,8 +204,8 @@ socket.on("connect_error", (error) => {
     url: process.env.REACT_APP_API_PATH_SOCKET,
     transport: socket.io?.engine?.transport?.name || "unknown",
     userId: sessionStorage.getItem("user"),
-    path: "/hci/api/realtime-socket/socket.io",
-    query: { tenantID: "droptable" },
+    path: "/api/realtime-socket/socket.io",
+    query: { tenantID: "bubblebrain" },
     timestamp: new Date().toISOString(),
     errorMessage: error.message,
     errorStack: error.stack,

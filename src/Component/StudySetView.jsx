@@ -25,7 +25,7 @@ import {
 import { ArrowLeft, Edit2, Trash2, RotateCcw } from "lucide-react"
 import { BackgroundContext } from "../App"
 
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+const API_BASE_URL = "https://bubblebrain.app/api/api/default"
 
 // Create a local storage key for comments based on study set ID
 const getLocalStorageKey = (studySetId) => `study_set_comments_${studySetId}`

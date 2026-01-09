@@ -230,7 +230,7 @@ const NavBar = () => {
                             <ListItem key={item.path} disablePadding sx={{ display: "flex" }}>
                                 <ListItemButton
                                     component={item.external ? "a" : Link}
-                                    href={item.external ? `https://webdev.cse.buffalo.edu/hci/teams/droptable${item.path}` : undefined}
+                                    href={item.external ? `https://webdev.cse.buffalo.edu/hci/teams/droptable${item.path}` : undefined}//fix this later
                                     to={!item.external ? item.path : undefined}
                                     target={item.external ? "_blank" : undefined}
                                     selected={isActive}

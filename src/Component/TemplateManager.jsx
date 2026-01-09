@@ -30,7 +30,7 @@ import { Plus, Trash2, BookOpen, X, Save } from "lucide-react"
 import background from "../assets/image3.png"
 import TagSelector from "./tag-selector"
 
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable"
+const API_BASE_URL = "https://bubblebrain.app/api/api/default"
 
 const TemplateManager = ({ onSelectTemplate, onClose, language = "English" }) => {
   const langKey = language === "English" ? "en" : "es"

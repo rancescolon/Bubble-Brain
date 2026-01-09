@@ -18,7 +18,7 @@ import { styled } from "@mui/material/styles";
 import { BackgroundContext } from "../App"
 import text from "../translations.json"
 
-const API_BASE_URL = "https://webdev.cse.buffalo.edu/hci/api/api/droptable";
+const API_BASE_URL = "https://bubblebrain.app/api/api/default";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
