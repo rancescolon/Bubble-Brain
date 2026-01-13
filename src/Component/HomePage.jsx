@@ -40,6 +40,17 @@ import { getSelectedLanguage } from "../App";
 
 console.log("Selected language from context:", getSelectedLanguage());
 
+function generateSecureId() {
+  // Prefer Web Crypto API for cryptographically secure randomness
+  if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    // Convert to a short, readable base-36 string
+    return `user-secure-${array[0].toString(36)}`;
+  }
+  // Fallback for environments without Web Crypto; best-effort rather than secure
+  return `user-secure-${Math.random().toString(36).slice(2)}`;
+}
 
 // Fallback mock users in case API fails
 const MOCK_USERS = [
@@ -435,7 +446,7 @@ const HomePage = () => {
           // For each user, fetch their detailed information to get last activity
           const userDetailsPromises = usersArray.map(async (user) => {
             try {
-              const userId = user.id || user._id || `user-${Math.random()}`
+              const userId = user.id || user._id || generateSecureId()
               const isCurrentUser = currentUser && currentUser.toString() === userId.toString()
 
               // If this is the current user or we need detailed info, fetch user details

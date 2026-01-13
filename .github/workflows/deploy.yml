@@ -1,15 +1,19 @@
 name: Deploy Frontend
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches: [ "main" ]  # Runs when you push to main
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy Frontend via SSH
-        uses: appleboy/ssh-action@v1.0.0
+
+        uses: appleboy/ssh-action@53631f3c321894d38d8d341908b9821815e61239
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
@@ -28,7 +32,7 @@ jobs:
             npm install
             npm run build
             
-            # 4. Reload Nginx (Optional, ensures cache clears)
+            # 4. Reload Nginx
             sudo systemctl reload nginx
             
             echo "✅ Frontend Deployed Successfully!"
