@@ -113,7 +113,7 @@ const NavBar = () => {
         setIsExpanded(!isExpanded)
     }
 
-    const { currentBackground, language } = useContext(BackgroundContext)
+    const { language } = useContext(BackgroundContext)
     const langKey = language === "English" ? "en" : "es"
     const navViewText = text[langKey]
 

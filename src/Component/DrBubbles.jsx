@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext ,useMemo} from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Box, Typography, Button, useMediaQuery, IconButton, Tooltip } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
@@ -84,7 +84,7 @@ const DrBubbles = () => {
   }, [isMobile])
 
   // --- GUIDE DATA ---
-  const guideSteps = [
+  const guideSteps = useMemo(() => [
     { element: "nav-start", message: DrBubblesViewText.guideSteps.navStart, position: { x: 15, y: 40 } },
     { element: "nav-home", message: DrBubblesViewText.guideSteps.navHome, position: { x: 14, y: 40 } },
     { element: "nav-friends", message: DrBubblesViewText.guideSteps.navFriends, position: { x: 15, y: 115 } },
@@ -94,13 +94,13 @@ const DrBubbles = () => {
     { element: "nav-style-guide", message: DrBubblesViewText.guideSteps.navStyleGuide, position: { x: 15, y: 330 } },
     { element: "nav-feed", message: DrBubblesViewText.guideSteps.navFeed, position: { x: 15, y: 390 } },
     { element: "nav-shop", message: DrBubblesViewText.guideSteps.navShop, position: { x: 15, y: 440 } },
-  ]
+  ], [DrBubblesViewText]);
 
   useEffect(() => {
     if (step < guideSteps.length) {
       setPosition({ x: guideSteps[step].position.x, y: guideSteps[step].position.y })
     }
-  }, [step])
+  }, [step,guideSteps])
 
   const handleNext = () => {
     if (step < guideSteps.length - 1) {
