@@ -34,21 +34,28 @@ import text from "../text.json"
 const drawerWidth = 240
 const collapsedDrawerWidth = 68
 
+// Custom Spring/Wiggle Configuration
+// This cubic-bezier creates an "overshoot" effect (values > 1) which looks like a wiggle/bounce
+const wiggleEasing = "cubic-bezier(0.34, 1.56, 0.64, 1)"
+const transitionDuration = 600 // Increased duration slightly so the wiggle is visible
+
 const StyledDrawer = styled(Drawer)(({ theme, open }) => ({
     width: open ? drawerWidth : collapsedDrawerWidth,
     flexShrink: 0,
     whiteSpace: "nowrap",
     boxSizing: "border-box",
     overflowX: "hidden",
+    // Updated Transition for the Container
     transition: theme.transitions.create("width", {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.enteringScreen,
+        easing: wiggleEasing,
+        duration: transitionDuration,
     }),
     "& .MuiDrawer-paper": {
         width: open ? drawerWidth : collapsedDrawerWidth,
+        // Updated Transition for the Paper (the actual visible background)
         transition: theme.transitions.create("width", {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
+            easing: wiggleEasing,
+            duration: transitionDuration,
         }),
         backgroundColor: theme.palette.background.paper,
         borderRight: `1px solid ${theme.palette.divider}`,
@@ -70,47 +77,34 @@ const NavBar = () => {
 
     // Enhanced effect to handle skin persistence across navigation
     useEffect(() => {
-        // Make the key user-specific
         const localStorageKey = userId ? `lastEquippedSkinId_${userId}` : "lastEquippedSkinId"
 
-        // Clear any stored skin data if userId is null (logged out)
         if (!userId) {
             setCurrentSkin(defaultSkin)
-            console.log("[Navbar] No user logged in, using default skin")
             return
         }
 
-        // First, try to get the equipped skin from the ShopContext
         const contextSkin = getEquippedSkin()
 
-        // If we have a skin ID in context that isn't default, use and store it
         if (equippedSkinId && equippedSkinId !== defaultSkin.id) {
             setCurrentSkin(contextSkin)
             localStorage.setItem(localStorageKey, equippedSkinId)
-            console.log("[Navbar] Using equipped skin from context:", equippedSkinId)
             return
         }
 
-        // If the context doesn't have a non-default skin, try to get from localStorage
         const savedSkinId = localStorage.getItem(localStorageKey)
 
         if (savedSkinId && savedSkinId !== defaultSkin.id) {
-            // If we have a saved skin ID, use it to retrieve the skin data
             const fallbackSkin = getEquippedSkin()
-
             if (fallbackSkin && fallbackSkin.id !== defaultSkin.id) {
                 setCurrentSkin(fallbackSkin)
-                console.log("[Navbar] Restored skin from localStorage:", savedSkinId)
                 return
             }
         }
 
-        // Default fallback - use whatever the context provides
         setCurrentSkin(getEquippedSkin())
-        console.log("[Navbar] Using default skin from context")
     }, [getEquippedSkin, equippedSkinId, userId, defaultSkin])
 
-    // Update expanded state when screen size changes
     useEffect(() => {
         setIsExpanded(!isMobile)
     }, [isMobile])
@@ -124,7 +118,6 @@ const NavBar = () => {
     const navViewText = text[langKey]
 
     const navItems = [
-        // { icon: Home, label: "Home", path: "/", external: false },
         { icon: MessageSquare, label: [navViewText.navbar.items.friends], path: "/friends", external: false },
         { icon: Upload, label: [navViewText.navbar.items.upload], path: "/upload", external: false },
         { icon: Users, label: [navViewText.navbar.items.community], path: "/community", external: false },
@@ -164,9 +157,10 @@ const NavBar = () => {
                         alignItems: "center",
                         justifyContent: "center",
                         p: 2,
+                        // We also apply the wiggle timing to the padding/content transitions
                         transition: theme.transitions.create(["padding", "justify-content"], {
-                            easing: theme.transitions.easing.sharp,
-                            duration: theme.transitions.duration.enteringScreen,
+                            easing: wiggleEasing,
+                            duration: transitionDuration,
                         }),
                     }}
                 >
@@ -206,6 +200,12 @@ const NavBar = () => {
                                 whiteSpace: "nowrap",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
+                                // Simple fade in for text
+                                animation: "fadeIn 0.5s ease-in",
+                                "@keyframes fadeIn": {
+                                    "0%": { opacity: 0 },
+                                    "100%": { opacity: 1 },
+                                }
                             }}
                         >
                             Bubble <br />
@@ -230,7 +230,7 @@ const NavBar = () => {
                             <ListItem key={item.path} disablePadding sx={{ display: "flex" }}>
                                 <ListItemButton
                                     component={item.external ? "a" : Link}
-                                    href={item.external ? `https://webdev.cse.buffalo.edu/hci/teams/droptable${item.path}` : undefined}//fix this later
+                                    href={item.external ? `https://webdev.cse.buffalo.edu/hci/teams/droptable${item.path}` : undefined}
                                     to={!item.external ? item.path : undefined}
                                     target={item.external ? "_blank" : undefined}
                                     selected={isActive}

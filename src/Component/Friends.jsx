@@ -632,30 +632,6 @@ const Friends = () => {
                   {friendsText.subtitle}
                 </p>
               </div>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setSelectedOption(1)}
-                  className={`px-4 py-2 rounded-full transition-colors ${
-                    selectedOption === 1
-                      ? "bg-[#1D6EF1] text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                  style={fontStyle}
-                >
-                  {friendsText.tabs.option1}
-                </button>
-                <button
-                  onClick={() => setSelectedOption(2)}
-                  className={`px-4 py-2 rounded-full transition-colors ${
-                    selectedOption === 2
-                      ? "bg-[#1D6EF1] text-white"
-                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                  }`}
-                  style={fontStyle}
-                >
-                  {friendsText.tabs.option2}
-                </button>
-              </div>
             </div>
           </div>
 

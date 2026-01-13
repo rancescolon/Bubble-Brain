@@ -30,3 +30,5 @@ build
 
 # Data
 *.sqlite3
+.env
+.env

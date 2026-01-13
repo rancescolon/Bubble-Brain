@@ -1276,13 +1276,13 @@ const Communities = () => {
                         className={`${navOpen ? "fixed right-0 top-20 bottom-0 z-30 w-3/4" : ""} md:static md:z-auto bg-[#F4FDFF] p-4 md:p-6 rounded-xl shadow-lg md:sticky md:top-24 transition-all duration-300`}
                     >
                       <button
-                          className="w-full bg-[#48BB78] hover:bg-[#9DDCB1] text-white py-2 md:py-3 px-3 md:px-4 rounded-lg flex items-center justify-center mb-4 md:mb-6 transition-colors shadow-md"
+                          className="w-full bg-[#48BB78] hover:bg-[#9DDCB1] text-white py-2 md:py-3 px-3 md:px-4 rounded-[8px] flex items-center justify-center mb-4 md:mb-6 transition-colors shadow-md"
                           onClick={() => setShowModal(true)}
                       >
-                        <Plus className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+                        <Plus className="mr-2 h-4 w-4 md:h-5 md:w-5"/>
                         <span style={fontStyle} className="text-sm md:text-base font-semibold">
-                     {comText.sidebar.createButton}
-                    </span>
+        {comText.sidebar.createButton}
+    </span>
                       </button>
 
                       <h2 className="text-[#1D1D20] text-lg md:text-xl font-semibold mb-3 md:mb-4" style={fontStyle}>
@@ -1294,18 +1294,19 @@ const Communities = () => {
                             joinedCommunities.map((community) => (
                                 <div
                                     key={community.id}
-                                    className="bg-[#C5EDFD] p-2 md:p-3 rounded-lg cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
+                                    className="bg-[#C5EDFD] p-2 md:p-3 rounded-[8px] cursor-pointer hover:bg-[#97C7F1] transition-colors flex items-center"
                                     onClick={() => navigate(`/community/view/${community.id}`)}
                                 >
-                                  <div className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
+                                  <div
+                                      className="bg-[#1D6EF1] rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-white mr-2 md:mr-3">
                                     <span style={fontStyle}>{community.name.charAt(0).toUpperCase()}</span>
                                   </div>
                                   <span
                                       className="text-[#1D1D20] font-medium overflow-hidden text-ellipsis whitespace-nowrap text-sm md:text-base"
                                       style={fontStyle}
                                   >
-                            {community.name}
-                          </span>
+        {community.name}
+    </span>
                                 </div>
                             ))
                         ) : (
@@ -1327,7 +1328,8 @@ const Communities = () => {
         {showModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div ref={modalRef} className="bg-[#F4FDFF] p-5 md:p-8 rounded-xl shadow-2xl w-full max-w-md">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-[#1D1D20] text-center" style={fontStyle}>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-[#1D1D20] text-center"
+                    style={fontStyle}>
                   {comText.modal.title}
                 </h2>
 
@@ -1339,7 +1341,7 @@ const Communities = () => {
                     <input
                         type="text"
                         maxLength={20}
-                        placeholder= {comText.modal.namePlaceholder}
+                        placeholder={comText.modal.namePlaceholder}
                         className="w-full p-2 md:p-3 border-2 border-[#97C7F1] rounded-lg text-[#1D1D20] focus:outline-none focus:ring-2 focus:ring-[#1D6EF1] focus:border-transparent text-sm md:text-base"
                         value={communityName}
                         onChange={(e) => setCommunityName(e.target.value)}
