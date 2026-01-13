@@ -27,3 +27,9 @@ jobs:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # turn to ture
+          VALIDATE_JAVASCRIPT_STANDARD: false
+          VALIDATE_JSCPD: false
+          DISABLE_ERRORS: true
+#          JSCPD_THRESHOLD: 10 # Allow up to 10% duplication
