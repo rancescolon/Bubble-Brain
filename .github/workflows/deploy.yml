@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Deploy Frontend via SSH
 
-        uses: appleboy/ssh-action@53631f3c321894d38d8d341908b9821815e61239
+        uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USERNAME }}
