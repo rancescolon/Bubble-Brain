@@ -1,0 +1,34 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ "main" ]  # Runs when you push to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Frontend via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            echo "🚀 Deploying Frontend..."
+            
+            # 1. Go to frontend folder
+            cd ~/Bubble-Brain
+            
+            # 2. Get latest code
+            git fetch --all
+            git reset --hard origin/main
+            
+            # 3. Install & Build
+            npm install
+            npm run build
+            
+            # 4. Reload Nginx (Optional, ensures cache clears)
+            sudo systemctl reload nginx
+            
+            echo "✅ Frontend Deployed Successfully!"
